@@ -1,3 +1,13 @@
+---
+title: VG Predictive Intelligence
+emoji: 🧠
+colorFrom: blue
+colorTo: indigo
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # VG Intelligence — World-Class Political Pattern Analysis
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
