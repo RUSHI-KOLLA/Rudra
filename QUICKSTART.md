@@ -150,8 +150,8 @@ GROQ_API_KEY=gsk_...
 TAVILY_API_KEY=tvly_...
 
 # Models
-GROQ_MODEL_LARGE=llama-3.3-70b-versatile
-GROQ_MODEL_SMALL=llama-3.1-8b-instant
+GROQ_MODEL_LARGE=openai/gpt-oss-120b
+GROQ_MODEL_SMALL=openai/gpt-oss-20b
 
 # Rate Limits
 GROQ_RPM_LIMIT=15

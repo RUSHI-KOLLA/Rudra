@@ -1,13 +1,3 @@
----
-title: VG Predictive Intelligence
-emoji: 🧠
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-pinned: false
-app_port: 7860
----
-
 # VG Intelligence — World-Class Political Pattern Analysis
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
@@ -238,9 +228,9 @@ Edit `.env` to customize:
 GROQ_API_KEY=your_groq_key
 TAVILY_API_KEY=your_tavily_key
 
-# Model Selection (served via Groq — no external provider)
-GROQ_MODEL_LARGE=openai/gpt-oss-20b
-GROQ_MODEL_SMALL=allam-2-7b
+# Model Selection
+GROQ_MODEL_LARGE=openai/gpt-oss-120b
+GROQ_MODEL_SMALL=openai/gpt-oss-20b
 
 # Rate Limiting
 GROQ_RPM_LIMIT=15

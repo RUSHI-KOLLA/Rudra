@@ -28,6 +28,38 @@ _rate_limiter: Optional[AsyncLimiter] = None
 _semaphore: Optional[asyncio.Semaphore] = None
 _async_state_loop: Optional[asyncio.AbstractEventLoop] = None
 
+# Models that are known-good on Groq today. Used when a configured model
+# returns 404 model_not_found (e.g. retired llama-3.x IDs in old env vars).
+_FALLBACK_MODELS = ["openai/gpt-oss-120b", "openai/gpt-oss-20b", "allam-2-7b"]
+
+
+def _model_fallback_chain(model: str) -> list:
+    """Configured model first, then known-good fallbacks."""
+    chain = [model]
+    for m in _FALLBACK_MODELS:
+        if m not in chain:
+            chain.append(m)
+    return chain
+
+
+def _is_model_not_found(error: Exception) -> bool:
+    """Detect Groq 404 model_not_found / model-does-not-exist errors."""
+    msg = str(error).lower()
+    return "model_not_found" in msg or "does not exist" in msg or "not supported" in msg
+
+
+def _generation_kwargs(model: str) -> Dict[str, Any]:
+    """Extra API kwargs per model.
+
+    gpt-oss models are reasoning models: without this, they spend the whole
+    token budget on hidden reasoning and return EMPTY content at small
+    max_tokens (shadow round uses 96 tokens) -> empty stances downstream.
+    """
+    kwargs: Dict[str, Any] = {}
+    if model and "gpt-oss" in model:
+        kwargs["reasoning_effort"] = "low"
+    return kwargs
+
 
 def _ensure_async_primitives() -> None:
     """Recreate loop-bound primitives when requests run on a new event loop."""
@@ -174,24 +206,37 @@ class GroqLLMClient:
 
     def chat(self, system_prompt: str, user_prompt: str, temperature: float = 0.7,
              max_tokens: int = 2048, response_format: Optional[dict] = None) -> str:
-        kwargs: Dict[str, Any] = {
-            "model": self.model,
-            "messages": [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-            "temperature": temperature,
-            "max_tokens": max_tokens,
-        }
-        if response_format:
-            kwargs["response_format"] = response_format
+        last_error: Optional[Exception] = None
+        # Try configured model first; on model_not_found fall back to known-good models
+        for model in _model_fallback_chain(self.model):
+            kwargs: Dict[str, Any] = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+            kwargs.update(_generation_kwargs(model))
+            if response_format:
+                kwargs["response_format"] = response_format
 
-        try:
-            resp = self.client.chat.completions.create(**kwargs)
-            return resp.choices[0].message.content or ""
-        except Exception as e:
-            print(f"[GroqLLMClient] Error: {e}")
-            return ""
+            try:
+                resp = self.client.chat.completions.create(**kwargs)
+                self.model = model
+                return resp.choices[0].message.content or ""
+            except Exception as e:
+                last_error = e
+                if _is_model_not_found(e):
+                    print(f"[GroqLLMClient] Model '{model}' unavailable — falling back")
+                    continue
+                print(f"[GroqLLMClient] Error: {e}")
+                return ""
+
+        if last_error is not None:
+            print(f"[GroqLLMClient] Error: {last_error}")
+        return ""
 
     # backwards compat alias
     def chat_with_prompt(self, system_prompt: str, user_prompt: str) -> str:
@@ -276,21 +321,31 @@ class AsyncGroqLLMClient:
         if response_format:
             kwargs["response_format"] = response_format
 
-        for attempt in range(1, retries + 1):
-            try:
-                async with sem:
-                    async with limiter:
-                        resp = await asyncio.wait_for(
-                            self.client.chat.completions.create(**kwargs),
-                            timeout=timeout,
-                        )
-                return resp.choices[0].message.content or ""
-            except Exception as error:
-                last_error = error
-                if attempt >= retries or not self._is_retriable(error):
-                    raise
-                await asyncio.sleep(delay_seconds)
-                delay_seconds = min(delay_seconds * 2, 4)
+        # Try configured model first; on model_not_found fall back to known-good models
+        for model in _model_fallback_chain(self.model):
+            kwargs["model"] = model
+            kwargs.pop("reasoning_effort", None)
+            kwargs.update(_generation_kwargs(model))
+            delay_seconds = 1
+            for attempt in range(1, retries + 1):
+                try:
+                    async with sem:
+                        async with limiter:
+                            resp = await asyncio.wait_for(
+                                self.client.chat.completions.create(**kwargs),
+                                timeout=timeout,
+                            )
+                    self.model = model
+                    return resp.choices[0].message.content or ""
+                except Exception as error:
+                    last_error = error
+                    if _is_model_not_found(error):
+                        print(f"[Groq] Model '{model}' unavailable — falling back")
+                        break  # next model in chain
+                    if attempt >= retries or not self._is_retriable(error):
+                        raise
+                    await asyncio.sleep(delay_seconds)
+                    delay_seconds = min(delay_seconds * 2, 4)
 
         if last_error is not None:
             raise last_error

@@ -17,7 +17,7 @@ class Config:
     gemini_api_key: Optional[str] = None
 
     # --- Model Selection ---
-    model_large: str = "groq/compound-mini"
+    model_large: str = "openai/gpt-oss-20b"
     model_small: str = "allam-2-7b"
     # Gemini 2.5 Flash with native context caching
     gemini_model: str = "gemini-2.0-flash"
@@ -36,7 +36,7 @@ class Config:
     max_tokens: int = 2048
     shadow_max_tokens: int = 96
     agent_max_tokens: int = 640
-    judge_max_tokens: int = 512
+    judge_max_tokens: int = 1024
 
     # --- RAG ---
     chroma_db_path: str = "./chroma_db"
@@ -58,7 +58,7 @@ def get_config() -> Config:
         groq_api_key=os.getenv("GROQ_API_KEY"),
         tavily_api_key=os.getenv("TAVILY_API_KEY"),
         gemini_api_key=os.getenv("GEMINI_API_KEY"),
-        model_large=os.getenv("GROQ_MODEL_LARGE", "groq/compound-mini"),
+        model_large=os.getenv("GROQ_MODEL_LARGE", "openai/gpt-oss-20b"),
         model_small=os.getenv("GROQ_MODEL_SMALL", "allam-2-7b"),
         gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
         default_provider=os.getenv("LLM_PROVIDER", "groq"),
@@ -71,7 +71,7 @@ def get_config() -> Config:
         max_tokens=int(os.getenv("VG_MAX_TOKENS", "2048")),
         shadow_max_tokens=int(os.getenv("VG_SHADOW_MAX_TOKENS", "96")),
         agent_max_tokens=int(os.getenv("VG_AGENT_MAX_TOKENS", "640")),
-        judge_max_tokens=int(os.getenv("VG_JUDGE_MAX_TOKENS", "512")),
+        judge_max_tokens=int(os.getenv("VG_JUDGE_MAX_TOKENS", "1024")),
         chroma_db_path=os.getenv("VG_CHROMA_PATH", "./chroma_db"),
         rag_top_k=int(os.getenv("VG_RAG_TOP_K", "2")),
         rag_chunk_words=int(os.getenv("VG_RAG_CHUNK_WORDS", "300")),
