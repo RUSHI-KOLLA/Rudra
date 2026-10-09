@@ -99,10 +99,17 @@ class EnhancedDebateCoordinator:
     - 🔮 Oracle Mode: contrarian intelligence when consensus is too strong
     """
 
-    def __init__(self, num_rounds: int = None, enable_optimizations: bool = True, api_key: Optional[str] = None):
+    def __init__(
+        self,
+        num_rounds: int = None,
+        enable_optimizations: bool = True,
+        api_key: Optional[str] = None,
+        provider: Optional[str] = None,
+    ):
         self.num_rounds = num_rounds or config.max_debate_rounds
         self.enable_optimizations = enable_optimizations
         self.api_key = api_key
+        self.provider = provider
 
         # Initialize optimization components
         self.optimizer = get_optimizer() if enable_optimizations else None
@@ -172,7 +179,9 @@ class EnhancedDebateCoordinator:
         geo_entities = []
         if has_real_news_content(web_news):
             try:
-                summary_llm = get_async_llm_client(model=config.model_small, api_key=self.api_key)
+                summary_llm = get_async_llm_client(
+                    provider=self.provider, model=config.model_small, api_key=self.api_key
+                )
                 news_summary, geo_entities = await _summarize_web_news(web_news, summary_llm)
                 if news_summary:
                     print(f"   Extracted {len(news_summary.split('•'))} bullet points, {len(geo_entities)} entities")
@@ -186,7 +195,9 @@ class EnhancedDebateCoordinator:
         kg_summary = ""
         kg_judge_summary = ""
         try:
-            kg_llm = get_async_llm_client(model=config.model_large, api_key=self.api_key)
+            kg_llm = get_async_llm_client(
+                provider=self.provider, model=config.model_large, api_key=self.api_key
+            )
             knowledge_graph = await self.kg_builder.build(question, web_news, kg_llm)
             kg_summary = KnowledgeGraphBuilder.format_for_agents(knowledge_graph)
             kg_judge_summary = KnowledgeGraphBuilder.format_for_judge(knowledge_graph)
@@ -228,7 +239,9 @@ class EnhancedDebateCoordinator:
 
         # ── STEP 6: Shadow Round (8B) ──────────────────────────────────
         print("⚡ Step 6: Running shadow round (fast pre-filter)...")
-        shadow_llm = get_async_llm_client(model=config.model_small, api_key=self.api_key)
+        shadow_llm = get_async_llm_client(
+            provider=self.provider, model=config.model_small, api_key=self.api_key
+        )
 
         # Use optimized prompts if enabled
         if self.enable_optimizations:
@@ -312,7 +325,9 @@ class EnhancedDebateCoordinator:
                 # Run Contrarian Agents Round
                 print("\n   🔮 Running Contrarian Agents Round...")
                 oracle_context = self.contrarian_engine.get_oracle_context(oracle_report)
-                contrarian_llm = get_async_llm_client(model=config.model_large, api_key=self.api_key)
+                contrarian_llm = get_async_llm_client(
+                    provider=self.provider, model=config.model_large, api_key=self.api_key
+                )
                 contrarian_results = await self._run_contrarian_round(
                     question, contrarian_llm, oracle_context,
                     contrarian_evidence, consensus_text, consensus_count,
@@ -333,7 +348,9 @@ class EnhancedDebateCoordinator:
             print(f"\n⚔  Split detected — {len(dissenters)} dissenters proceed to full debate")
 
             # ── STEP 8: Full Debate (70B) ────────────────────────────────
-            full_llm = get_async_llm_client(model=config.model_large, api_key=self.api_key)
+            full_llm = get_async_llm_client(
+                provider=self.provider, model=config.model_large, api_key=self.api_key
+            )
 
             # Select debate roster (only dissenters + context)
             debate_roles = self._select_debate_roster(shadow_results, dissenters)
@@ -399,7 +416,9 @@ class EnhancedDebateCoordinator:
             pipeline_log["optimizations_applied"].append("hallucination_detection")
 
         # ── STEP 10: Judge (Oracle Judge if Oracle Mode active) ──────────
-        judge_llm = get_async_llm_client(model=config.model_large, api_key=self.api_key)
+        judge_llm = get_async_llm_client(
+            provider=self.provider, model=config.model_large, api_key=self.api_key
+        )
 
         if oracle_report and contrarian_results:
             # 🔮 ORACLE JUDGE — dual verdict with upset probability

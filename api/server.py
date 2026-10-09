@@ -86,14 +86,16 @@ class VGWebHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
             return
 
-        # Extract API key from header (per-request, never stored)
-        api_key = self.headers.get("X-API-Key", "").strip()
-        if not api_key:
+        # Browser credentials are explicitly Groq-scoped.
+        submitted_groq_key = self.headers.get("X-API-Key", "").strip()
+        default_groq_key = config.groq_api_key or os.getenv("GROQ_API_KEY")
+        groq_key = submitted_groq_key or default_groq_key
+        if not groq_key:
             self._send_json(
                 HTTPStatus.UNAUTHORIZED,
                 {
-                    "error": "API key required.",
-                    "hint": "Send your Groq API key in the X-API-Key header.",
+                    "error": "Groq API key required.",
+                    "hint": "Provide X-API-Key or configure GROQ_API_KEY on the server.",
                 },
             )
             return
@@ -105,7 +107,6 @@ class VGWebHandler(BaseHTTPRequestHandler):
             return
 
         question = str(payload.get("question", "")).strip()
-        use_enhanced = bool(payload.get("enhanced", True))
 
         if not question:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Question is required."})
@@ -113,7 +114,12 @@ class VGWebHandler(BaseHTTPRequestHandler):
 
         try:
             result = asyncio.run(
-                analyze_async(question, use_enhanced=use_enhanced, api_key=api_key)
+                analyze_async(
+                    question,
+                    use_enhanced=True,
+                    api_key=groq_key,
+                    provider="groq",
+                )
             )
         except Exception as exc:  # pragma: no cover - runtime protection
             error_msg = str(exc)
@@ -137,7 +143,7 @@ class VGWebHandler(BaseHTTPRequestHandler):
             HTTPStatus.OK,
             {
                 "question": question,
-                "enhanced": use_enhanced,
+                "enhanced": True,
                 "result": result,
             },
         )

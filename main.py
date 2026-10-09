@@ -33,10 +33,19 @@ except ImportError:
     ENHANCED_MODE = False
 
 
-async def analyze_async(question: str, use_enhanced: bool = True, api_key: str = None) -> dict:
+async def analyze_async(
+    question: str,
+    use_enhanced: bool = True,
+    api_key: str = None,
+    provider: str | None = None,
+) -> dict:
     """Run the full VG analysis pipeline."""
     if use_enhanced and ENHANCED_MODE:
-        coordinator = DebateCoordinator(enable_optimizations=True, api_key=api_key)
+        coordinator = DebateCoordinator(
+            enable_optimizations=True,
+            api_key=api_key,
+            provider=provider,
+        )
     else:
         coordinator = DebateCoordinator()
     return await coordinator.run_full_pipeline(question)

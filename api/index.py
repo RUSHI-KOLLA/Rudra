@@ -56,12 +56,18 @@ class handler(BaseHTTPRequestHandler):
             self._json_response(404, {"error": "Not found"})
             return
 
-        # Extract API key
-        api_key = self.headers.get("X-API-Key", "").strip()
-        if not api_key:
+        # Bootstrap before resolving config and browser credentials.
+        _bootstrap()
+        from vg.config import config
+
+        # Browser credentials are explicitly Groq-scoped.
+        submitted_groq_key = self.headers.get("X-API-Key", "").strip()
+        default_groq_key = config.groq_api_key or os.getenv("GROQ_API_KEY")
+        groq_key = submitted_groq_key or default_groq_key
+        if not groq_key:
             self._json_response(401, {
-                "error": "API key required.",
-                "hint": "Send your Groq API key in the X-API-Key header.",
+                "error": "Groq API key required.",
+                "hint": "Provide X-API-Key or configure GROQ_API_KEY on the server.",
             })
             return
 
@@ -79,13 +85,17 @@ class handler(BaseHTTPRequestHandler):
             return
 
         # Lazy import — only runs on first request
-        _bootstrap()
         import asyncio
         from vg.main import analyze_async
 
         try:
             result = asyncio.run(
-                analyze_async(question, use_enhanced=True, api_key=api_key)
+                analyze_async(
+                    question,
+                    use_enhanced=True,
+                    api_key=groq_key,
+                    provider="groq",
+                )
             )
         except Exception as exc:
             error_msg = str(exc)
