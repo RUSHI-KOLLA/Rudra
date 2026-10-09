@@ -350,6 +350,105 @@
             font-style: italic;
         }
 
+        /* ─── Expandable agent rows (green-on-black terminal) ─── */
+        .agent-row {
+            border-bottom: 1px solid rgba(0, 255, 65, 0.12);
+            padding: 3px 0;
+        }
+
+        .agent-row:last-child {
+            border-bottom: none;
+        }
+
+        .agent-header {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            cursor: pointer;
+            user-select: none;
+            line-height: 1.5;
+        }
+
+        .agent-header:hover .agent-name {
+            text-shadow: 0 0 8px rgba(0, 255, 65, 0.8);
+        }
+
+        .toggle-arrow {
+            flex-shrink: 0;
+            width: 14px;
+            color: var(--matrix-green);
+            font-size: 10px;
+            opacity: 0.9;
+        }
+
+        .agent-header:hover .toggle-arrow {
+            opacity: 1;
+            text-shadow: 0 0 8px var(--matrix-green);
+        }
+
+        .agent-name {
+            color: var(--matrix-green);
+            font-weight: bold;
+        }
+
+        .agent-short {
+            color: rgba(0, 255, 65, 0.85);
+            overflow-wrap: break-word;
+            word-break: break-word;
+        }
+
+        .agent-full {
+            display: none;
+            margin: 4px 0 6px 20px;
+            padding: 6px 8px;
+            border-left: 2px solid rgba(0, 255, 65, 0.35);
+            background: rgba(0, 255, 65, 0.05);
+            color: var(--matrix-green);
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.6;
+        }
+
+        .agent-row.expanded .agent-full {
+            display: block;
+        }
+
+        .agent-full .agent-meta {
+            color: rgba(0, 255, 65, 0.6);
+        }
+
+        /* ─── Persistent question block (right verdict panel) ─── */
+        .question-block {
+            border: 1px solid rgba(201, 148, 58, 0.35);
+            border-left: 3px solid var(--ember-gold);
+            background: rgba(201, 148, 58, 0.06);
+            padding: 10px 12px;
+            margin-bottom: 18px;
+        }
+
+        .question-block strong {
+            color: var(--ember-gold);
+            font-weight: 600;
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.25em;
+            margin-bottom: 6px;
+        }
+
+        .question-block span {
+            color: var(--off-white);
+            font-family: var(--font-body);
+            font-size: 15px;
+            line-height: 1.5;
+            display: block;
+            overflow-wrap: break-word;
+            word-break: break-word;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
         .cursor-blink {
             display: inline-block;
             width: 8px;
@@ -919,6 +1018,10 @@
 
         <aside class="app-side" id="results-panel">
             <div class="side-title">VERDICT CONSTRUCT</div>
+            <div class="side-data question-block" id="question-block" style="display: none;">
+                <strong>QUESTION</strong>
+                <span id="res-question">...</span>
+            </div>
             <div class="side-verdict" id="res-verdict">Awaiting Data...</div>
 
             <div class="side-data">
@@ -1239,6 +1342,7 @@
         const cmdForm = document.getElementById('cmd-form');
         const cmdInput = document.getElementById('cmd-input');
         const resVerdict = document.getElementById('res-verdict'), resPattern = document.getElementById('res-pattern'), resPrecedent = document.getElementById('res-precedent'), resReasoning = document.getElementById('res-reasoning');
+        const resQuestion = document.getElementById('res-question'), questionBlock = document.getElementById('question-block');
         const interceptPanel = document.getElementById('live-intercept');
         const interceptContent = document.getElementById('intercept-content');
 
@@ -1257,10 +1361,79 @@
             }
         }
 
+        // Persistent question display — stays visible after Execute
+        function setQuestion(text) {
+            if (!resQuestion || !questionBlock) return;
+            resQuestion.textContent = text;
+            questionBlock.style.display = 'block';
+        }
+
+        // Expandable agent row: collapsed = name + short stance, click ▶/▼ for full answer
+        function addAgentInterceptRow(agent) {
+            interceptPanel.classList.add('show');
+            const name = agent.agent_name || 'Unknown';
+            const stance = agent.stance || 'No stance.';
+            const short = stance.length > 80 ? stance.slice(0, 80) + '…' : stance;
+
+            const row = document.createElement('div');
+            row.className = 'intercept-line agent-row';
+
+            const header = document.createElement('div');
+            header.className = 'agent-header';
+            header.setAttribute('role', 'button');
+            header.setAttribute('tabindex', '0');
+            header.title = 'Click to expand full answer';
+
+            const arrow = document.createElement('span');
+            arrow.className = 'toggle-arrow';
+            arrow.textContent = '▶';
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'agent-name';
+            nameEl.textContent = `[${name}] `;
+
+            const shortEl = document.createElement('span');
+            shortEl.className = 'agent-short';
+            shortEl.textContent = short;
+
+            header.appendChild(arrow);
+            header.appendChild(nameEl);
+            header.appendChild(shortEl);
+
+            const full = document.createElement('div');
+            full.className = 'agent-full';
+            const detailLines = [
+                `STANCE: ${stance}`,
+                `CONFIDENCE: ${agent.confidence ?? 'N/A'}%`,
+                `PATTERN: ${agent.key_pattern || 'N/A'}`,
+                `PRECEDENT: ${agent.historical_precedent || 'N/A'}`,
+                `PREDICTION: ${agent.prediction || 'N/A'}`,
+                `PRINCIPLE: ${agent.principle_applied || 'N/A'}`
+            ];
+            full.textContent = detailLines.join('\n');
+
+            const toggle = () => {
+                const expanded = row.classList.toggle('expanded');
+                arrow.textContent = expanded ? '▼' : '▶';
+                interceptContent.scrollTop = interceptContent.scrollHeight;
+            };
+            header.addEventListener('click', toggle);
+            header.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(); }
+            });
+
+            row.appendChild(header);
+            row.appendChild(full);
+            interceptContent.appendChild(row);
+            playTypingSound();
+            interceptContent.scrollTop = interceptContent.scrollHeight;
+        }
+
         cmdForm.addEventListener('submit', async (e) => {
             e.preventDefault(); const query = cmdInput.value.trim(); if (!query) return;
             cmdInput.value = '';
             initAudio();
+            setQuestion(query);
             resultsPanel.classList.remove('show');
             interceptPanel.classList.remove('show');
             interceptContent.innerHTML = '<div class="intercept-line system">INITIALIZING VG ANALYSIS PROTOCOL...</div>';
@@ -1291,14 +1464,12 @@
                     }
                 }
 
-                // Stream agent thoughts
+                // Stream agent thoughts — expandable rows (collapsed by default)
                 if (data.result && data.result.agent_results) {
                     const agents = data.result.agent_results;
-                    for (const agent of agents.slice(0, 5)) {
-                        const source = agent.agent_name?.toLowerCase().includes('chanakya') ? 'chanakya' :
-                            agent.agent_name?.toLowerCase().includes('skeptic') ? 'skeptic' : 'system';
-                        const thought = `[${agent.agent_name}] ${(agent.stance || '').slice(0, 80)}`;
-                        await streamLiveIntercept(thought, source);
+                    for (const agent of agents) {
+                        addAgentInterceptRow(agent);
+                        await new Promise(r => setTimeout(r, 120));
                     }
                     if (agents.length > 0) playConnectSound();
                 }
