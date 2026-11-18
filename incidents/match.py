@@ -930,49 +930,72 @@ async def record_outcome(
     outcome_text: str,
     api_key: Optional[str] = None,
     extractor: Optional[Callable[..., Awaitable[str]]] = None,
+    user_confirmed: bool = False,
+    proposed_outcome: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Map free text onto an existing card's outcome (one small LLM call).
 
+    Two-phase contract (per reviewer):
+    - Phase 1: user_confirmed=False, proposed_outcome=None.
+      Returns {"status": "reviewing", "proposed_outcome": {...}} with model-mapped fields.
+    - Phase 2: user_confirmed=True, proposed_outcome={...} (user-confirmed fields).
+      Writes card JSON only (NO Chroma upsert — no re-embed on outcome).
+      Returns {"status": "recorded", "incident_id": incident_id}.
+
     Raises LookupError (unknown card), ExtractionIncomplete (mapping failed —
-    API layer returns 422), IncidentStoreError (index write failed — 503).
+    API layer returns 422), IncidentStoreError (JSON write failed — 503).
     """
     path = DATA_DIR / f"{incident_id}.json"
     if not path.exists():
         raise LookupError(incident_id)
 
-    data = await _extract_json(
-        _OUTCOME_SYSTEM,
-        f"Recorded outcome text:\n{outcome_text}",
-        outcome_text,
-        api_key=api_key,
-        extractor=extractor,
-        missing_label="outcome",
-    )
+    # Phase 1: extract proposed outcome, return for user review
+    if not user_confirmed:
+        data = await _extract_json(
+            _OUTCOME_SYSTEM,
+            f"Recorded outcome text:\n{outcome_text}",
+            outcome_text,
+            api_key=api_key,
+            extractor=extractor,
+            missing_label="outcome",
+        )
+
+        proposed = {
+            "summary": str(data.get("summary") or outcome_text).strip(),
+            "resolution": _outcome_enums(data, "resolution", Resolution),
+            "succession": str(data.get("succession") or "").strip(),
+            "constraint_types": [],
+        }
+
+        return {
+            "status": "reviewing",
+            "proposed_outcome": proposed,
+            "incident_id": incident_id,
+        }
+
+    # Phase 2: user confirmed the proposed outcome
+    if proposed_outcome is None:
+        raise ValueError("proposed_outcome required when user_confirmed=True")
 
     card = load_card(path)
     card.outcome = Outcome(
-        summary=str(data.get("summary") or outcome_text).strip(),
+        summary=str(proposed_outcome.get("summary") or "").strip(),
         constraint_types=[],
         recorded_at=_dt.date.today().isoformat(),
         sources=[],
     )
-    resolutions = _outcome_enums(data, "resolution", Resolution)
+    resolutions = proposed_outcome.get("resolution", [])
     if resolutions:
         card.resolution = resolutions
-    succession = str(data.get("succession") or "").strip()
+    succession = str(proposed_outcome.get("succession") or "").strip()
     if succession:
         try:
             card.succession = Succession(succession)
         except ValueError:
             pass
 
-    save_card_json(card)          # atomic write + bump_corpus_version()
-    try:
-        upsert_card_to_chroma(card)
-    except IncidentStoreError:
-        raise
-    except Exception as exc:      # pragma: no cover - chroma failure path
-        raise IncidentStoreError(f"incident index unavailable: {exc}") from exc
+    save_card_json(card)  # atomic write + bump_corpus_version()
+    # NO Chroma upsert on outcome — no re-embed. summary_embed doesn't include outcome fields.
 
     return {"status": "recorded", "incident_id": incident_id}
 
