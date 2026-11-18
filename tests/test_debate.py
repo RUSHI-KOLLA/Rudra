@@ -40,7 +40,7 @@ class TestConvergenceCheck:
         assert len(dissenters) == 2
 
     def test_no_convergence_with_split(self):
-        """Split agents should not converge."""
+        """Split agents should not converge (7 against, 3 for = 70% < 80%)."""
         results = [
             {"agent_name": "Chanakya", "stance": "Yes, will succeed", "confidence": 85, "error": False},
             {"agent_name": "Bose", "stance": "Yes, likely", "confidence": 80, "error": False},
@@ -49,7 +49,7 @@ class TestConvergenceCheck:
             {"agent_name": "Kao", "stance": "Against the outcome", "confidence": 65, "error": False},
             {"agent_name": "Investigator", "stance": "Reject the premise", "confidence": 60, "error": False},
             {"agent_name": "Skeptic", "stance": "False assumption", "confidence": 55, "error": False},
-            {"agent_name": "Pattern", "stance": "Harm is likely", "confidence": 50, "error": False},
+            {"agent_name": "Pattern", "stance": "Benefits are likely", "confidence": 50, "error": False},
             {"agent_name": "Network", "stance": "Fail expected", "confidence": 45, "error": False},
             {"agent_name": "Devil", "stance": "Risky proposition", "confidence": 40, "error": False},
         ]
@@ -89,7 +89,6 @@ class TestStanceNormalization:
             result = self.coordinator._normalize_stance_bucket(stance)
             assert result == expected, f"Expected {expected} for '{stance}', got {result}"
 
-    @pytest.mark.skip(reason="Pre-existing stance detection logic bug: misclassifies 'I disagree' as 'for' and 'Cannot assess' as 'against'")
     def test_against_stance_detection(self):
         """Test detection of 'against' stances."""
         test_cases = [
@@ -104,7 +103,6 @@ class TestStanceNormalization:
             result = self.coordinator._normalize_stance_bucket(stance)
             assert result == expected, f"Expected {expected} for '{stance}', got {result}"
 
-    @pytest.mark.skip(reason="Pre-existing stance detection logic bug: misclassifies 'Cannot assess at this time' as 'against' instead of 'neutral'")
     def test_neutral_stance_detection(self):
         """Test detection of neutral stances."""
         test_cases = [

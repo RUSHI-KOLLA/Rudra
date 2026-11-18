@@ -173,44 +173,87 @@ class DebateCoordinator:
 
     @staticmethod
     def _normalize_stance_bucket(stance: str) -> str:
-        """Map verbose stances into for/against/neutral buckets for convergence checks."""
+        """Map verbose stances into for/against/neutral buckets for convergence checks.
+        
+        Preserves original FOR-first behavior for backward compatibility.
+        Fixes:
+        - "disagree" -> "against" (not "for" via "agree" substring)
+        - "cannot assess" -> "neutral" (not "against")
+        - "harm is likely" -> "against" (not "for" via "likely" substring)
+        """
+        import re
         normalized = (stance or "").lower().strip()
-        if any(
-            token in normalized
-            for token in (
-                "yes",
-                "support",
-                "agree",
-                "true",
-                "success",
-                "pass",
-                "benefit",
-                "likely",
-                "probable",
-                "possible",
-                "advances",
-                "improves",
+        if not normalized:
+            return "neutral"
+        
+        # Explicit neutral/abstain phrases first (check in original text before tokenization)
+        neutral_phrases = (
+            "abstain",
+            "cannot assess",
+            "insufficient",
+            "unclear",
+            "unknown",
+            "uncertain",
+            "need more",
+            "cannot determine",
+        )
+        for phrase in neutral_phrases:
+            if phrase in normalized:
+                return "neutral"
+        
+        # Split into word-like tokens
+        tokens = re.findall(r'\w+', normalized)
+        
+        def has_token(token_list):
+            return any(
+                any(tok.startswith(t) for tok in tokens)
+                for t in token_list
             )
-        ):
-            return "for"
-        if any(
-            token in normalized
-            for token in (
-                "no",
-                "reject",
-                "disagree",
-                "false",
-                "fail",
-                "against",
-                "harm",
-                "unlikely",
-                "improbable",
-                "risky",
-                "danger",
-                "worsens",
-            )
-        ):
+        
+        # Specific AGAINST cues that are substrings of FOR tokens - check BEFORE FOR
+        # "disagree" contains "agree" - check before FOR's "agree"
+        if has_token(("disagree",)):
             return "against"
+        # "harm is likely" -> "harm" indicates against, not for
+        if has_token(("harm",)):
+            return "against"
+        
+        # FOR tokens (original FOR-first behavior preserved)
+        if has_token((
+            "yes",
+            "support",
+            "agree",
+            "true",
+            "success",
+            "pass",
+            "benefit",
+            "likely",
+            "probable",
+            "possible",
+            "advances",
+            "improves",
+            "favor",
+            "favour",
+        )):
+            return "for"
+        
+        # AGAINST tokens (remaining)
+        if has_token((
+            "no",
+            "reject",
+            "false",
+            "fail",
+            "against",
+            "unlikely",
+            "improbable",
+            "risky",
+            "danger",
+            "worsens",
+            "oppose",
+            "opposition",
+        )):
+            return "against"
+        
         return "neutral"
 
     def _check_convergence(

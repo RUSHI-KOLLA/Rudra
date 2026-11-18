@@ -34,11 +34,20 @@
       "supports": [
         "c2"
       ],
-      "tag": "reported_unconfirmed",
-      "text": "Easterbrook was dismissed without cause on November 3, 2019 for violating company policy"
+      "tag": "documented",
+      "text": "Easterbrook separated from his officer and director positions effective 1 November 2019; a separation agreement provided severance"
     },
     {
       "id": "c4",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [],
+      "tag": "documented",
+      "text": "In August 2020 the Company sued Easterbrook alleging he misrepresented the number of relationships during its investigation"
+    },
+    {
+      "id": "c5",
       "source_ids": [
         "s1"
       ],
@@ -84,7 +93,7 @@
         "type": "paraphrase"
       }
     ],
-    "summary": "Easterbrook was separated from his officer and director positions effective November 1, 2019, with a separation agreement and severance. The 8-K does not state cause. In 2020, McDonald's sued Easterbrook to recover severance and equity, alleging he lied about the scope of his relationships. In 2021, McDonald's reported additional evidence of relationships with three more employees. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum."
+    "summary": "Easterbrook separated from his officer and director positions effective 1 November 2019, with a separation agreement and severance. The 8-K does not state cause. In August 2020, McDonald's sued Easterbrook alleging he misrepresented the number of relationships during its investigation. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum."
   },
   "recorded_at": "2019-11-04",
   "resolution": [
@@ -129,12 +138,19 @@
       "claim_ids": [
         "c3"
       ],
-      "date": "2019-11-03",
-      "event": "Board concludes Easterbrook violated company policy and dismisses him without cause"
+      "date": "2019-11-01",
+      "event": "Easterbrook separated from officer and director positions effective 1 November; separation agreement with severance"
     },
     {
       "claim_ids": [
         "c4"
+      ],
+      "date": "2020-08-07",
+      "event": "McDonald's sues Easterbrook alleging he misrepresented the number of relationships during investigation"
+    },
+    {
+      "claim_ids": [
+        "c5"
       ],
       "date": "2019-11-04",
       "event": "Chris Kempczinski named as new CEO"
