@@ -1,79 +1,163 @@
 {
-  "incident_id": "vijay_mallya_2016",
-  "title": "Vijay Mallya flees India after Kingfisher collapse",
-  "status": "curated",
-  "date": "2016-03-02",
-  "recorded_at": "2016-03-03",
-  "actors": ["Vijay Mallya"],
-  "actor_roles": ["ceo"],
-  "sector": "aviation",
-  "geography": "India / United Kingdom",
-  "trigger": "Vijay Mallya, chairman of Kingfisher Airlines, fled India in March 2016 after the airline collapsed under mounting debt and allegations of loan default and fund diversion.",
-  "trigger_type": "fraud",
-  "constraint_types": ["legal", "regulatory"],
-  "legal_outcome": "pending",
-  "escalation_vector": ["filing", "inquiry"],
-  "tempo": "years",
-  "exit_authority": "self",
-  "succession": "external",
-  "timeline": [
-    {"date": "2012-10-01", "event": "Kingfisher Airlines ceases operations after accumulating massive debt", "claim_ids": ["c1"]},
-    {"date": "2016-02-29", "event": "Indian banks file case against Mallya for defaulting on Rs 90 billion in loans", "claim_ids": ["c2"]},
-    {"date": "2016-03-02", "event": "Mallya leaves India for London as banks seek to recover dues", "claim_ids": ["c3"]},
-    {"date": "2017-04-18", "event": "Indian government declares Mallya a fugitive economic offender", "claim_ids": ["c4"]},
-    {"date": "2019-12-10", "event": "UK court approves Mallya's extradition to India", "claim_ids": ["c5"]}
+  "actor_roles": [
+    "ceo"
   ],
-  "resolution": ["dismissal", "bankruptcy"],
-  "outcome": {
-    "summary": "Vijay Mallya fled India in March 2016 after Kingfisher Airlines collapsed with approximately Rs 90 billion in unpaid loans. He was declared a fugitive economic offender in 2017. UK courts approved his extradition to India in 2019, but he remains in London fighting extradition. Indian banks continue to pursue recovery through civil and criminal proceedings.",
-    "actors": ["Vijay Mallya"],
-    "constraint_types": ["legal", "regulatory"],
-    "recorded_at": "2019-12-10",
-    "sources": [
-      {"id": "s1", "type": "court_record", "ref": "data/incidents/vijay_mallya_2016/sources/pnb_2016_bank_case.md", "date": "2016-02-29"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/vijay_mallya_2016/sources/uk_2019_extradition.md", "date": "2019-12-10"}
-    ]
-  },
+  "actors": [
+    "Vijay Mallya"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Kingfisher Airlines ceased operations on October 1, 2012 after accumulating massive debt",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "Kingfisher Airlines ceased operations on October 1, 2012 after accumulating massive debt"
     },
     {
       "id": "c2",
-      "text": "Indian banks filed a case against Vijay Mallya on February 29, 2016 for defaulting on Rs 90 billion in loans",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "Indian banks filed a case against Vijay Mallya on February 29, 2016 for defaulting on Rs 90 billion in loans"
     },
     {
       "id": "c3",
-      "text": "Vijay Mallya left India for London on March 2, 2016 as banks sought to recover dues",
-      "tag": "reported_unconfirmed",
       "source_ids": [],
-      "supports": ["c2"]
+      "supports": [
+        "c2"
+      ],
+      "tag": "reported_unconfirmed",
+      "text": "Vijay Mallya left India for London on March 2, 2016 as banks sought to recover dues"
     },
     {
       "id": "c4",
-      "text": "The Indian government declared Mallya a fugitive economic offender on April 18, 2017",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c3"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c3"]
+      "text": "The Indian government declared Mallya a fugitive economic offender on April 18, 2017"
     },
     {
       "id": "c5",
-      "text": "A UK court approved Mallya's extradition to India on December 10, 2019",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c4"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c4"]
+      "text": "A UK court approved Mallya's extradition to India on December 10, 2019"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "court_record", "ref": "data/incidents/vijay_mallya_2016/sources/pnb_2016_bank_case.md", "date": "2016-02-29"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/vijay_mallya_2016/sources/uk_2019_extradition.md", "date": "2019-12-10"}
+  "constraint_types": [
+    "legal",
+    "regulatory"
   ],
-  "summary_embed": ""
+  "date": "2016-03-02",
+  "escalation_vector": [
+    "filing",
+    "inquiry"
+  ],
+  "exit_authority": "self",
+  "geography": "India / United Kingdom",
+  "incident_id": "vijay_mallya_2016",
+  "legal_outcome": "pending",
+  "outcome": {
+    "actors": [
+      "Vijay Mallya"
+    ],
+    "constraint_types": [
+      "legal",
+      "regulatory"
+    ],
+    "recorded_at": "2019-12-10",
+    "sources": [
+      {
+        "date": "2016-02-29",
+        "id": "s1",
+        "ref": "data/incidents/vijay_mallya_2016/sources/pnb_2016_bank_case.md",
+        "type": "court_record"
+      },
+      {
+        "date": "2019-12-10",
+        "id": "s2",
+        "ref": "data/incidents/vijay_mallya_2016/sources/uk_2019_extradition.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "Vijay Mallya fled India in March 2016 after Kingfisher Airlines collapsed with approximately Rs 90 billion in unpaid loans. He was declared a fugitive economic offender in 2017. UK courts approved his extradition to India in 2019, but he remains in London fighting extradition. Indian banks continue to pursue recovery through civil and criminal proceedings."
+  },
+  "recorded_at": "2016-03-03",
+  "resolution": [
+    "dismissal",
+    "bankruptcy"
+  ],
+  "sector": "aviation",
+  "sources": [
+    {
+      "date": "2016-02-29",
+      "id": "s1",
+      "ref": "data/incidents/vijay_mallya_2016/sources/pnb_2016_bank_case.md",
+      "type": "court_record"
+    },
+    {
+      "date": "2019-12-10",
+      "id": "s2",
+      "ref": "data/incidents/vijay_mallya_2016/sources/uk_2019_extradition.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "years",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2012-10-01",
+      "event": "Kingfisher Airlines ceases operations after accumulating massive debt"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2016-02-29",
+      "event": "Indian banks file case against Mallya for defaulting on Rs 90 billion in loans"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2016-03-02",
+      "event": "Mallya leaves India for London as banks seek to recover dues"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2017-04-18",
+      "event": "Indian government declares Mallya a fugitive economic offender"
+    },
+    {
+      "claim_ids": [
+        "c5"
+      ],
+      "date": "2019-12-10",
+      "event": "UK court approves Mallya's extradition to India"
+    }
+  ],
+  "title": "Vijay Mallya flees India after Kingfisher collapse",
+  "trigger": "Vijay Mallya, chairman of Kingfisher Airlines, fled India in March 2016 after the airline collapsed under mounting debt and allegations of loan default and fund diversion.",
+  "trigger_type": "fraud"
 }

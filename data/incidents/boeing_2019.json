@@ -1,71 +1,149 @@
 {
-  "incident_id": "boeing_2019",
-  "title": "Dennis Muilenburg resigns as Boeing CEO",
-  "status": "curated",
-  "date": "2019-12-23",
-  "recorded_at": "2019-12-24",
-  "actors": ["Dennis Muilenburg"],
-  "actor_roles": ["ceo"],
-  "sector": "aerospace",
-  "geography": "United States",
-  "trigger": "The Boeing 737 MAX was grounded worldwide after two fatal crashes (Lion Air Flight 610 in October 2018 and Ethiopian Airlines Flight 302 in March 2019) killed 346 people. CEO Dennis Muilenburg resigned after facing intense scrutiny over the company's handling of the MCAS flight control system.",
-  "trigger_type": "operational_failure",
-  "constraint_types": ["legal", "regulatory", "reputational"],
-  "legal_outcome": "none",
-  "escalation_vector": ["leak", "inquiry"],
-  "tempo": "months",
-  "exit_authority": "board",
-  "succession": "external",
-  "timeline": [
-    {"date": "2018-10-29", "event": "Lion Air Flight 610 crashes into the Java Sea, killing all 189 people on board", "claim_ids": ["c1"]},
-    {"date": "2019-03-11", "event": "Ethiopian Airlines Flight 302 crashes, killing all 157 people on board", "claim_ids": ["c2"]},
-    {"date": "2019-03-13", "event": "The 737 MAX is grounded worldwide by aviation regulators", "claim_ids": ["c3"]},
-    {"date": "2019-12-23", "event": "Dennis Muilenburg resigns as CEO of Boeing; David Calhoun named as successor", "claim_ids": ["c4"]}
+  "actor_roles": [
+    "ceo"
   ],
-  "resolution": ["resignation"],
-  "outcome": {
-    "summary": "Dennis Muilenburg resigned as CEO of Boeing in December 2019 after the 737 MAX was grounded worldwide following two fatal crashes. David Calhoun succeeded him as CEO. Boeing reached a $2.5 billion settlement with the US Department of Justice in 2021 over the 737 MAX certification process. Muilenburg was not personally charged but forfeited tens of millions in compensation.",
-    "actors": ["Dennis Muilenburg", "David Calhoun"],
-    "constraint_types": ["legal", "regulatory", "reputational"],
-    "recorded_at": "2021-09-01",
-    "sources": [
-      {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/boeing_2019/sources/doj_2021_settlement.md", "date": "2021-09-01"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/boeing_2019/sources/boeing_2019_8k.md", "date": "2019-12-23"}
-    ]
-  },
+  "actors": [
+    "Dennis Muilenburg"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Lion Air Flight 610 crashed into the Java Sea on October 29, 2018, killing all 189 people on board",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "Lion Air Flight 610 crashed into the Java Sea on October 29, 2018, killing all 189 people on board"
     },
     {
       "id": "c2",
-      "text": "Ethiopian Airlines Flight 302 crashed on March 11, 2019, killing all 157 people on board",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "Ethiopian Airlines Flight 302 crashed on March 11, 2019, killing all 157 people on board"
     },
     {
       "id": "c3",
-      "text": "The 737 MAX was grounded worldwide by aviation regulators on March 13, 2019",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c2"]
+      "text": "The 737 MAX was grounded worldwide by aviation regulators on March 13, 2019"
     },
     {
       "id": "c4",
-      "text": "Dennis Muilenburg resigned as CEO of Boeing on December 23, 2019; David Calhoun was named as successor",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c3"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c3"]
+      "text": "Dennis Muilenburg resigned as CEO of Boeing on December 23, 2019; David Calhoun was named as successor"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/boeing_2019/sources/doj_2021_settlement.md", "date": "2021-09-01"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/boeing_2019/sources/boeing_2019_8k.md", "date": "2019-12-23"}
+  "constraint_types": [
+    "legal",
+    "regulatory",
+    "reputational"
   ],
-  "summary_embed": ""
+  "date": "2019-12-23",
+  "escalation_vector": [
+    "leak",
+    "inquiry"
+  ],
+  "exit_authority": "board",
+  "geography": "United States",
+  "incident_id": "boeing_2019",
+  "legal_outcome": "none",
+  "outcome": {
+    "actors": [
+      "Dennis Muilenburg",
+      "David Calhoun"
+    ],
+    "constraint_types": [
+      "legal",
+      "regulatory",
+      "reputational"
+    ],
+    "recorded_at": "2021-09-01",
+    "sources": [
+      {
+        "date": "2021-09-01",
+        "id": "s1",
+        "ref": "data/incidents/boeing_2019/sources/doj_2021_settlement.md",
+        "type": "regulatory_report"
+      },
+      {
+        "date": "2019-12-23",
+        "id": "s2",
+        "ref": "data/incidents/boeing_2019/sources/boeing_2019_8k.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "Dennis Muilenburg resigned as CEO of Boeing in December 2019 after the 737 MAX was grounded worldwide following two fatal crashes. David Calhoun succeeded him as CEO. Boeing reached a $2.5 billion settlement with the US Department of Justice in 2021 over the 737 MAX certification process. Muilenburg was not personally charged but forfeited tens of millions in compensation."
+  },
+  "recorded_at": "2019-12-24",
+  "resolution": [
+    "resignation"
+  ],
+  "sector": "aerospace",
+  "sources": [
+    {
+      "date": "2021-09-01",
+      "id": "s1",
+      "ref": "data/incidents/boeing_2019/sources/doj_2021_settlement.md",
+      "type": "regulatory_report"
+    },
+    {
+      "date": "2019-12-23",
+      "id": "s2",
+      "ref": "data/incidents/boeing_2019/sources/boeing_2019_8k.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "months",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2018-10-29",
+      "event": "Lion Air Flight 610 crashes into the Java Sea, killing all 189 people on board"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2019-03-11",
+      "event": "Ethiopian Airlines Flight 302 crashes, killing all 157 people on board"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2019-03-13",
+      "event": "The 737 MAX is grounded worldwide by aviation regulators"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2019-12-23",
+      "event": "Dennis Muilenburg resigns as CEO of Boeing; David Calhoun named as successor"
+    }
+  ],
+  "title": "Dennis Muilenburg resigns as Boeing CEO",
+  "trigger": "The Boeing 737 MAX was grounded worldwide after two fatal crashes (Lion Air Flight 610 in October 2018 and Ethiopian Airlines Flight 302 in March 2019) killed 346 people. CEO Dennis Muilenburg resigned after facing intense scrutiny over the company's handling of the MCAS flight control system.",
+  "trigger_type": "operational_failure"
 }

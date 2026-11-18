@@ -1,71 +1,146 @@
 {
-  "incident_id": "easterbrook_mcdonalds_2019",
-  "title": "Steve Easterbrook dismissed as McDonald's CEO",
-  "status": "curated",
-  "date": "2019-11-03",
-  "recorded_at": "2019-11-04",
-  "actors": ["Steve Easterbrook", "McDonald's Board of Directors"],
-  "actor_roles": ["ceo", "board"],
-  "sector": "consumer_goods",
-  "geography": "United States",
-  "trigger": "McDonald's board dismissed CEO Steve Easterbrook after determining he had violated company policy by engaging in consensual relationships with company employees.",
-  "trigger_type": "personal_conduct",
-  "constraint_types": ["reputational"],
-  "legal_outcome": "settled",
-  "escalation_vector": ["filing"],
-  "tempo": "days",
-  "exit_authority": "board",
-  "succession": "external",
-  "timeline": [
-    {"date": "2019-10-27", "event": "McDonald's board learns of Easterbrook's relationships with employees through an anonymous tip", "claim_ids": ["c1"]},
-    {"date": "2019-10-29", "event": "Board begins investigation with help of outside counsel", "claim_ids": ["c1", "c2"]},
-    {"date": "2019-11-03", "event": "Board concludes Easterbrook violated company policy and dismisses him without cause", "claim_ids": ["c3"]},
-    {"date": "2019-11-04", "event": "Chris Kempczinski named as new CEO", "claim_ids": ["c4"]}
+  "actor_roles": [
+    "ceo",
+    "board"
   ],
-  "resolution": ["dismissal"],
-  "outcome": {
-    "summary": "Easterbrook was dismissed without cause in November 2019. In 2020, McDonald's sued Easterbrook to recover severance and equity, alleging he lied about the scope of his relationships. In 2021, McDonald's reported additional evidence of relationships with three more employees. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum.",
-    "actors": ["Steve Easterbrook", "Chris Kempczinski", "McDonald's Board of Directors"],
-    "constraint_types": ["reputational"],
-    "recorded_at": "2023-02-15",
-    "sources": [
-      {"id": "s1", "type": "sec_filing", "ref": "data/incidents/2_easterbrook_mcdonalds_2019/sources/mcdonalds_2019_8k.md", "date": "2019-11-04"},
-      {"id": "s2", "type": "court_filing", "ref": "data/incidents/2_easterbrook_mcdonalds_2019/sources/mcdonalds_2020_complaint.md", "date": "2020-08-07"}
-    ]
-  },
+  "actors": [
+    "Steve Easterbrook",
+    "McDonald's Board of Directors"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "An anonymous tip alerted McDonald's board to Easterbrook's relationships with employees",
-      "tag": "reported_unconfirmed",
       "source_ids": [],
-      "supports": []
+      "supports": [],
+      "tag": "reported_unconfirmed",
+      "text": "An anonymous tip alerted McDonald's board to Easterbrook's relationships with employees"
     },
     {
       "id": "c2",
-      "text": "The board conducted an investigation with outside counsel before making a decision",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "The board conducted an investigation with outside counsel before making a decision"
     },
     {
       "id": "c3",
-      "text": "Easterbrook was dismissed without cause on November 3, 2019 for violating company policy",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c2"]
+      "text": "Easterbrook was dismissed without cause on November 3, 2019 for violating company policy"
     },
     {
       "id": "c4",
-      "text": "Chris Kempczinski was appointed as Easterbrook's successor",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c3"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c3"]
+      "text": "Chris Kempczinski was appointed as Easterbrook's successor"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "sec_filing", "ref": "data/incidents/2_easterbrook_mcdonalds_2019/sources/mcdonalds_2019_8k.md", "date": "2019-11-04"},
-    {"id": "s2", "type": "court_filing", "ref": "data/incidents/2_easterbrook_mcdonalds_2019/sources/mcdonalds_2020_complaint.md", "date": "2020-08-07"}
+  "constraint_types": [
+    "reputational"
   ],
-  "summary_embed": ""
+  "date": "2019-11-03",
+  "escalation_vector": [
+    "filing"
+  ],
+  "exit_authority": "board",
+  "geography": "United States",
+  "incident_id": "easterbrook_mcdonalds_2019",
+  "legal_outcome": "settled",
+  "outcome": {
+    "actors": [
+      "Steve Easterbrook",
+      "Chris Kempczinski",
+      "McDonald's Board of Directors"
+    ],
+    "constraint_types": [
+      "reputational"
+    ],
+    "recorded_at": "2023-02-15",
+    "sources": [
+      {
+        "date": "2019-11-04",
+        "id": "s1",
+        "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2019_8k.md",
+        "type": "sec_filing"
+      },
+      {
+        "date": "2020-08-07",
+        "id": "s2",
+        "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2020_complaint.md",
+        "type": "court_filing"
+      }
+    ],
+    "summary": "Easterbrook was dismissed without cause in November 2019. In 2020, McDonald's sued Easterbrook to recover severance and equity, alleging he lied about the scope of his relationships. In 2021, McDonald's reported additional evidence of relationships with three more employees. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum."
+  },
+  "recorded_at": "2019-11-04",
+  "resolution": [
+    "dismissal"
+  ],
+  "sector": "consumer_goods",
+  "sources": [
+    {
+      "date": "2019-11-04",
+      "id": "s1",
+      "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2019_8k.md",
+      "type": "paraphrase"
+    },
+    {
+      "date": "2020-08-07",
+      "id": "s2",
+      "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2020_complaint.md",
+      "type": "court_filing"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "days",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2019-10-27",
+      "event": "McDonald's board learns of Easterbrook's relationships with employees through an anonymous tip"
+    },
+    {
+      "claim_ids": [
+        "c1",
+        "c2"
+      ],
+      "date": "2019-10-29",
+      "event": "Board begins investigation with help of outside counsel"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2019-11-03",
+      "event": "Board concludes Easterbrook violated company policy and dismisses him without cause"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2019-11-04",
+      "event": "Chris Kempczinski named as new CEO"
+    }
+  ],
+  "title": "Steve Easterbrook dismissed as McDonald's CEO",
+  "trigger": "McDonald's board dismissed CEO Steve Easterbrook after determining he had violated company policy by engaging in consensual relationships with company employees.",
+  "trigger_type": "personal_conduct"
 }

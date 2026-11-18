@@ -1,71 +1,150 @@
 {
-  "incident_id": "wells_fargo_2016",
-  "title": "John Stumpf resigns as Wells Fargo CEO",
-  "status": "curated",
-  "date": "2016-10-12",
-  "recorded_at": "2016-10-13",
-  "actors": ["John Stumpf"],
-  "actor_roles": ["ceo"],
-  "sector": "finance",
-  "geography": "United States",
-  "trigger": "Wells Fargo employees created millions of unauthorized bank and credit card accounts without customers' consent to meet sales targets. CEO John Stumpf resigned after the scandal became public and he faced intense scrutiny from Congress and regulators.",
-  "trigger_type": "official_misconduct",
-  "constraint_types": ["legal", "regulatory", "reputational"],
-  "legal_outcome": "settled",
-  "escalation_vector": ["leak", "inquiry"],
-  "tempo": "weeks",
-  "exit_authority": "board",
-  "succession": "external",
-  "timeline": [
-    {"date": "2016-09-08", "event": "Wells Fargo announces $185 million settlement with regulators over unauthorized accounts", "claim_ids": ["c1"]},
-    {"date": "2016-09-20", "event": "John Stumpf testifies before the Senate Banking Committee about the fake accounts scandal", "claim_ids": ["c2"]},
-    {"date": "2016-10-11", "event": "Stumpf announces his resignation as CEO effective immediately", "claim_ids": ["c3"]},
-    {"date": "2016-10-12", "event": "Tim Sloan named as new CEO of Wells Fargo", "claim_ids": ["c4"]}
+  "actor_roles": [
+    "ceo"
   ],
-  "resolution": ["resignation", "settlement"],
-  "outcome": {
-    "summary": "John Stumpf resigned as CEO of Wells Fargo in October 2016 after the bank admitted employees had opened millions of unauthorized accounts. The bank paid $185 million in fines and faced ongoing regulatory scrutiny. Stumpf also agreed to forfeit $41 million in compensation. Tim Sloan succeeded him as CEO.",
-    "actors": ["John Stumpf", "Tim Sloan"],
-    "constraint_types": ["legal", "regulatory", "reputational"],
-    "recorded_at": "2016-10-12",
-    "sources": [
-      {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_penalty.md", "date": "2016-09-08"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md", "date": "2016-10-11"}
-    ]
-  },
+  "actors": [
+    "John Stumpf"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Wells Fargo announced a $185 million settlement with regulators on September 8, 2016 over unauthorized accounts opened by employees",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "Wells Fargo announced a $185 million settlement with regulators on September 8, 2016 over unauthorized accounts opened by employees"
     },
     {
       "id": "c2",
-      "text": "John Stumpf testified before the Senate Banking Committee on September 20, 2016 about the fake accounts scandal",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c1"]
+      "text": "John Stumpf testified before the Senate Banking Committee on September 20, 2016 about the fake accounts scandal"
     },
     {
       "id": "c3",
-      "text": "John Stumpf announced his resignation as CEO on October 11, 2016, effective immediately",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c2"]
+      "text": "John Stumpf announced his resignation as CEO on October 11, 2016, effective immediately"
     },
     {
       "id": "c4",
-      "text": "Tim Sloan was named as the new CEO of Wells Fargo on October 12, 2016",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c3"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c3"]
+      "text": "Tim Sloan was named as the new CEO of Wells Fargo on October 12, 2016"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_penalty.md", "date": "2016-09-08"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md", "date": "2016-10-11"}
+  "constraint_types": [
+    "legal",
+    "regulatory",
+    "reputational"
   ],
-  "summary_embed": ""
+  "date": "2016-10-12",
+  "escalation_vector": [
+    "leak",
+    "inquiry"
+  ],
+  "exit_authority": "board",
+  "geography": "United States",
+  "incident_id": "wells_fargo_2016",
+  "legal_outcome": "settled",
+  "outcome": {
+    "actors": [
+      "John Stumpf",
+      "Tim Sloan"
+    ],
+    "constraint_types": [
+      "legal",
+      "regulatory",
+      "reputational"
+    ],
+    "recorded_at": "2016-10-12",
+    "sources": [
+      {
+        "date": "2016-09-08",
+        "id": "s1",
+        "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_penalty.md",
+        "type": "regulatory_report"
+      },
+      {
+        "date": "2016-10-11",
+        "id": "s2",
+        "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "John Stumpf resigned as CEO of Wells Fargo in October 2016 after the bank admitted employees had opened millions of unauthorized accounts. The bank paid $185 million in fines and faced ongoing regulatory scrutiny. Stumpf also agreed to forfeit $41 million in compensation. Tim Sloan succeeded him as CEO."
+  },
+  "recorded_at": "2016-10-13",
+  "resolution": [
+    "resignation",
+    "settlement"
+  ],
+  "sector": "finance",
+  "sources": [
+    {
+      "date": "2016-09-08",
+      "id": "s1",
+      "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_penalty.md",
+      "type": "regulatory_report"
+    },
+    {
+      "date": "2016-10-11",
+      "id": "s2",
+      "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "weeks",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2016-09-08",
+      "event": "Wells Fargo announces $185 million settlement with regulators over unauthorized accounts"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2016-09-20",
+      "event": "John Stumpf testifies before the Senate Banking Committee about the fake accounts scandal"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2016-10-11",
+      "event": "Stumpf announces his resignation as CEO effective immediately"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2016-10-12",
+      "event": "Tim Sloan named as new CEO of Wells Fargo"
+    }
+  ],
+  "title": "John Stumpf resigns as Wells Fargo CEO",
+  "trigger": "Wells Fargo employees created millions of unauthorized bank and credit card accounts without customers' consent to meet sales targets. CEO John Stumpf resigned after the scandal became public and he faced intense scrutiny from Congress and regulators.",
+  "trigger_type": "official_misconduct"
 }

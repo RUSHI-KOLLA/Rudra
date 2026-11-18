@@ -1,71 +1,134 @@
 {
-  "incident_id": "enron_2001",
-  "title": "Jeffrey Skilling resigns as Enron CEO",
-  "status": "curated",
-  "date": "2001-08-14",
-  "recorded_at": "2001-08-15",
-  "actors": ["Jeffrey Skilling"],
-  "actor_roles": ["ceo"],
-  "sector": "energy",
-  "geography": "United States",
-  "trigger": "Jeffrey Skilling abruptly resigned as CEO of Enron in August 2001, months before the company's accounting fraud was exposed and it collapsed into bankruptcy.",
-  "trigger_type": "fraud",
-  "constraint_types": ["legal", "regulatory", "reputational"],
-  "legal_outcome": "convicted",
-  "escalation_vector": ["leak", "filing", "inquiry"],
-  "tempo": "weeks",
-  "exit_authority": "self",
-  "succession": "external",
-  "timeline": [
-    {"date": "2001-08-14", "event": "Jeffrey Skilling resigns unexpectedly as CEO of Enron, citing personal reasons", "claim_ids": ["c1"]},
-    {"date": "2001-08-15", "event": "Skilling's resignation is publicly announced, raising questions about Enron's financial health", "claim_ids": ["c2"]},
-    {"date": "2002-07-09", "event": "Skilling is indicted on fraud charges related to Enron's accounting", "claim_ids": ["c3"]},
-    {"date": "2006-05-25", "event": "Skilling convicted on multiple counts of fraud and conspiracy", "claim_ids": ["c4"]}
+  "actor_roles": [
+    "ceo"
   ],
-  "resolution": ["resignation", "conviction"],
-  "outcome": {
-    "summary": "Jeffrey Skilling resigned as Enron CEO in August 2001, months before the company's accounting fraud was exposed. He was later indicted and convicted on multiple counts of fraud and conspiracy in 2006, sentenced to 24 years in prison (later reduced to 14). Enron filed for Chapter 11 bankruptcy in December 2001, then the largest in US history.",
-    "actors": ["Jeffrey Skilling"],
-    "constraint_types": ["legal", "regulatory", "reputational"],
-    "recorded_at": "2006-05-25",
-    "sources": [
-      {"id": "s1", "type": "court_record", "ref": "data/incidents/enron_2001/sources/enron_2001_skilling_resignation.md", "date": "2001-08-15"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/enron_2001/sources/enron_2006_conviction.md", "date": "2006-05-25"}
-    ]
-  },
+  "actors": [
+    "Jeffrey Skilling"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Jeffrey Skilling resigned as CEO of Enron on August 14, 2001, citing personal reasons",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "Jeffrey Skilling resigned as CEO of Enron on August 14, 2001, citing personal reasons"
     },
     {
       "id": "c2",
-      "text": "Skilling's unexpected resignation was publicly announced on August 15, 2001, raising questions about Enron's financial health",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "Skilling's unexpected resignation was publicly announced on August 15, 2001, raising questions about Enron's financial health"
     },
     {
       "id": "c3",
-      "text": "Skilling was indicted on fraud charges in July 2002 related to Enron's accounting practices",
-      "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c2"]
+      "source_ids": [],
+      "supports": [
+        "c2"
+      ],
+      "tag": "reported_unconfirmed",
+      "text": "Skilling was indicted on fraud charges in July 2002 related to Enron's accounting practices"
     },
     {
       "id": "c4",
-      "text": "Skilling was convicted on multiple counts of fraud and conspiracy on May 25, 2006",
-      "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c3"]
+      "source_ids": [],
+      "supports": [
+        "c3"
+      ],
+      "tag": "reported_unconfirmed",
+      "text": "Skilling was convicted on multiple counts of fraud and conspiracy on May 25, 2006"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "court_record", "ref": "data/incidents/enron_2001/sources/enron_2001_skilling_resignation.md", "date": "2001-08-15"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/enron_2001/sources/enron_2006_conviction.md", "date": "2006-05-25"}
+  "constraint_types": [
+    "legal",
+    "regulatory",
+    "reputational"
   ],
-  "summary_embed": ""
+  "date": "2001-08-14",
+  "escalation_vector": [
+    "leak",
+    "filing",
+    "inquiry"
+  ],
+  "exit_authority": "self",
+  "geography": "United States",
+  "incident_id": "enron_2001",
+  "legal_outcome": "convicted",
+  "outcome": {
+    "actors": [
+      "Jeffrey Skilling"
+    ],
+    "constraint_types": [
+      "legal",
+      "regulatory",
+      "reputational"
+    ],
+    "recorded_at": "2006-05-25",
+    "sources": [
+      {
+        "date": "2001-08-15",
+        "id": "s1",
+        "ref": "data/incidents/enron_2001/sources/enron_2001_skilling_resignation.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "Jeffrey Skilling resigned as Enron CEO in August 2001, months before the company's accounting fraud was exposed. He was later indicted and convicted on multiple counts of fraud and conspiracy in 2006, sentenced to 24 years in prison (later reduced to 14). Enron filed for Chapter 11 bankruptcy in December 2001, then the largest in US history."
+  },
+  "recorded_at": "2001-08-15",
+  "resolution": [
+    "resignation",
+    "conviction"
+  ],
+  "sector": "energy",
+  "sources": [
+    {
+      "date": "2001-08-15",
+      "id": "s1",
+      "ref": "data/incidents/enron_2001/sources/enron_2001_skilling_resignation.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "weeks",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2001-08-14",
+      "event": "Jeffrey Skilling resigns unexpectedly as CEO of Enron, citing personal reasons"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2001-08-15",
+      "event": "Skilling's resignation is publicly announced, raising questions about Enron's financial health"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2002-07-09",
+      "event": "Skilling is indicted on fraud charges related to Enron's accounting"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2006-05-25",
+      "event": "Skilling convicted on multiple counts of fraud and conspiracy"
+    }
+  ],
+  "title": "Jeffrey Skilling resigns as Enron CEO",
+  "trigger": "Jeffrey Skilling abruptly resigned as CEO of Enron in August 2001, months before the company's accounting fraud was exposed and it collapsed into bankruptcy.",
+  "trigger_type": "fraud"
 }

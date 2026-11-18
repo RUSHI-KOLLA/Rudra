@@ -1,55 +1,173 @@
 {
-  "incident_id": "satyam_2009",
-  "title": "Satyam Computer Services accounting fraud and founder resignation",
-  "status": "curated",
-  "date": "2009-01-07",
-  "recorded_at": "2009-01-08",
-  "actors": ["Ramalinga Raju", "Satyam Board of Directors", "Tech Mahindra"],
-  "actor_roles": ["founder", "board", "ceo"],
-  "sector": "technology",
-  "geography": "India",
-  "trigger": "Satyam founder Ramalinga Raju confessed to inflating the company's profits and assets by billions of rupees over several years, leading to his resignation and arrest.",
-  "trigger_type": "fraud",
-  "constraint_types": ["legal", "reputational"],
-  "legal_outcome": "convicted",
-  "escalation_vector": ["filing", "inquiry"],
-  "tempo": "weeks",
-  "exit_authority": "self",
-  "succession": "external",
-  "timeline": [
-    {"date": "2009-01-07", "event": "Raju sends letter to Satyam board confessing to inflating profits and cash balances by billions of rupees", "claim_ids": ["c1"]},
-    {"date": "2009-01-08", "event": "Raju resigns as Chairman; government appoints new board", "claim_ids": ["c2"]},
-    {"date": "2009-01-10", "event": "Raju and his brother are arrested by Andhra Pradesh police", "claim_ids": ["c3"]},
-    {"date": "2009-04-13", "event": "Tech Mahindra wins bid to acquire Satyam through government-managed process", "claim_ids": ["c4"]},
-    {"date": "2015-04-09", "event": "Raju and nine others convicted by a special CBI court", "claim_ids": ["c5"]}
+  "actor_roles": [
+    "founder",
+    "board",
+    "ceo"
   ],
-  "resolution": ["government_appointed_board", "tech_mahindra_acquisition", "resignation", "settlement"],
-  "outcome": {
-    "summary": "Raju confessed to inflating Satyam's profits by approximately Rs 70 billion (about $1.5 billion). He resigned and was arrested. The Indian government took control and orchestrated a sale to Tech Mahindra, which acquired Satyam in April 2009. The institution survived under new ownership. Raju was convicted in 2015 and sentenced to prison.",
-    "actors": ["Ramalinga Raju", "Tech Mahindra", "Satyam Board of Directors"],
-    "constraint_types": ["legal", "reputational"],
-    "recorded_at": "2015-04-09",
-    "sources": [
-      {"id": "s1", "type": "court_record", "ref": "data/incidents/8_satyam_2009/sources/satyam_2009_confession.md", "date": "2009-01-07"},
-      {"id": "s2", "type": "sec_filing", "ref": "data/incidents/8_satyam_2009/sources/tech_mahindra_2009_acquisition.md", "date": "2009-04-13"}
-    ]
-  },
+  "actors": [
+    "Ramalinga Raju",
+    "Satyam Board of Directors",
+    "Tech Mahindra"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Ramalinga Raju confessed in a letter to the board that Satyam's profits and cash balances were inflated by billions of rupees",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "Ramalinga Raju confessed in a letter to the board that Satyam's profits and cash balances were inflated by billions of rupees"
     },
-    {"id": "c2", "text": "Raju resigned as Chairman on January 8, 2009 and the government appointed a new board", "tag": "documented", "source_ids": ["s1"], "supports": ["c1"]},
-    {"id": "c3", "text": "Raju and his brother were arrested on January 10, 2009", "tag": "documented", "source_ids": ["s1"], "supports": ["c2"]},
-    {"id": "c4", "text": "Tech Mahindra won the bid to acquire Satyam in a government-managed process in April 2009", "tag": "documented", "source_ids": ["s2"], "supports": ["c3"]},
-    {"id": "c5", "text": "Raju and nine others were convicted by a special CBI court in April 2015", "tag": "documented", "source_ids": ["s1"], "supports": ["c1"]}
+    {
+      "id": "c2",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
+      "tag": "documented",
+      "text": "Raju resigned as Chairman on January 8, 2009 and the government appointed a new board"
+    },
+    {
+      "id": "c3",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c2"
+      ],
+      "tag": "documented",
+      "text": "Raju and his brother were arrested on January 10, 2009"
+    },
+    {
+      "id": "c4",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c3"
+      ],
+      "tag": "documented",
+      "text": "Tech Mahindra won the bid to acquire Satyam in a government-managed process in April 2009"
+    },
+    {
+      "id": "c5",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
+      "tag": "documented",
+      "text": "Raju and nine others were convicted by a special CBI court in April 2015"
+    }
   ],
+  "constraint_types": [
+    "legal",
+    "reputational"
+  ],
+  "date": "2009-01-07",
+  "escalation_vector": [
+    "filing",
+    "inquiry"
+  ],
+  "exit_authority": "self",
+  "geography": "India",
+  "incident_id": "satyam_2009",
+  "legal_outcome": "convicted",
+  "outcome": {
+    "actors": [
+      "Ramalinga Raju",
+      "Tech Mahindra",
+      "Satyam Board of Directors"
+    ],
+    "constraint_types": [
+      "legal",
+      "reputational"
+    ],
+    "recorded_at": "2015-04-09",
+    "sources": [
+      {
+        "date": "2009-01-07",
+        "id": "s1",
+        "ref": "data/incidents/satyam_2009/sources/satyam_2009_confession.md",
+        "type": "court_record"
+      },
+      {
+        "date": "2009-04-13",
+        "id": "s2",
+        "ref": "data/incidents/satyam_2009/sources/tech_mahindra_2009_acquisition.md",
+        "type": "sec_filing"
+      }
+    ],
+    "summary": "Raju confessed to inflating Satyam's profits by approximately Rs 70 billion (about $1.5 billion). He resigned and was arrested. The Indian government took control and orchestrated a sale to Tech Mahindra, which acquired Satyam in April 2009. The institution survived under new ownership. Raju was convicted in 2015 and sentenced to prison."
+  },
+  "recorded_at": "2009-01-08",
+  "resolution": [
+    "government_appointed_board",
+    "tech_mahindra_acquisition",
+    "resignation",
+    "settlement"
+  ],
+  "sector": "technology",
   "sources": [
-    {"id": "s1", "type": "court_record", "ref": "data/incidents/8_satyam_2009/sources/satyam_2009_confession.md", "date": "2009-01-07"},
-    {"id": "s2", "type": "sec_filing", "ref": "data/incidents/8_satyam_2009/sources/tech_mahindra_2009_acquisition.md", "date": "2009-04-13"}
+    {
+      "date": "2009-01-07",
+      "id": "s1",
+      "ref": "data/incidents/satyam_2009/sources/satyam_2009_confession.md",
+      "type": "court_record"
+    },
+    {
+      "date": "2009-04-13",
+      "id": "s2",
+      "ref": "data/incidents/satyam_2009/sources/tech_mahindra_2009_acquisition.md",
+      "type": "paraphrase"
+    }
   ],
-  "summary_embed": ""
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "weeks",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2009-01-07",
+      "event": "Raju sends letter to Satyam board confessing to inflating profits and cash balances by billions of rupees"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2009-01-08",
+      "event": "Raju resigns as Chairman; government appoints new board"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2009-01-10",
+      "event": "Raju and his brother are arrested by Andhra Pradesh police"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2009-04-13",
+      "event": "Tech Mahindra wins bid to acquire Satyam through government-managed process"
+    },
+    {
+      "claim_ids": [
+        "c5"
+      ],
+      "date": "2015-04-09",
+      "event": "Raju and nine others convicted by a special CBI court"
+    }
+  ],
+  "title": "Satyam Computer Services accounting fraud and founder resignation",
+  "trigger": "Satyam founder Ramalinga Raju confessed to inflating the company's profits and assets by billions of rupees over several years, leading to his resignation and arrest.",
+  "trigger_type": "fraud"
 }

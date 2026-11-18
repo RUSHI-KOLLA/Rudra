@@ -1,71 +1,151 @@
 {
-  "incident_id": "strauss_kahn_imf_2011",
-  "title": "Dominique Strauss-Kahn resigns as IMF Managing Director",
-  "status": "curated",
-  "date": "2011-05-18",
-  "recorded_at": "2011-05-19",
-  "actors": ["Dominique Strauss-Kahn", "IMF Board of Governors", "Christine Lagarde"],
-  "actor_roles": ["ceo", "board", "ceo"],
-  "sector": "finance",
-  "geography": "United States / France",
-  "trigger": "Strauss-Kahn was arrested in New York on charges of sexual assault of a hotel housekeeper, leading him to resign as Managing Director of the International Monetary Fund.",
-  "trigger_type": "personal_conduct",
-  "constraint_types": ["legal", "reputational"],
-  "legal_outcome": "charges_dropped",
-  "escalation_vector": ["leak", "media_cycle"],
-  "tempo": "days",
-  "exit_authority": "self",
-  "succession": "external",
-  "timeline": [
-    {"date": "2011-05-14", "event": "Strauss-Kahn arrested at JFK Airport and charged with sexual assault of a hotel housekeeper", "claim_ids": ["c1"]},
-    {"date": "2011-05-16", "event": "Strauss-Kahn resigns as IMF Managing Director, effective immediately", "claim_ids": ["c2"]},
-    {"date": "2011-05-18", "event": "Christine Lagarde named as new IMF Managing Director", "claim_ids": ["c3"]},
-    {"date": "2011-08-23", "event": "Criminal charges against Strauss-Kahn are dropped after prosecutors question the accuser's credibility", "claim_ids": ["c4"]}
+  "actor_roles": [
+    "ceo",
+    "board"
   ],
-  "resolution": ["resignation"],
-  "outcome": {
-    "summary": "Strauss-Kahn resigned from the IMF in May 2011 following his arrest. The criminal case was later dropped in August 2011 after prosecutors determined the accuser's credibility was compromised. He reached a civil settlement with the accuser in 2012. Christine Lagarde succeeded him as IMF Managing Director.",
-    "actors": ["Dominique Strauss-Kahn", "Christine Lagarde", "IMF Board of Governors"],
-    "constraint_types": ["legal", "reputational"],
-    "recorded_at": "2012-03-12",
-    "sources": [
-      {"id": "s1", "type": "court_record", "ref": "data/incidents/4_strauss_kahn_imf_2011/sources/dsk_2011_arrest.md", "date": "2011-05-14"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/4_strauss_kahn_imf_2011/sources/dsk_2011_dismissal.md", "date": "2011-08-23"}
-    ]
-  },
+  "actors": [
+    "Dominique Strauss-Kahn",
+    "IMF Board of Governors",
+    "Christine Lagarde"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Strauss-Kahn was arrested at JFK Airport on May 14, 2011 and charged with sexual assault",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "Strauss-Kahn was arrested at JFK Airport on May 14, 2011 and charged with sexual assault"
     },
     {
       "id": "c2",
-      "text": "Strauss-Kahn resigned as IMF Managing Director on May 18, 2011",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "Strauss-Kahn resigned as IMF Managing Director on May 18, 2011"
     },
     {
       "id": "c3",
-      "text": "Christine Lagarde was appointed as Strauss-Kahn's successor at the IMF",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c2"]
+      "text": "Christine Lagarde was appointed as Strauss-Kahn's successor at the IMF"
     },
     {
       "id": "c4",
-      "text": "Criminal charges were dropped on August 23, 2011 after prosecutors questioned the accuser's credibility",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c1"]
+      "text": "Criminal charges were dropped on August 23, 2011 after prosecutors questioned the accuser's credibility"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "court_record", "ref": "data/incidents/4_strauss_kahn_imf_2011/sources/dsk_2011_arrest.md", "date": "2011-05-14"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/4_strauss_kahn_imf_2011/sources/dsk_2011_dismissal.md", "date": "2011-08-23"}
+  "constraint_types": [
+    "legal",
+    "reputational"
   ],
-  "summary_embed": ""
+  "date": "2011-05-18",
+  "escalation_vector": [
+    "leak",
+    "media_cycle"
+  ],
+  "exit_authority": "self",
+  "geography": "United States / France",
+  "incident_id": "strauss_kahn_imf_2011",
+  "legal_outcome": "charges_dropped",
+  "outcome": {
+    "actors": [
+      "Dominique Strauss-Kahn",
+      "Christine Lagarde",
+      "IMF Board of Governors"
+    ],
+    "constraint_types": [
+      "legal",
+      "reputational"
+    ],
+    "recorded_at": "2012-03-12",
+    "sources": [
+      {
+        "date": "2011-05-14",
+        "id": "s1",
+        "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_arrest.md",
+        "type": "court_record"
+      },
+      {
+        "date": "2011-08-23",
+        "id": "s2",
+        "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_dismissal.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "Strauss-Kahn resigned from the IMF in May 2011 following his arrest. The criminal case was later dropped in August 2011 after prosecutors determined the accuser's credibility was compromised. He reached a civil settlement with the accuser in 2012. Christine Lagarde succeeded him as IMF Managing Director."
+  },
+  "recorded_at": "2011-05-19",
+  "resolution": [
+    "resignation"
+  ],
+  "sector": "finance",
+  "sources": [
+    {
+      "date": "2011-05-14",
+      "id": "s1",
+      "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_arrest.md",
+      "type": "court_record"
+    },
+    {
+      "date": "2011-08-23",
+      "id": "s2",
+      "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_dismissal.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "days",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2011-05-14",
+      "event": "Strauss-Kahn arrested at JFK Airport and charged with sexual assault of a hotel housekeeper"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2011-05-16",
+      "event": "Strauss-Kahn resigns as IMF Managing Director, effective immediately"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2011-05-18",
+      "event": "Christine Lagarde named as new IMF Managing Director"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2011-08-23",
+      "event": "Criminal charges against Strauss-Kahn are dropped after prosecutors question the accuser's credibility"
+    }
+  ],
+  "title": "Dominique Strauss-Kahn resigns as IMF Managing Director",
+  "trigger": "Strauss-Kahn was arrested in New York on charges of sexual assault of a hotel housekeeper, leading him to resign as Managing Director of the International Monetary Fund.",
+  "trigger_type": "personal_conduct"
 }
