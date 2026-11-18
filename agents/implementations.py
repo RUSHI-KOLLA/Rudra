@@ -591,13 +591,12 @@ def compress_to_stance_vectors_v3(results: List[Dict[str, Any]]) -> str:
         stance = r.get("stance", "").lower().strip()
         confidence = r.get("confidence", 0) / 100.0
 
-        # Stance normalization - aligned with debate.py
-        FOR_TOKENS = ("yes", "support", "agree", "true", "success", "pass", "benefit", "likely", "probable", "possible", "advances", "improves")
-        AGAINST_TOKENS = ("no", "reject", "disagree", "false", "fail", "against", "harm", "unlikely", "improbable", "risky", "danger", "worsens")
-
-        if any(w in stance for w in FOR_TOKENS):
+        # Stance normalization - using shared core.stance.normalize_stance
+        from vg.core.stance import normalize_stance
+        bucket = normalize_stance(stance)
+        if bucket == "for":
             sign = "+"
-        elif any(w in stance for w in AGAINST_TOKENS):
+        elif bucket == "against":
             sign = "-"
         else:
             sign = "0"

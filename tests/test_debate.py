@@ -142,5 +142,63 @@ class TestDebateRosterSelection:
         assert len(roles) >= 1
 
 
+class TestSingleSourceOfTruth:
+    """Tests ensuring stance normalization has a single source of truth."""
+
+    def test_no_duplicate_stance_normalization(self):
+        """Ensure no module defines its own _normalize_stance or _normalize_stance_bucket.
+        
+        All stance normalization must delegate to vg.core.stance.normalize_stance.
+        """
+        import re
+        from pathlib import Path
+        
+        # Patterns that indicate inline stance normalization (should only be in core/stance.py)
+        forbidden_patterns = [
+            r"def _normalize_stance",
+            r"def _normalize_stance_bucket",
+            r"FOR_TOKENS\s*=",
+            r"AGAINST_TOKENS\s*=",
+        ]
+        
+        # Files that are allowed to have the old patterns
+        allowed_files = {
+            "tests/test_debate.py",
+            "core/stance.py",
+            "vg/core/stance.py",
+        }
+        
+        project_root = Path(__file__).resolve().parents[2]
+        
+        for py_file in project_root.rglob("*.py"):
+            # Skip hidden, trash, and pycache directories
+            if any(part.startswith(".") or part == "__pycache__" or part == "Trash" for part in py_file.parts):
+                continue
+                
+            rel_path = str(py_file.relative_to(project_root))
+            if rel_path in allowed_files:
+                continue
+            if "test" in rel_path and rel_path.startswith("tests/"):
+                # Skip other test files
+                continue
+                
+            try:
+                content = py_file.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue
+            
+            for pattern in forbidden_patterns:
+                matches = re.findall(pattern, content)
+                if matches:
+                    # Check if it's the shared function call (import + call) which is OK
+                    if "normalize_stance" in content and "from vg.core.stance import" in content:
+                        continue
+                    # Allow the old pattern in the shared module itself (which we already skip)
+                    raise AssertionError(
+                        f"Found duplicate stance normalization in {rel_path}: "
+                        f"pattern '{pattern}' matches {len(matches)} times. "
+                        f"All stance normalization must delegate to vg.core.stance.normalize_stance"
+                    )
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

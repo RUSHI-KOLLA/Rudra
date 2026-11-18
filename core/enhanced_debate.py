@@ -959,22 +959,12 @@ JSON only:
         if not valid:
             return False, "", results
 
-        # Normalize stance buckets
-        def normalize(stance: str) -> str:
-            s = (stance or "").lower().strip()
-            # Stance normalization - aligned with debate.py and implementations.py
-            FOR_TOKENS = ("yes", "support", "agree", "true", "success", "pass", "benefit", "likely", "probable", "possible", "advances", "improves")
-            AGAINST_TOKENS = ("no", "reject", "disagree", "false", "fail", "against", "harm", "unlikely", "improbable", "risky", "danger", "worsens")
-            if any(t in s for t in FOR_TOKENS):
-                return "for"
-            if any(t in s for t in AGAINST_TOKENS):
-                return "against"
-            return "neutral"
+        # Group by stance using shared normalization
+        from vg.core.stance import normalize_stance
 
-        # Group by stance
         groups: Dict[str, List] = {}
         for r in valid:
-            bucket = normalize(r.get("stance", ""))
+            bucket = normalize_stance(r.get("stance", ""))
             if bucket not in groups:
                 groups[bucket] = []
             groups[bucket].append(r)
@@ -990,7 +980,10 @@ JSON only:
         # 8/10 = converged
         if max_count >= 8:
             all_agents = [a for agents in groups.values() for a in agents]
-            dissenters = [a for a in all_agents if normalize(a.get("stance", "")) != majority_bucket]
+            dissenters = [
+                a for a in all_agents
+                if normalize_stance(a.get("stance", "")) != majority_bucket
+            ]
             return True, majority_bucket, dissenters
 
         return False, "", valid
@@ -1038,16 +1031,12 @@ JSON only:
         return roles if roles else [r for r in AgentRole if r != AgentRole.JUDGE][:7]
 
     def _normalize_stance(self, stance: str) -> str:
-        """Normalize stance to for/against/neutral."""
-        s = (stance or "").lower().strip()
-        # Stance normalization - aligned with debate.py and implementations.py
-        FOR_TOKENS = ("yes", "support", "agree", "true", "success", "pass", "benefit", "likely", "probable", "possible", "advances", "improves")
-        AGAINST_TOKENS = ("no", "reject", "disagree", "false", "fail", "against", "harm", "unlikely", "improbable", "risky", "danger", "worsens")
-        if any(t in s for t in FOR_TOKENS):
-            return "for"
-        if any(t in s for t in AGAINST_TOKENS):
-            return "against"
-        return "neutral"
+        """Normalize stance to for/against/neutral.
+        
+        Delegates to shared core.stance.normalize_stance for single source of truth.
+        """
+        from vg.core.stance import normalize_stance
+        return normalize_stance(stance)
 
     def _merge_results(
         self, existing: List[Dict[str, Any]], new: List[Dict[str, Any]]
