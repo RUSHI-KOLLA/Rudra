@@ -30,8 +30,10 @@ _FOR_PHRASES = (
     "no question about",
 )
 
-# Negation tokens — if any appear as a token, the stance is AGAINST
+# Negation tokens — if any appear as a WHOLE WORD token, the stance is AGAINST
 # (checked after FOR-phrases so "no doubt" stays FOR, but "no chance" -> against)
+# These are EXACT word matches, NOT prefixes, to avoid "notable", "north", etc.
+# Includes contracted forms without apostrophes (tokenizer strips apostrophes)
 _NEGATION_TOKENS = (
     "no",
     "not",
@@ -39,6 +41,21 @@ _NEGATION_TOKENS = (
     "neither",
     "without",
     "hardly",
+    "none",
+    "cannot",
+    "cant",
+    "don",
+    "wont",
+    "isnt",
+    "arent",
+    "wasnt",
+    "didnt",
+    "doesnt",
+    "hasnt",
+    "hadnt",
+    "wouldnt",
+    "couldnt",
+    "shouldnt",
 )
 
 # FOR tokens (prefix matching on word tokens)
@@ -63,8 +80,8 @@ _FOR_TOKENS = (
 )
 
 # AGAINST tokens (prefix matching on word tokens)
+# "no" removed: negation gate handles "no" as exact word match to avoid "notable", "north", "norms", "nominee"
 _AGAINST_TOKENS = (
-    "no",
     "reject",
     "disagree",
     "false",
@@ -133,9 +150,10 @@ def normalize_stance(stance: str) -> str:
     if _has_any_token(tokens, ("harm",)):
         return "against"
 
-    # NEGATION GATE: if any negation token appears, stance is AGAINST
+    # NEGATION GATE: if any negation token appears as a WHOLE WORD, stance is AGAINST
     # (checked after FOR-phrases so "no doubt" -> FOR, but "no chance" -> against)
-    if _has_any_token(tokens, _NEGATION_TOKENS):
+    # Uses exact word matching (not prefix) to avoid "notable", "north", "norms", "nominee", etc.
+    if any(tok in _NEGATION_TOKENS for tok in tokens):
         return "against"
 
     # 3. FOR tokens (original FOR-first behavior preserved)
@@ -188,6 +206,19 @@ if __name__ == "__main__":
         ("It will improve growth", "for"),
         ("This advances the plan", "for"),
         ("This will advance the plan", "for"),
+        # Negation gate — reviewer requirement: negation + positive word = against
+        ("There is no chance of success", "against"),
+        ("There is no chance of success at all", "against"),
+        ("Not likely to succeed", "against"),
+        ("Without any benefit to farmers", "against"),
+        ("Never a success", "against"),
+        ("Notable growth in exports", "for"),
+        ("The north region will benefit", "for"),
+        ("Norms will improve", "for"),
+        ("The nominee supports the bill", "for"),
+        # Cannot/don't contraction forms
+        ("Cannot succeed", "against"),
+        ("Don't succeed", "against"),
     ]
 
     all_pass = True
