@@ -1,0 +1,71 @@
+{
+  "incident_id": "commonwealth_games_2010",
+  "title": "Commonwealth Games 2010 corruption scandal",
+  "status": "curated",
+  "date": "2011-04-26",
+  "recorded_at": "2011-04-27",
+  "actors": ["Suresh Kalmadi", "Suresh Kalmadi", "Suresh Kalmadi"],
+  "actor_roles": ["ceo", "ceo", "ceo"],
+  "sector": "sports",
+  "geography": "India",
+  "trigger": "The Commonwealth Games 2010 organizing committee, headed by Suresh Kalmadi, was accused of widespread corruption and mismanagement in awarding contracts, leading to his dismissal and arrest.",
+  "trigger_type": "official_misconduct",
+  "constraint_types": ["legal", "reputational"],
+  "legal_outcome": "convicted",
+  "escalation_vector": ["leak", "inquiry"],
+  "tempo": "years",
+  "exit_authority": "self",
+  "succession": "external",
+  "timeline": [
+    {"date": "2010-10-03", "event": "Commonwealth Games 2010 concludes in Delhi amidst corruption allegations", "claim_ids": ["c1"]},
+    {"date": "2011-04-25", "event": "Suresh Kalmadi arrested by CBI for alleged irregularities in Games contracts", "claim_ids": ["c2"]},
+    {"date": "2011-04-26", "event": "Kalmadi dismissed from Indian National Congress party", "claim_ids": ["c3"]},
+    {"date": "2011-08-25", "event": "Kalmadi granted bail after 4 months in custody", "claim_ids": ["c4"]}
+  ],
+  "resolution": ["dismissal"],
+  "outcome": {
+    "summary": "Suresh Kalmadi, chairman of the Commonwealth Games organizing committee, was arrested in April 2011 on corruption charges related to Games contracts. He was dismissed from the Congress party and spent 4 months in custody before being granted bail. The CBI filed charges against him and others for criminal conspiracy and cheating.",
+    "actors": ["Suresh Kalmadi", "Suresh Kalmadi"],
+    "constraint_types": ["legal", "reputational"],
+    "recorded_at": "2011-08-25",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/commonwealth_games_2010/sources/cbi_2011_kalmadi_arrest.md", "date": "2011-04-25"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/commonwealth_games_2010/sources/cbi_2011_chargesheet.md", "date": "2011-08-25"}
+    ]
+  },
+  "claims": [
+    {
+      "id": "c1",
+      "text": "Commonwealth Games 2010 concluded in Delhi amidst widespread corruption allegations",
+      "tag": "reported_unconfirmed",
+      "source_ids": [],
+      "supports": []
+    },
+    {
+      "id": "c2",
+      "text": "Suresh Kalmadi was arrested by CBI on April 25, 2011 for alleged irregularities in Games contracts",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": ["c1"]
+    },
+    {
+      "id": "c3",
+      "text": "Kalmadi was dismissed from the Indian National Congress party on April 26, 2011",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": ["c2"]
+    },
+    {
+      "id": "c4",
+      "text": "Kalmadi was granted bail on August 25, 2011 after 4 months in custody",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c2"]
+    }
+  ],
+  "sources": [
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/commonwealth_games_2010/sources/cbi_2011_kalmadi_arrest.md", "date": "2011-04-25"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/commonwealth_games_2010/sources/cbi_2011_chargesheet.md", "date": "2011-08-25"}
+  ],
+  "summary_embed": ""
+}

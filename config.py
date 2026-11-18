@@ -3,10 +3,28 @@
 from dataclasses import dataclass, field
 from typing import Optional
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Package root: this file lives at the repo root, which IS the vg package.
+_PACKAGE_ROOT = Path(__file__).resolve().parent
+
+
+def _resolve_path(value: str, default_rel: str) -> str:
+    """Resolve a possibly-relative path against the package root.
+
+    Relative values are anchored at the package root, not the process CWD,
+    so the data directory is the same directory whichever way the server is
+    launched (``python -m vg.main`` from the parent, or from inside the repo).
+    """
+    raw = value or default_rel
+    path = Path(raw)
+    if not path.is_absolute():
+        path = _PACKAGE_ROOT / path
+    return str(path)
 
 
 @dataclass
@@ -48,6 +66,14 @@ class Config:
     convergence_threshold: float = 0.8   # 80% agreement → early exit
     judge_consistency_runs: int = 3
 
+    # --- Incident mode ---
+    incidents_data_path: str = ""
+    incidents_collection: str = "incidents"
+    incident_weak_threshold: float = 0.3222
+    debate_enabled: bool = False
+    max_research_rounds: int = 2
+    questions_per_round: int = 5
+
     # --- Search ---
     disable_web_search: bool = False
 
@@ -72,12 +98,26 @@ def get_config() -> Config:
         shadow_max_tokens=int(os.getenv("VG_SHADOW_MAX_TOKENS", "96")),
         agent_max_tokens=int(os.getenv("VG_AGENT_MAX_TOKENS", "640")),
         judge_max_tokens=int(os.getenv("VG_JUDGE_MAX_TOKENS", "1024")),
-        chroma_db_path=os.getenv("VG_CHROMA_PATH", "./chroma_db"),
+        chroma_db_path=_resolve_path(
+            os.getenv("VG_CHROMA_PATH", ""), os.path.join("chroma_db")
+        ),
         rag_top_k=int(os.getenv("VG_RAG_TOP_K", "2")),
         rag_chunk_words=int(os.getenv("VG_RAG_CHUNK_WORDS", "300")),
         max_debate_rounds=int(os.getenv("VG_MAX_DEBATE_ROUNDS", "2")),
         convergence_threshold=float(os.getenv("VG_CONVERGENCE_THRESHOLD", "0.8")),
         judge_consistency_runs=int(os.getenv("VG_JUDGE_CONSISTENCY_RUNS", "3")),
+        incidents_data_path=_resolve_path(
+            os.getenv("VG_INCIDENTS_DATA_PATH", ""),
+            os.path.join("data", "incidents"),
+        ),
+        incidents_collection=os.getenv("VG_INCIDENTS_COLLECTION", "incidents"),
+        incident_weak_threshold=float(
+            os.getenv("VG_INCIDENT_WEAK_THRESHOLD", "0.3222")
+        ),
+        debate_enabled=os.getenv("VG_DEBATE_ENABLED", "").lower()
+        in {"1", "true", "yes", "on"},
+        max_research_rounds=int(os.getenv("VG_MAX_RESEARCH_ROUNDS", "2")),
+        questions_per_round=int(os.getenv("VG_QUESTIONS_PER_ROUND", "5")),
         disable_web_search=os.getenv("VG_DISABLE_WEB_SEARCH", "").lower() in {"1", "true", "yes", "on"},
     )
 

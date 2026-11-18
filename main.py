@@ -33,13 +33,28 @@ except ImportError:
     ENHANCED_MODE = False
 
 
+class ForecastDisabledError(RuntimeError):
+    """debate_enabled is off — forecast mode must not run.
+
+    Raised before any coordinator construction so a misrouted paste cannot
+    burn Tavily quota (the debate pipeline's first act is a search call).
+    The API layer maps this to HTTP 409 "forecast mode disabled".
+    """
+
+
 async def analyze_async(
     question: str,
     use_enhanced: bool = True,
     api_key: str = None,
     provider: str | None = None,
 ) -> dict:
-    """Run the full VG analysis pipeline."""
+    """Run the full VG analysis pipeline.
+
+    Gated on ``debate_enabled`` BEFORE any coordinator is constructed.
+    """
+    if not config.debate_enabled:
+        raise ForecastDisabledError("forecast mode disabled")
+
     if use_enhanced and ENHANCED_MODE:
         coordinator = DebateCoordinator(
             enable_optimizations=True,
@@ -194,7 +209,12 @@ def run_cli(argv: list[str]) -> None:
     print(f"\n🚀 VG Intelligence Analysis{' (Enhanced Mode)' if use_enhanced and ENHANCED_MODE else ''}")
     print("=" * 56)
 
-    result = analyze(question, use_enhanced=use_enhanced)
+    try:
+        result = analyze(question, use_enhanced=use_enhanced)
+    except ForecastDisabledError:
+        print("\nForecast mode is disabled (debate_enabled = off).")
+        print("Set VG_DEBATE_ENABLED=1 to run the debate pipeline.")
+        sys.exit(1)
     print_report(result)
 
     # Show optimization stats if enhanced mode
@@ -231,6 +251,27 @@ def run_web(argv: list[str]) -> None:
             build_all()
         except Exception as e:
             print(f"❌ Failed to auto-build RAG database: {e}")
+
+    # Incident corpus: ensure the incidents collection exists and is in sync
+    # with data/incidents/*.json (the JSON files are the source of truth).
+    # Best effort at startup — a missing embedder still serves, and the
+    # per-request path raises IncidentStoreError -> HTTP 503 instead.
+    try:
+        from vg.incidents.store import IncidentStoreError, drift_check, load_all_cards, rebuild_index
+
+        cards = load_all_cards()
+        if not cards:
+            print("📁 No incident cards found — incident corpus empty.")
+        elif drift_check():
+            print(f"📁 Incident index out of sync ({len(cards)} cards). Rebuilding...")
+            n = rebuild_index()
+            print(f"✓ Incident index built: {n} cards")
+        else:
+            print(f"✓ Incident index in sync: {len(cards)} cards")
+    except IncidentStoreError as e:
+        print(f"⚠ Incident index unavailable at startup: {e}")
+    except Exception as e:  # pragma: no cover - never block serving
+        print(f"⚠ Incident index startup check failed: {e}")
 
     host = _consume_option(argv, "--host", os.getenv("VG_HOST", "0.0.0.0"))
     port = int(_consume_option(argv, "--port", os.getenv("PORT", os.getenv("VG_PORT", "8080"))))

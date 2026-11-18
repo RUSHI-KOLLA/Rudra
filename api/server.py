@@ -4,6 +4,24 @@ Production-ready for public SaaS hosting:
 - API keys are provided per-request via X-API-Key header (never stored on server)
 - CORS enabled for cross-origin access
 - No server-side key storage for multi-user safety
+
+Phase 3 dispatch (design doc §22):
+
+    POST /api/analyze          -> debate pipeline, gated on debate_enabled
+    POST /api/incident-match   -> incident extraction/matching (zero agents)
+    POST /api/incident-outcome -> record an outcome onto a card
+
+Typed failure contract:
+
+- 401  missing/invalid X-API-Key (existing shape, unchanged)
+- 409  forecast mode disabled (flag off — checked BEFORE any coordinator)
+- 422  needs_manual_entry (extraction incomplete; paste spooled)
+- 503  IncidentStoreError (embedder/Chroma down; reason included)
+- 404  unknown incident_id on /api/incident-outcome
+
+Reading the POST body happens exactly once in ``do_POST``; handlers receive
+the parsed dict, so ``mode=debate`` on an incident route cannot re-read an
+already-consumed stream.
 """
 
 from __future__ import annotations
@@ -15,11 +33,18 @@ import os
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from vg.main import analyze_async
 from vg.config import config
+from vg.incidents.match import (
+    ExtractionIncomplete,
+    MAX_PASTE_CHARS,
+    record_outcome,
+    run_match,
+)
+from vg.incidents.store import IncidentStoreError
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -64,6 +89,9 @@ class VGWebHandler(BaseHTTPRequestHandler):
                     "service": "vg-web",
                     "version": "2.0",
                     "mode": "saas",
+                    # R5: new FIELD on the existing route (no new endpoint).
+                    # The panel uses it to decide whether to render Debate.
+                    "debate_enabled": bool(config.debate_enabled),
                 },
             )
             return
@@ -81,72 +109,35 @@ class VGWebHandler(BaseHTTPRequestHandler):
 
     # ─── POST ───────────────────────────────────────────────────────
     def do_POST(self) -> None:  # noqa: N802
-        parsed = urlparse(self.path)
-        if parsed.path != "/api/analyze":
+        route = urlparse(self.path).path
+
+        # Dispatch table over the three routes (design doc §22).
+        dispatch: dict[str, Callable[[dict[str, Any]], None]] = {
+            "/api/analyze": self._handle_analyze,
+            "/api/incident-match": self._handle_incident_match,
+            "/api/incident-outcome": self._handle_incident_outcome,
+        }
+
+        handler = dispatch.get(route)
+        if handler is None:
             self._send_json(HTTPStatus.NOT_FOUND, {"error": "Not found"})
             return
 
-        # Browser credentials are explicitly Groq-scoped.
-        submitted_groq_key = self.headers.get("X-API-Key", "").strip()
-        default_groq_key = config.groq_api_key or os.getenv("GROQ_API_KEY")
-        groq_key = submitted_groq_key or default_groq_key
-        if not groq_key:
-            self._send_json(
-                HTTPStatus.UNAUTHORIZED,
-                {
-                    "error": "Groq API key required.",
-                    "hint": "Provide X-API-Key or configure GROQ_API_KEY on the server.",
-                },
-            )
-            return
-
+        # Body is read exactly once, here, and handed to the handler.
         try:
-            payload = self._read_json_body()
+            body = self._read_json_body()
         except ValueError as exc:
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
 
-        question = str(payload.get("question", "")).strip()
-
-        if not question:
-            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Question is required."})
-            return
-
-        try:
-            result = asyncio.run(
-                analyze_async(
-                    question,
-                    use_enhanced=True,
-                    api_key=groq_key,
-                    provider="groq",
-                )
+        if not isinstance(body, dict):
+            self._send_json(
+                HTTPStatus.BAD_REQUEST,
+                {"error": "Request body must be a JSON object."},
             )
-        except Exception as exc:  # pragma: no cover - runtime protection
-            error_msg = str(exc)
-            # Detect invalid API key errors
-            if "auth" in error_msg.lower() or "unauthorized" in error_msg.lower() or "invalid" in error_msg.lower():
-                self._send_json(
-                    HTTPStatus.UNAUTHORIZED,
-                    {"error": "Invalid API key. Please check your Groq API key."},
-                )
-            else:
-                self._send_json(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    {
-                        "error": "Analysis failed.",
-                        "detail": error_msg,
-                    },
-                )
             return
 
-        self._send_json(
-            HTTPStatus.OK,
-            {
-                "question": question,
-                "enhanced": True,
-                "result": result,
-            },
-        )
+        handler(body)
 
     # ─── Helpers ────────────────────────────────────────────────────
     def log_message(self, format: str, *args: Any) -> None:  # noqa: A003
@@ -195,24 +186,219 @@ class VGWebHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _groq_key(self) -> str:
+        """Per-request key; falls back to a server-side key when configured."""
+        submitted = self.headers.get("X-API-Key", "").strip()
+        return submitted or (config.groq_api_key or os.getenv("GROQ_API_KEY") or "")
+
+    def _require_key(self) -> bool:
+        """401 with the existing shape when no key is available."""
+        if self._groq_key():
+            return True
+        self._send_json(
+            HTTPStatus.UNAUTHORIZED,
+            {
+                "error": "Groq API key required.",
+                "hint": "Provide X-API-Key or configure GROQ_API_KEY on the server.",
+            },
+        )
+        return False
+
+    def _send_match_error(self, exc: Exception) -> None:
+        """Map incident-mode exceptions to the typed failure contract."""
+        if isinstance(exc, ExtractionIncomplete):
+            self._send_json(
+                HTTPStatus.UNPROCESSABLE_ENTITY,
+                {
+                    "error": "needs_manual_entry",
+                    "status": "needs_manual_entry",
+                    "missing": exc.missing,
+                    "raw_paste": exc.raw_paste,
+                    "spooled_path": exc.spooled_path,
+                },
+            )
+            return
+        if isinstance(exc, IncidentStoreError):
+            self._send_json(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                {"error": "service unavailable", "reason": str(exc)},
+            )
+            return
+        if isinstance(exc, LookupError):
+            self._send_json(
+                HTTPStatus.NOT_FOUND,
+                {"error": "unknown incident_id", "incident_id": str(exc.args[0])},
+            )
+            return
+        self._send_json(
+            HTTPStatus.INTERNAL_SERVER_ERROR,
+            {"error": "Match failed.", "detail": str(exc)},
+        )
+
+    # ─── Incident match endpoint ────────────────────────────────────
+    def _handle_incident_match(self, body: dict[str, Any]) -> None:
+        """POST /api/incident-match — extract card, score corpus, return matches.
+
+        Two-phase: no ``extracted`` key -> ``status: reviewing`` (or 422
+        needs_manual_entry); with ``extracted`` -> ``status: complete``.
+        ``mode=debate`` reuses the same body (already read) and routes to
+        the analyze handler.
+        """
+        mode = str(body.get("mode", "incident") or "incident").strip()
+        if mode not in ("incident", "debate"):
+            self._send_json(
+                HTTPStatus.BAD_REQUEST,
+                {"error": "Invalid mode. Use 'incident' or 'debate'."},
+            )
+            return
+
+        if mode == "debate":
+            # Same parsed body — no second read of rfile (it is spent).
+            self._handle_analyze(body)
+            return
+
+        if not self._require_key():
+            return
+
+        paste = str(body.get("paste", "") or "")
+        if not paste.strip():
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Paste is required."})
+            return
+
+        extracted = body.get("extracted")
+        if extracted is not None and not isinstance(extracted, dict):
+            self._send_json(
+                HTTPStatus.BAD_REQUEST,
+                {"error": "'extracted' must be an object when present."},
+            )
+            return
+
+        try:
+            result = asyncio.run(
+                run_match(
+                    paste=paste,
+                    api_key=self._groq_key(),
+                    extracted=extracted,
+                )
+            )
+        except Exception as exc:
+            self._send_match_error(exc)
+            return
+
+        if len(paste) > MAX_PASTE_CHARS:
+            result.setdefault("truncated", True)
+        self._send_json(HTTPStatus.OK, result)
+
+    # ─── Incident outcome endpoint ──────────────────────────────────
+    def _handle_incident_outcome(self, body: dict[str, Any]) -> None:
+        """POST /api/incident-outcome — record outcome for a card."""
+        if not self._require_key():
+            return
+
+        incident_id = str(body.get("incident_id", "") or "").strip()
+        outcome_text = str(body.get("outcome_text", "") or "").strip()
+
+        if not incident_id or not outcome_text:
+            self._send_json(
+                HTTPStatus.BAD_REQUEST,
+                {"error": "Both incident_id and outcome_text are required."},
+            )
+            return
+
+        try:
+            result = asyncio.run(
+                record_outcome(
+                    incident_id=incident_id,
+                    outcome_text=outcome_text,
+                    api_key=self._groq_key(),
+                )
+            )
+        except Exception as exc:
+            self._send_match_error(exc)
+            return
+
+        self._send_json(HTTPStatus.OK, result)
+
+    # ─── Debate endpoint ────────────────────────────────────────────
+    def _handle_analyze(self, body: dict[str, Any]) -> None:
+        """POST /api/analyze — debate pipeline, gated on debate_enabled.
+
+        Flag off -> 409 *before* any coordinator construction (a misrouted
+        paste must not burn Tavily quota). Flag on -> unchanged behavior.
+        """
+        if not config.debate_enabled:
+            self._send_json(
+                HTTPStatus.CONFLICT,
+                {"error": "forecast mode disabled"},
+            )
+            return
+
+        if not self._require_key():
+            return
+
+        groq_key = self._groq_key()
+        question = str(body.get("question", "") or "").strip()
+
+        if not question:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Question is required."})
+            return
+
+        try:
+            result = asyncio.run(
+                analyze_async(
+                    question,
+                    use_enhanced=True,
+                    api_key=groq_key,
+                    provider="groq",
+                )
+            )
+        except Exception as exc:
+            error_msg = str(exc)
+            if (
+                "auth" in error_msg.lower()
+                or "unauthorized" in error_msg.lower()
+                or "invalid" in error_msg.lower()
+            ):
+                self._send_json(
+                    HTTPStatus.UNAUTHORIZED,
+                    {"error": "Invalid API key. Please check your Groq API key."},
+                )
+            else:
+                self._send_json(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    {"error": "Analysis failed.", "detail": error_msg},
+                )
+            return
+
+        self._send_json(
+            HTTPStatus.OK,
+            {
+                "question": question,
+                "enhanced": True,
+                "result": result,
+            },
+        )
+
 
 def run_server(host: str = "0.0.0.0", port: int = 8080) -> None:
     """Start the threaded VG web server."""
-    print(f"  Mode: Public SaaS (per-request API keys)")
-    print(f"  Server: VGWeb/2.0")
+    print("  Mode: Public SaaS (per-request API keys)")
+    print("  Server: VGWeb/2.0")
+    print(
+        f"  Debate mode: {'enabled' if config.debate_enabled else 'disabled (forecast disabled)'}"
+    )
 
-    # Check for fallback server-side key (for CLI mode)
     server_key = config.groq_api_key or os.getenv("GROQ_API_KEY")
     if server_key:
-        print(f"  Server fallback key: ✓ configured (for CLI)")
+        print("  Server fallback key: ✓ configured (for CLI)")
     else:
-        print(f"  Server fallback key: ✗ not set (web users must provide their own)")
+        print("  Server fallback key: ✗ not set (web users must provide their own)")
 
     tavily_key = config.tavily_api_key
     if tavily_key and "your" not in tavily_key.lower():
-        print(f"  Tavily key: ✓ configured")
+        print("  Tavily key: ✓ configured")
     else:
-        print(f"  Tavily key: ✗ not set (web search disabled)")
+        print("  Tavily key: ✗ not set (web search disabled)")
 
     server = ThreadingHTTPServer((host, port), VGWebHandler)
     print(f"\nVG web interface running at http://{host}:{port}")
@@ -223,3 +409,7 @@ def run_server(host: str = "0.0.0.0", port: int = 8080) -> None:
         print("\nStopping VG web interface...")
     finally:
         server.server_close()
+
+
+if __name__ == "__main__":
+    run_server()

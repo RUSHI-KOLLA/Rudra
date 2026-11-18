@@ -1,0 +1,31 @@
+{
+  "incident_id": "fixture_query_nvidia_analog",
+  "title": "Tech CEO resigns after misconduct allegations",
+  "status": "provisional",
+  "date": "2026-01-15",
+  "recorded_at": "2026-01-16",
+  "actors": ["John CEO"],
+  "actor_roles": ["ceo", "board"],
+  "sector": "technology",
+  "geography": "United States",
+  "trigger": "CEO resigns following personal conduct allegations",
+  "trigger_type": "personal_conduct",
+  "constraint_types": ["reputational", "security"],
+  "legal_outcome": "none",
+  "escalation_vector": ["media_cycle", "inquiry"],
+  "tempo": "days",
+  "exit_authority": "board",
+  "succession": "internal",
+  "timeline": [
+    {"date": "2026-01-10", "event": "Allegations surface", "claim_ids": ["c1"]},
+    {"date": "2026-01-15", "event": "CEO resigns", "claim_ids": ["c2"]}
+  ],
+  "resolution": ["resignation"],
+  "outcome": null,
+  "claims": [
+    {"id": "c1", "text": "Allegations surface", "tag": "reported_unconfirmed", "source_ids": [], "supports": []},
+    {"id": "c2", "text": "CEO resigns", "tag": "reported_unconfirmed", "source_ids": [], "supports": []}
+  ],
+  "sources": [],
+  "summary_embed": ""
+}

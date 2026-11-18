@@ -1,0 +1,79 @@
+{
+  "incident_id": "park_geun_hye_2016",
+  "title": "Park Geun-hye impeachment and removal",
+  "status": "curated",
+  "date": "2017-03-10",
+  "recorded_at": "2017-03-11",
+  "actors": ["Park Geun-hye", "Park Geun-hye", "Choi Soon-sil"],
+  "actor_roles": ["ceo", "ceo", "court"],
+  "sector": "government",
+  "geography": "South Korea",
+  "trigger": "Park Geun-hye was impeached and removed from office after a corruption scandal involving her close confidante Choi Soon-sil, who was accused of extorting companies and influencing state affairs through her personal relationship with the president.",
+  "trigger_type": "official_misconduct",
+  "constraint_types": ["legal", "reputational"],
+  "legal_outcome": "convicted",
+  "escalation_vector": ["leak", "media_cycle"],
+  "tempo": "months",
+  "exit_authority": "legislature",
+  "succession": "external",
+  "timeline": [
+    {"date": "2016-10-24", "event": "First media reports reveal Choi Soon-sil's influence over Park Geun-hye", "claim_ids": ["c1"]},
+    {"date": "2016-12-09", "event": "National Assembly votes to impeach Park Geun-hye", "claim_ids": ["c2"]},
+    {"date": "2017-03-10", "event": "Constitutional Court upholds impeachment; Park removed from office", "claim_ids": ["c3"]},
+    {"date": "2017-03-31", "event": "Park arrested and detained", "claim_ids": ["c4"]},
+    {"date": "2018-04-06", "event": "Park convicted on multiple corruption charges", "claim_ids": ["c5"]}
+  ],
+  "resolution": ["dismissal"],
+  "outcome": {
+    "summary": "Park Geun-hye was impeached by the National Assembly in December 2016 and removed from office by the Constitutional Court on March 10, 2017. She was arrested and later convicted on multiple corruption charges, receiving a 24-year prison sentence (later reduced). The scandal led to the election of Moon Jae-in as her successor.",
+    "actors": ["Park Geun-hye", "Moon Jae-in", "Choi Soon-sil"],
+    "constraint_types": ["legal", "reputational"],
+    "recorded_at": "2018-04-06",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/park_geun_hye_2016/sources/constitutional_court_2017_ruling.md", "date": "2017-03-10"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/park_geun_hye_2016/sources/park_2018_conviction.md", "date": "2018-04-06"}
+    ]
+  },
+  "claims": [
+    {
+      "id": "c1",
+      "text": "Media reports in October 2016 revealed Choi Soon-sil's influence over President Park Geun-hye",
+      "tag": "reported_unconfirmed",
+      "source_ids": [],
+      "supports": []
+    },
+    {
+      "id": "c2",
+      "text": "The National Assembly voted to impeach Park Geun-hye on December 9, 2016",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": ["c1"]
+    },
+    {
+      "id": "c3",
+      "text": "The Constitutional Court upheld the impeachment and removed Park from office on March 10, 2017",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": ["c2"]
+    },
+    {
+      "id": "c4",
+      "text": "Park was arrested and detained on March 31, 2017",
+      "tag": "reported_unconfirmed",
+      "source_ids": [],
+      "supports": []
+    },
+    {
+      "id": "c5",
+      "text": "Park was convicted on multiple corruption charges on April 6, 2018",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c3"]
+    }
+  ],
+  "sources": [
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/park_geun_hye_2016/sources/constitutional_court_2017_ruling.md", "date": "2017-03-10"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/park_geun_hye_2016/sources/park_2018_conviction.md", "date": "2018-04-06"}
+  ],
+  "summary_embed": ""
+}

@@ -1,0 +1,63 @@
+{
+  "incident_id": "panama_papers_2016",
+  "title": "Sigmundur Gunnlaugsson resigns as Iceland PM",
+  "status": "curated",
+  "date": "2016-04-05",
+  "recorded_at": "2016-04-06",
+  "actors": ["Sigmundur Gunnlaugsson"],
+  "actor_roles": ["ceo"],
+  "sector": "government",
+  "geography": "Iceland",
+  "trigger": "The Panama Papers leak revealed that Sigmundur Gunnlaugsson's wife owned an offshore company that was not disclosed when he became Prime Minister of Iceland, leading to mass protests and his resignation.",
+  "trigger_type": "personal_conduct",
+  "constraint_types": ["legal", "reputational"],
+  "legal_outcome": "none",
+  "escalation_vector": ["leak", "media_cycle"],
+  "tempo": "days",
+  "exit_authority": "self",
+  "succession": "external",
+  "timeline": [
+    {"date": "2016-04-03", "event": "The International Consortium of Investigative Journalists publishes the Panama Papers, revealing Gunnlaugsson's wife owned an offshore company", "claim_ids": ["c1"]},
+    {"date": "2016-04-05", "event": "Gunnlaugsson resigns as Prime Minister of Iceland amid mass protests", "claim_ids": ["c2"]},
+    {"date": "2016-04-07", "event": "Sigurdur Ingi Johannsson named as acting Prime Minister", "claim_ids": ["c3"]}
+  ],
+  "resolution": ["resignation"],
+  "outcome": {
+    "summary": "Sigmundur Gunnlaugsson resigned as Prime Minister of Iceland on April 5, 2016 after the Panama Papers revealed his wife's undisclosed offshore company. He was succeeded by Sigurdur Ingi Johannsson. Gunnlaugsson was not charged criminally but stepped down amid mass protests and loss of parliamentary support.",
+    "actors": ["Sigmundur Gunnlaugsson", "Sigurdur Ingi Johannsson"],
+    "constraint_types": ["legal", "reputational"],
+    "recorded_at": "2016-04-07",
+    "sources": [
+      {"id": "s1", "type": "news_report", "ref": "data/incidents/panama_papers_2016/sources/panama_papers_2016_leak.md", "date": "2016-04-03"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/panama_papers_2016/sources/iceland_2016_resignation.md", "date": "2016-04-05"}
+    ]
+  },
+  "claims": [
+    {
+      "id": "c1",
+      "text": "The Panama Papers leak on April 3, 2016 revealed that Sigmundur Gunnlaugsson's wife owned an undisclosed offshore company",
+      "tag": "reported_unconfirmed",
+      "source_ids": [],
+      "supports": []
+    },
+    {
+      "id": "c2",
+      "text": "Gunnlaugsson resigned as Prime Minister of Iceland on April 5, 2016 amid mass protests",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c1"]
+    },
+    {
+      "id": "c3",
+      "text": "Sigurdur Ingi Johannsson was named as acting Prime Minister on April 7, 2016",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c2"]
+    }
+  ],
+  "sources": [
+    {"id": "s1", "type": "news_report", "ref": "data/incidents/panama_papers_2016/sources/panama_papers_2016_leak.md", "date": "2016-04-03"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/panama_papers_2016/sources/iceland_2016_resignation.md", "date": "2016-04-05"}
+  ],
+  "summary_embed": ""
+}

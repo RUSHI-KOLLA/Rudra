@@ -925,6 +925,367 @@
                 padding: 6px 12px !important;
             }
         }
+
+        /* ══ Incident Memory overlay (Phase 3) ══════════════════════════
+           Full-height overlay above #app-interface, below #setup-overlay.
+           Never reuses the 350px verdict aside. */
+        #incident-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000; /* app-interface: 20 · setup-overlay: 9999 */
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(14px);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #incident-overlay.open { display: flex; }
+
+        .io-shell {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-width: 1180px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 22px 34px 26px;
+            gap: 14px;
+            min-height: 0;
+        }
+
+        .io-top {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.35);
+            padding-bottom: 12px;
+            flex: none;
+        }
+        .io-title {
+            font-family: var(--font-display);
+            font-size: 30px;
+            letter-spacing: 0.14em;
+            color: var(--matrix-green);
+        }
+        .io-sub {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            color: var(--cold-cyan);
+            opacity: 0.75;
+        }
+        .io-modes { display: flex; gap: 8px; margin-left: auto; }
+        .io-mode {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+            padding: 7px 16px;
+            background: transparent;
+            border: 1px solid var(--cold-cyan);
+            color: var(--cold-cyan);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .io-mode.active {
+            background: var(--matrix-green);
+            border-color: var(--matrix-green);
+            color: #000;
+        }
+        .io-state {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--ember-gold);
+            min-width: 120px;
+            text-align: right;
+        }
+        .io-close {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            letter-spacing: 0.14em;
+            padding: 7px 14px;
+            background: transparent;
+            border: 1px solid var(--dark-ember);
+            color: var(--dark-ember);
+            cursor: pointer;
+        }
+        .io-close:hover { background: var(--dark-ember); color: #000; }
+
+        .io-body {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+        .io-body::-webkit-scrollbar { width: 8px; }
+        .io-body::-webkit-scrollbar-track { background: rgba(0, 255, 65, 0.06); }
+        .io-body::-webkit-scrollbar-thumb { background: rgba(0, 255, 65, 0.35); }
+
+        .io-view[hidden] { display: none !important; }
+
+        .io-label {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--matrix-green);
+            margin: 16px 0 8px;
+        }
+        .io-label:first-child { margin-top: 0; }
+
+        .io-paste {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            background: rgba(0, 255, 65, 0.04);
+            border: 1px solid rgba(0, 255, 65, 0.4);
+            color: var(--off-white);
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.55;
+            padding: 14px;
+            outline: none;
+        }
+        .io-paste:focus { border-color: var(--matrix-green); box-shadow: 0 0 12px rgba(0, 255, 65, 0.18); }
+
+        .io-meta {
+            display: flex;
+            gap: 18px;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            color: var(--cold-cyan);
+            margin-top: 7px;
+            min-height: 16px;
+        }
+        .io-meta .warn { color: var(--dark-ember); }
+
+        .io-primary {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            letter-spacing: 0.2em;
+            padding: 12px 34px;
+            margin-top: 16px;
+            background: var(--matrix-green);
+            border: 1px solid var(--matrix-green);
+            color: #000;
+            cursor: pointer;
+        }
+        .io-primary:disabled { opacity: 0.45; cursor: wait; }
+        .io-primary.secondary { background: transparent; color: var(--matrix-green); margin-left: 10px; }
+
+        .io-banner {
+            font-family: var(--font-mono);
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 12px 16px;
+            margin-top: 14px;
+            border-left: 3px solid var(--cold-cyan);
+            background: rgba(79, 184, 201, 0.08);
+            color: var(--off-white);
+            white-space: pre-wrap;
+        }
+        .io-banner.err { border-left-color: var(--dark-ember); background: rgba(232, 93, 4, 0.1); }
+        .io-banner.warn { border-left-color: var(--ember-gold); background: rgba(201, 148, 58, 0.1); }
+
+        /* Review form */
+        .io-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 14px 20px;
+        }
+        .io-field { display: flex; flex-direction: column; gap: 5px; }
+        .io-field.wide { grid-column: 1 / -1; }
+        .io-field label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            color: var(--cold-cyan);
+        }
+        .io-field.missing label { color: var(--dark-ember); }
+        .io-field.missing input,
+        .io-field.missing textarea { border-color: var(--dark-ember); }
+        .io-field input,
+        .io-field textarea,
+        .io-field select {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(237, 232, 224, 0.28);
+            color: var(--off-white);
+            font-family: var(--font-mono);
+            font-size: 13px;
+            padding: 8px 10px;
+            outline: none;
+        }
+        .io-field input:focus,
+        .io-field textarea:focus,
+        .io-field select:focus { border-color: var(--matrix-green); }
+        .io-field textarea { min-height: 64px; resize: vertical; }
+
+        .io-checks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 12px;
+            padding: 8px 10px;
+            border: 1px solid rgba(237, 232, 224, 0.2);
+            max-height: 130px;
+            overflow-y: auto;
+        }
+        .io-checks label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.06em;
+            color: var(--off-white);
+            cursor: pointer;
+        }
+        .io-checks input { accent-color: var(--matrix-green); }
+
+        /* Results */
+        .io-line {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            line-height: 1.65;
+            color: var(--ember-gold);
+            padding: 12px 16px;
+            background: rgba(201, 148, 58, 0.07);
+            border-left: 3px solid var(--ember-gold);
+            margin-bottom: 14px;
+        }
+        .io-line.asof { color: var(--cold-cyan); background: rgba(79, 184, 201, 0.06); border-left-color: var(--cold-cyan); font-size: 12px; }
+
+        .io-match {
+            border: 1px solid rgba(237, 232, 224, 0.18);
+            border-left: 4px solid var(--cold-cyan);
+            background: rgba(0, 0, 0, 0.4);
+            padding: 16px 20px;
+            margin-bottom: 14px;
+        }
+        .io-match.strong { border-left-color: var(--matrix-green); box-shadow: 0 0 18px rgba(0, 255, 65, 0.07); }
+        .io-match.weak { opacity: 0.82; }
+
+        .io-match-head {
+            display: flex;
+            align-items: baseline;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+        .io-tier {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            padding: 3px 9px;
+            border: 1px solid currentColor;
+        }
+        .io-tier.strong { color: var(--matrix-green); }
+        .io-tier.weak { color: var(--cold-cyan); }
+        .io-match-title {
+            font-family: var(--font-display);
+            font-size: 24px;
+            letter-spacing: 0.08em;
+            color: var(--off-white);
+        }
+        .io-score { font-family: var(--font-mono); font-size: 13px; color: var(--ember-gold); margin-left: auto; }
+        .io-match-id { font-family: var(--font-mono); font-size: 11px; color: var(--cold-cyan); opacity: 0.7; }
+
+        .io-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 26px; }
+        @media (max-width: 760px) { .io-cols { grid-template-columns: 1fr; } }
+
+        .io-bullets { margin: 0; padding-left: 18px; }
+        .io-bullets li {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.65;
+            color: var(--off-white);
+            margin-bottom: 3px;
+        }
+        .io-bullets.breaks li { color: var(--dark-ember); }
+        .io-bullets.why li { color: var(--matrix-green); }
+        .io-bullets.sub li { color: var(--off-white); opacity: 0.8; }
+
+        .io-kv {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--off-white);
+        }
+        .io-kv b { color: var(--cold-cyan); font-weight: normal; letter-spacing: 0.08em; }
+
+        .io-claim {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--off-white);
+            padding: 5px 0;
+            border-bottom: 1px dotted rgba(237, 232, 224, 0.15);
+        }
+        .io-claim .io-tag {
+            font-size: 10px;
+            letter-spacing: 0.14em;
+            color: var(--matrix-green);
+            border: 1px solid rgba(0, 255, 65, 0.45);
+            padding: 1px 6px;
+            margin-right: 8px;
+        }
+        .io-claim .io-tag.low { color: var(--dark-ember); border-color: rgba(232, 93, 4, 0.55); }
+        .io-claim .io-src { color: var(--cold-cyan); font-size: 11px; }
+        .io-claim .io-src.none { color: var(--dark-ember); font-style: italic; }
+
+        .io-timeline { list-style: none; margin: 0; padding: 0; }
+        .io-timeline li {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--off-white);
+            padding: 4px 0 4px 14px;
+            border-left: 2px solid rgba(79, 184, 201, 0.5);
+            margin-left: 4px;
+        }
+        .io-timeline .t-date { color: var(--ember-gold); margin-right: 10px; }
+
+        details.io-debug {
+            margin-top: 16px;
+            border: 1px solid rgba(79, 184, 201, 0.35);
+            padding: 10px 14px;
+        }
+        details.io-debug summary {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            color: var(--cold-cyan);
+            cursor: pointer;
+        }
+        details.io-debug pre {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: var(--off-white);
+            opacity: 0.85;
+            white-space: pre-wrap;
+            margin-top: 10px;
+        }
+
+        .io-section-h {
+            font-family: var(--font-display);
+            font-size: 21px;
+            letter-spacing: 0.12em;
+            color: var(--matrix-green);
+            margin: 22px 0 10px;
+        }
+        .io-empty {
+            font-family: var(--font-mono);
+            font-size: 14px;
+            color: var(--cold-cyan);
+            padding: 24px 0;
+        }
+
+        @media (max-width: 760px) {
+            .io-shell { padding: 14px 16px 18px; }
+            .io-title { font-size: 22px; }
+            .io-state { display: none; }
+        }
     </style>
 </head>
 
@@ -1003,7 +1364,11 @@
     <div id="app-interface">
         <header class="app-top">
             <span>VG ONLINE</span>
-            <span><span class="settings-link" id="btn-settings">⚙ SETTINGS</span> · GRAPH LINK: STABLE</span>
+            <span>
+                <span class="settings-link" id="btn-incident-open">◈ INCIDENT</span>
+                · <span class="settings-link" id="btn-settings">⚙ SETTINGS</span>
+                · GRAPH LINK: STABLE
+            </span>
         </header>
 
         <aside class="live-intercept" id="live-intercept">
@@ -1048,6 +1413,54 @@
                 <button type="submit" class="cmd-btn">EXECUTE</button>
             </form>
         </footer>
+    </div>
+
+    <!-- ══ Incident Memory overlay (Phase 3) ═══════════════════════════
+         Full-height overlay above #app-interface, below #setup-overlay.
+         States: idle / extracting / reviewing / matching / complete / error -->
+    <div id="incident-overlay" aria-label="Incident memory panel">
+        <div class="io-shell">
+            <div class="io-top">
+                <span class="io-title">INCIDENT MEMORY</span>
+                <span class="io-sub">SAME PATTERN, NOT SAME WORDS</span>
+                <div class="io-modes" id="io-modes">
+                    <button type="button" class="io-mode active" data-mode="incident">INCIDENT</button>
+                    <!-- Debate rendered only when health.debate_enabled -->
+                </div>
+                <span class="io-state" id="io-state">IDLE</span>
+                <button type="button" class="io-close" id="io-close">✕ CLOSE</button>
+            </div>
+
+            <div class="io-body" id="io-body">
+                <!-- idle: paste box -->
+                <section class="io-view" id="io-view-paste">
+                    <label class="io-label" for="io-paste">PASTE INCIDENT</label>
+                    <textarea id="io-paste" class="io-paste" spellcheck="false"
+                        placeholder="Paste a news incident: who, what, when, how it escalated..."></textarea>
+                    <div class="io-meta">
+                        <span id="io-charcount">0 / 4,000 chars</span>
+                        <span class="warn" id="io-trunc" hidden>⚠ exceeds 4,000 — will be truncated on submit</span>
+                    </div>
+                    <button type="button" class="io-primary" id="io-run">EXTRACT &amp; MATCH</button>
+                    <div class="io-banner" id="io-paste-banner" hidden></div>
+                </section>
+
+                <!-- reviewing: extracted fields review/edit -->
+                <section class="io-view" id="io-view-review" hidden>
+                    <div class="io-banner warn" id="io-review-banner" hidden></div>
+                    <label class="io-label">REVIEW EXTRACTED FIELDS — edit anything wrong, then confirm</label>
+                    <div class="io-grid" id="io-review-grid"></div>
+                    <button type="button" class="io-primary" id="io-confirm">CONFIRM &amp; MATCH</button>
+                    <button type="button" class="io-primary secondary" id="io-review-back">← RE-PASTE</button>
+                </section>
+
+                <!-- matching/complete/error: rendered output -->
+                <section class="io-view" id="io-view-results" hidden>
+                    <div class="io-banner" id="io-results-banner" hidden></div>
+                    <div id="io-results"></div>
+                </section>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -1514,6 +1927,518 @@
         });
 
         window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+
+        // ══ Incident Memory panel (Phase 3) ══════════════════════════════
+        // State machine: idle → extracting → reviewing → matching → complete
+        //                 ↘ error (503 stops; needs_manual_entry → reviewing)
+        (function incidentPanel() {
+            const overlay = document.getElementById('incident-overlay');
+            const stateEl = document.getElementById('io-state');
+            const modesEl = document.getElementById('io-modes');
+            const bodyEl = document.getElementById('io-body');
+
+            const viewPaste = document.getElementById('io-view-paste');
+            const viewReview = document.getElementById('io-view-review');
+            const viewResults = document.getElementById('io-view-results');
+
+            const pasteBox = document.getElementById('io-paste');
+            const charCount = document.getElementById('io-charcount');
+            const truncWarn = document.getElementById('io-trunc');
+            const pasteBanner = document.getElementById('io-paste-banner');
+            const reviewBanner = document.getElementById('io-review-banner');
+            const reviewGrid = document.getElementById('io-review-grid');
+            const resultsBanner = document.getElementById('io-results-banner');
+            const resultsEl = document.getElementById('io-results');
+
+            const btnRun = document.getElementById('io-run');
+            const btnConfirm = document.getElementById('io-confirm');
+            const btnBack = document.getElementById('io-review-back');
+            const btnClose = document.getElementById('io-close');
+            const btnReopen = document.getElementById('btn-incident-open');
+
+            const MAX_PASTE = 4000;
+
+            // Closed vocabularies (mirrors incidents/schema.py — no new enums)
+            const ENUMS = {
+                trigger_type: ['personal_conduct', 'market_shock', 'regulatory', 'internal_conflict', 'external_attack', 'policy_shift', 'fraud', 'operational_failure', 'official_misconduct'],
+                constraint_types: ['legal', 'regulatory', 'market', 'reputational', 'security'],
+                legal_outcome: ['none', 'pending', 'charges_dropped', 'convicted', 'acquitted', 'settled', 'pardoned', 'fled'],
+                escalation_vector: ['leak', 'filing', 'inquiry', 'ultimatum', 'resign_signal', 'media_cycle'],
+                tempo: ['hours', 'days', 'weeks', 'months', 'years'],
+                exit_authority: ['self', 'board', 'investors', 'court', 'regulator', 'electorate', 'legislature'],
+                succession: ['internal', 'external', 'contested', 'unknown'],
+                resolution: ['resignation', 'dismissal', 'settlement', 'ongoing', 'acquittal', 'conviction', 'bankruptcy', 'dissolution', 'grounding', 'government_appointed_board', 'tech_mahindra_acquisition'],
+                actor_roles: ['ceo', 'founder', 'cfo', 'board', 'employee', 'regulator', 'court', 'intelligence_agency', 'government', 'investor', 'customer', 'media']
+            };
+            const SCALAR_SELECTS = ['trigger_type', 'tempo', 'exit_authority', 'succession', 'legal_outcome'];
+            const CHECKBOX_LISTS = ['actor_roles', 'constraint_types', 'escalation_vector', 'resolution'];
+            const TEXT_FIELDS = ['title', 'date', 'trigger', 'sector', 'geography'];
+
+            let state = 'idle';
+            let lastPaste = '';
+            let lastExtracted = null;   // submitted payload, kept for the "both timelines" render
+            let mode = localStorage.getItem('vg_mode') || 'incident';
+
+            function setState(next) {
+                state = next;
+                stateEl.textContent = next.toUpperCase();
+            }
+
+            function showView(which) {
+                viewPaste.hidden = which !== 'paste';
+                viewReview.hidden = which !== 'review';
+                viewResults.hidden = which !== 'results';
+                bodyEl.scrollTop = 0;
+            }
+
+            function banner(el, text, kind) {
+                if (!text) { el.hidden = true; el.textContent = ''; return; }
+                el.textContent = text;
+                el.className = 'io-banner' + (kind ? ' ' + kind : '');
+                el.hidden = false;
+            }
+
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+                    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+                ));
+            }
+
+            // ── open / close ──
+            function openPanel() {
+                overlay.classList.add('open');
+                if (state === 'idle') showView('paste');
+            }
+            function closePanel() { overlay.classList.remove('open'); }
+
+            btnClose.addEventListener('click', closePanel);
+            btnReopen.addEventListener('click', openPanel);
+
+            // ── mode selector (Debate rendered only when flag on) ──
+            function applyMode(m, persist) {
+                mode = m;
+                if (persist) localStorage.setItem('vg_mode', m);
+                modesEl.querySelectorAll('.io-mode').forEach(b => {
+                    b.classList.toggle('active', b.dataset.mode === m);
+                });
+                if (m === 'debate') {
+                    // Debate posts to /api/analyze exactly as today (cmd-form path)
+                    closePanel();
+                    const ci = document.getElementById('cmd-input');
+                    if (ci) ci.focus();
+                } else {
+                    openPanel();
+                }
+            }
+
+            function renderModeButtons(debateEnabled) {
+                // Hidden, not disabled, while the flag is off.
+                if (debateEnabled && !modesEl.querySelector('[data-mode="debate"]')) {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'io-mode';
+                    b.dataset.mode = 'debate';
+                    b.textContent = 'DEBATE';
+                    b.addEventListener('click', () => applyMode('debate', true));
+                    modesEl.appendChild(b);
+                }
+                modesEl.querySelectorAll('.io-mode[data-mode="incident"]').forEach(b => {
+                    b.onclick = () => applyMode('incident', true);
+                });
+            }
+
+            // Health: drives the Debate option only (no new endpoint, no new field
+            // anywhere else — debate_enabled rides the existing GET /api/health).
+            fetch('/api/health').then(r => r.json()).then(h => {
+                renderModeButtons(!!h.debate_enabled);
+            }).catch(() => renderModeButtons(false));
+
+            // ── paste box: char count + truncation notice ──
+            function updateCount() {
+                const n = pasteBox.value.length;
+                charCount.textContent = `${n.toLocaleString()} / ${MAX_PASTE.toLocaleString()} chars`;
+                truncWarn.hidden = n <= MAX_PASTE;
+            }
+            pasteBox.addEventListener('input', updateCount);
+
+            // ── API helpers ──
+            async function postJSON(url, payload) {
+                const apiKey = getApiKey();
+                if (!apiKey) {
+                    document.getElementById('setup-overlay').style.display = 'flex';
+                    const err = new Error('no api key');
+                    err.noKey = true;
+                    throw err;
+                }
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+                    body: JSON.stringify(payload)
+                });
+                let data = null;
+                try { data = await res.json(); } catch (e) { data = { error: 'malformed response' }; }
+                return { res, data };
+            }
+
+            // ── Phase 1: extract ──
+            btnRun.addEventListener('click', async () => {
+                const paste = pasteBox.value.trim();
+                if (!paste) { banner(pasteBanner, 'Paste an incident first.', 'err'); return; }
+                lastPaste = paste;
+                lastExtracted = null;
+                banner(pasteBanner, '');
+                setState('extracting');
+                btnRun.disabled = true;
+                btnRun.textContent = 'EXTRACTING...';
+                try {
+                    const { res, data } = await postJSON('/api/incident-match', { paste, mode: 'incident' });
+                    if (res.ok && data.status === 'reviewing') {
+                        setState('reviewing');
+                        openReview(data.extracted_card || {}, null);
+                    } else if (res.status === 422 && data.status === 'needs_manual_entry') {
+                        // Extraction failed or incomplete → review state with raw paste
+                        setState('reviewing');
+                        openReview({}, data);
+                    } else if (res.status === 503) {
+                        setState('error');
+                        showView('results');
+                        banner(resultsBanner, 'Embedder unavailable — ' + (data.reason || 'index offline') + '. Nothing was scored.', 'err');
+                    } else {
+                        setState('error');
+                        banner(pasteBanner, data.error || data.detail || ('Request failed (' + res.status + ').'), 'err');
+                    }
+                } catch (err) {
+                    if (!err.noKey) {
+                        setState('error');
+                        banner(pasteBanner, 'Connection failed: ' + err.message, 'err');
+                    } else {
+                        setState('idle');
+                    }
+                } finally {
+                    btnRun.disabled = false;
+                    btnRun.textContent = 'EXTRACT & MATCH';
+                }
+            });
+
+            // ── Phase 2: review / manual entry form ──
+            function openReview(extracted, manualInfo) {
+                reviewGrid.innerHTML = '';
+                banner(reviewBanner, '');
+
+                if (manualInfo) {
+                    const miss = (manualInfo.missing || []).join(', ') || 'unknown';
+                    banner(reviewBanner,
+                        'needs_manual_entry — extraction could not fill: ' + miss + '.\n' +
+                        'Fill the fields below (raw paste kept' +
+                        (manualInfo.spooled_path ? ' at ' + manualInfo.spooled_path : '') + ').',
+                        'warn');
+                }
+
+                const frag = document.createDocumentFragment();
+
+                TEXT_FIELDS.forEach(name => {
+                    frag.appendChild(fieldWrap(name, name.toUpperCase(), () => {
+                        const i = document.createElement('input');
+                        i.type = 'text';
+                        i.dataset.field = name;
+                        i.value = extracted[name] == null ? '' : String(extracted[name]);
+                        return i;
+                    }, (manualInfo && (manualInfo.missing || []).includes(name))));
+                });
+
+                // actors: comma-separated, ≥2 required
+                frag.appendChild(fieldWrap('actors', 'ACTORS (comma-separated, ≥2)', () => {
+                    const i = document.createElement('input');
+                    i.type = 'text';
+                    i.dataset.field = 'actors';
+                    i.value = Array.isArray(extracted.actors) ? extracted.actors.join(', ') : '';
+                    return i;
+                }, (manualInfo && (manualInfo.missing || []).includes('actors')), true));
+
+                SCALAR_SELECTS.forEach(name => {
+                    frag.appendChild(fieldWrap(name, name.toUpperCase(), () => {
+                        const s = document.createElement('select');
+                        s.dataset.field = name;
+                        const blank = document.createElement('option');
+                        blank.value = ''; blank.textContent = '— select —';
+                        s.appendChild(blank);
+                        ENUMS[name].forEach(v => {
+                            const o = document.createElement('option');
+                            o.value = v; o.textContent = v;
+                            s.appendChild(o);
+                        });
+                        s.value = extracted[name] == null ? '' : String(extracted[name]);
+                        return s;
+                    }, (manualInfo && (manualInfo.missing || []).includes(name))));
+                });
+
+                CHECKBOX_LISTS.forEach(name => {
+                    frag.appendChild(fieldWrap(name, name.toUpperCase(), () => {
+                        const box = document.createElement('div');
+                        box.className = 'io-checks';
+                        box.dataset.fieldGroup = name;
+                        const selected = new Set(Array.isArray(extracted[name]) ? extracted[name] : []);
+                        ENUMS[name].forEach(v => {
+                            const lab = document.createElement('label');
+                            const cb = document.createElement('input');
+                            cb.type = 'checkbox';
+                            cb.value = v;
+                            cb.checked = selected.has(v);
+                            lab.appendChild(cb);
+                            lab.appendChild(document.createTextNode(v));
+                            box.appendChild(lab);
+                        });
+                        return box;
+                    }, (manualInfo && (manualInfo.missing || []).includes(name)), true));
+                });
+
+                // timeline: one "YYYY-MM-DD | event" per line
+                frag.appendChild(fieldWrap('timeline', 'TIMELINE (one "YYYY-MM-DD | event" per line)', () => {
+                    const t = document.createElement('textarea');
+                    t.dataset.field = 'timeline';
+                    const tl = Array.isArray(extracted.timeline) ? extracted.timeline : [];
+                    t.value = tl.map(e => `${e.date || ''} | ${e.event || ''}`).trim();
+                    return t;
+                }, false, true));
+
+                reviewGrid.appendChild(frag);
+                showView('review');
+                setState('reviewing');
+            }
+
+            function fieldWrap(name, label, makeInput, missing, wide) {
+                const wrap = document.createElement('div');
+                wrap.className = 'io-field' + (wide ? ' wide' : '') + (missing ? ' missing' : '');
+                const lab = document.createElement('label');
+                lab.textContent = label;
+                wrap.appendChild(lab);
+                wrap.appendChild(makeInput());
+                return wrap;
+            }
+
+            function collectReview() {
+                const out = {};
+                reviewGrid.querySelectorAll('[data-field]').forEach(el => {
+                    const name = el.dataset.field;
+                    if (name === 'actors') {
+                        out.actors = el.value.split(',').map(s => s.trim()).filter(Boolean);
+                    } else if (name === 'timeline') {
+                        out.timeline = el.value.split('\n').map(line => {
+                            const idx = line.indexOf('|');
+                            if (idx === -1) return null;
+                            const date = line.slice(0, idx).trim();
+                            const event = line.slice(idx + 1).trim();
+                            if (!event) return null;
+                            return { date, event };
+                        }).filter(Boolean);
+                    } else {
+                        out[name] = el.value.trim();
+                    }
+                });
+                reviewGrid.querySelectorAll('[data-field-group]').forEach(el => {
+                    out[el.dataset.fieldGroup] = Array.from(
+                        el.querySelectorAll('input[type=checkbox]:checked')
+                    ).map(cb => cb.value);
+                });
+                return out;
+            }
+
+            btnBack.addEventListener('click', () => {
+                setState('idle');
+                banner(pasteBanner, '');
+                showView('paste');
+            });
+
+            btnConfirm.addEventListener('click', async () => {
+                const extracted = collectReview();
+                lastExtracted = extracted;
+                setState('matching');
+                btnConfirm.disabled = true;
+                btnConfirm.textContent = 'MATCHING...';
+                try {
+                    const { res, data } = await postJSON('/api/incident-match', {
+                        paste: lastPaste, mode: 'incident', extracted
+                    });
+                    if (res.ok && data.status === 'complete') {
+                        setState('complete');
+                        renderResults(data);
+                    } else if (res.status === 422 && data.status === 'needs_manual_entry') {
+                        setState('reviewing');
+                        openReview(extracted, data);
+                    } else if (res.status === 503) {
+                        setState('error');
+                        showView('results');
+                        banner(resultsBanner, 'Embedder unavailable — ' + (data.reason || 'index offline') + '. Nothing was scored.', 'err');
+                    } else {
+                        setState('error');
+                        showView('results');
+                        banner(resultsBanner, data.error || data.detail || ('Match failed (' + res.status + ').'), 'err');
+                    }
+                } catch (err) {
+                    if (!err.noKey) {
+                        setState('error');
+                        showView('results');
+                        banner(resultsBanner, 'Connection failed: ' + err.message, 'err');
+                    } else {
+                        setState('reviewing');
+                    }
+                } finally {
+                    btnConfirm.disabled = false;
+                    btnConfirm.textContent = 'CONFIRM & MATCH';
+                }
+            });
+
+            // ── complete: render the output contract ──
+            function fieldLine(label, value) {
+                const v = Array.isArray(value) ? value.join(', ') : value;
+                if (v == null || v === '' || (Array.isArray(value) && value.length === 0)) return '';
+                return `<div class="io-kv"><b>${esc(label)}</b> ${esc(v)}</div>`;
+            }
+
+            function renderCardFields(card) {
+                return [
+                    fieldLine('TRIGGER TYPE', card.trigger_type),
+                    fieldLine('CONSTRAINTS', card.constraint_types),
+                    fieldLine('ESCALATION', card.escalation_vector),
+                    fieldLine('TEMPO', card.tempo),
+                    fieldLine('EXIT AUTHORITY', card.exit_authority),
+                    fieldLine('SUCCESSION', card.succession),
+                    fieldLine('SECTOR', card.sector),
+                    fieldLine('RESOLUTION', card.resolution),
+                    fieldLine('LEGAL OUTCOME', card.legal_outcome),
+                    card.outcome && card.outcome.summary ? fieldLine('OUTCOME', card.outcome.summary) : ''
+                ].join('');
+            }
+
+            function renderClaims(card) {
+                const claims = card.claims || [];
+                if (!claims.length) return '';
+                const srcById = {};
+                (card.sources || []).forEach(s => { srcById[s.id] = s; });
+                const rows = claims.map(c => {
+                    const low = c.tag !== 'documented';
+                    const srcs = (c.source_ids || []).map(id => srcById[id]).filter(Boolean);
+                    const srcHTML = srcs.length
+                        ? srcs.map(s => `<span class="io-src">${esc(s.ref || s.id)}</span>`).join(', ')
+                        : '<span class="io-src none">no source available</span>';
+                    return `<div class="io-claim"><span class="io-tag${low ? ' low' : ''}">${esc(c.tag)}</span>${esc(c.text)} <span class="io-src">·</span> ${srcHTML}</div>`;
+                }).join('');
+                return `<div class="io-section-h">CLAIMS · TAG · SOURCE</div>${rows}`;
+            }
+
+            function renderTimeline(entries, heading) {
+                if (!entries || !entries.length) return '';
+                const items = entries.map(e =>
+                    `<li><span class="t-date">${esc(e.date)}</span>${esc(e.event)}</li>`).join('');
+                return `<div class="io-section-h">${esc(heading)}</div><ul class="io-timeline">${items}</ul>`;
+            }
+
+            function renderResults(data) {
+                showView('results');
+                banner(resultsBanner, '');
+
+                if (data.corpus_size === 0) {
+                    resultsEl.innerHTML = '<div class="io-empty">No records yet — the corpus is empty (not the same as no match).</div>';
+                    return;
+                }
+
+                const parts = [];
+
+                // Base rate: text already carries explicit counts + trigger-type fallback
+                if (data.base_rate && data.base_rate.text) {
+                    parts.push(`<div class="io-line">${esc(data.base_rate.text)}</div>`);
+                }
+                // Silence line + as-of stamp
+                if (data.silence_line) {
+                    parts.push(`<div class="io-line asof">${esc(data.silence_line)}</div>`);
+                } else if (data.as_of) {
+                    parts.push(`<div class="io-line asof">As of ${esc(data.as_of)}.</div>`);
+                }
+
+                const matches = data.matches || [];
+                const strong = matches.filter(m => m.tier === 'strong');
+
+                if (!matches.length || !strong.length) {
+                    parts.push('<div class="io-banner warn">No card in memory matches this shape — new to the record. Weak candidates below are context only.</div>');
+                }
+
+                matches.forEach((m, i) => {
+                    const card = m.card || {};
+                    const tier = m.tier === 'strong' ? 'strong' : 'weak';
+                    const why = (m.why || []).map(w => `<li>${esc(w.component)} · ${Math.round((w.value || 0) * 100)}% shared · w ${w.weight}</li>`).join('');
+                    const breaks = (m.breaks || []).map(b => `<li>${esc(b.component)} · ${b.weight} lost</li>`).join('');
+
+                    parts.push(`
+                        <div class="io-match ${tier}">
+                            <div class="io-match-head">
+                                <span class="io-tier ${tier}">#${i + 1} ${tier === 'strong' ? 'STRONG' : 'WEAK'}</span>
+                                <span class="io-match-title">${esc(card.title || m.id)}</span>
+                                <span class="io-match-id">${esc(m.id)}</span>
+                                <span class="io-score">S ${Number(m.score).toFixed(4)} · cosine ${Number(m.cosine).toFixed(4)}</span>
+                            </div>
+                            <div class="io-cols">
+                                <div>
+                                    <div class="io-section-h" style="margin-top:4px;font-size:15px;">WHY IT MATCHES</div>
+                                    <ul class="io-bullets why">${why || '<li>—</li>'}</ul>
+                                </div>
+                                <div>
+                                    <div class="io-section-h" style="margin-top:4px;font-size:15px;">WHERE IT BREAKS</div>
+                                    <ul class="io-bullets breaks">${breaks || '<li>—</li>'}</ul>
+                                </div>
+                            </div>
+                            <div class="io-section-h" style="font-size:15px;">STRUCTURED FIELDS</div>
+                            ${renderCardFields(card)}
+                            ${renderClaims(card)}
+                            ${renderTimeline(card.timeline, 'MATCHED TIMELINE')}
+                        </div>`);
+                });
+
+                // Both timelines: the pasted record's, then each match's (above)
+                if (lastExtracted && Array.isArray(lastExtracted.timeline) && lastExtracted.timeline.length) {
+                    parts.push(renderTimeline(lastExtracted.timeline, 'PASTED RECORD TIMELINE'));
+                }
+
+                // Research Q&A (empty in Phase 4-less Phase 3; renders when present)
+                const audit = data.loop_audit || [];
+                if (audit.length) {
+                    const rows = audit.map(a => {
+                        const src = a.source
+                            ? `<span class="io-src">${esc(a.source)}</span>`
+                            : '<span class="io-src none">no source available</span>';
+                        return `<div class="io-claim"><span class="io-tag${a.closed ? '' : ' low'}">${esc(a.gap_type || 'gap')}</span>${esc(a.question)} — ${a.closed ? 'closed' : 'open'} · ${src}</div>`;
+                    }).join('');
+                    parts.push(`<div class="io-section-h">RESEARCH QUESTIONS</div>${rows}`);
+                }
+
+                // Retrieval debug + as-of
+                parts.push(`<div class="io-line asof">as of ${esc(data.as_of || '')}</div>`);
+                if (data.retrieval_debug) {
+                    parts.push(`
+                        <details class="io-debug">
+                            <summary>RETRIEVAL DEBUG</summary>
+                            <pre>${esc(JSON.stringify(data.retrieval_debug, null, 2))}</pre>
+                        </details>`);
+                }
+
+                resultsEl.innerHTML = parts.join('');
+                if (typeof playConnectSound === 'function') playConnectSound();
+            }
+
+            // Enter the app with incident mode (the default) on top.
+            const origEnter = document.getElementById('btn-enter-app');
+            if (origEnter) {
+                origEnter.addEventListener('click', () => {
+                    setTimeout(() => {
+                        if (mode !== 'debate') openPanel();
+                    }, 300);
+                });
+            }
+
+            // Initial paint
+            applyMode(mode, false);
+            if (mode !== 'debate') showView('paste');
+            setState('idle');
+        })();
     </script>
 </body>
 

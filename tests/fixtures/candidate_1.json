@@ -1,0 +1,31 @@
+{
+  "incident_id": "fixture_candidate_1",
+  "title": "Tech CEO resigns after personal conduct scandal",
+  "status": "curated",
+  "date": "2025-06-01",
+  "recorded_at": "2025-06-02",
+  "actors": ["Jane CEO"],
+  "actor_roles": ["ceo", "board"],
+  "sector": "technology",
+  "geography": "United States",
+  "trigger": "CEO resigns following personal conduct allegations",
+  "trigger_type": "personal_conduct",
+  "constraint_types": ["reputational", "legal"],
+  "legal_outcome": "settled",
+  "escalation_vector": ["media_cycle", "inquiry"],
+  "tempo": "weeks",
+  "exit_authority": "board",
+  "succession": "external",
+  "timeline": [
+    {"date": "2025-05-20", "event": "Allegations surface", "claim_ids": ["c1"]},
+    {"date": "2025-06-01", "event": "CEO resigns", "claim_ids": ["c2"]}
+  ],
+  "resolution": ["resignation"],
+  "outcome": null,
+  "claims": [
+    {"id": "c1", "text": "Allegations surface", "tag": "reported_unconfirmed", "source_ids": [], "supports": []},
+    {"id": "c2", "text": "CEO resigns", "tag": "reported_unconfirmed", "source_ids": [], "supports": []}
+  ],
+  "sources": [],
+  "summary_embed": ""
+}

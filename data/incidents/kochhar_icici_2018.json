@@ -1,0 +1,55 @@
+{
+  "incident_id": "kochhar_icici_2018",
+  "title": "Chanda Kochhar resigns as ICICI Bank CEO",
+  "status": "curated",
+  "date": "2018-10-04",
+  "recorded_at": "2018-10-05",
+  "actors": ["Chanda Kochhar", "ICICI Board of Directors", "Sandeep Bakhshi"],
+  "actor_roles": ["ceo", "board", "ceo"],
+  "sector": "finance",
+  "geography": "India",
+  "trigger": "Allegations of conflict of interest in ICICI Bank's loan to the Videocon Group, linked to Kochhar's husband's business, led the board to ask for her resignation.",
+  "trigger_type": "personal_conduct",
+  "constraint_types": ["regulatory", "reputational"],
+  "legal_outcome": "pending",
+  "escalation_vector": ["leak", "inquiry"],
+  "tempo": "months",
+  "exit_authority": "board",
+  "succession": "internal",
+  "timeline": [
+    {"date": "2018-01-03", "event": "Arvind Gupta's complaint to SEBI alleges conflict of interest in ICICI Bank's Rs 3,250 crore loan to Videocon Group", "claim_ids": ["c1"]},
+    {"date": "2018-06-25", "event": "ICICI Bank board asks Kochhar to proceed on leave pending investigation", "claim_ids": ["c1", "c2"]},
+    {"date": "2018-10-04", "event": "Kochhar resigns as MD and CEO; Sandeep Bakhshi appointed as successor", "claim_ids": ["c3"]},
+    {"date": "2019-01-30", "event": "ICICI Bank terminates Kochhar's employment 'for cause' and claws back her bonuses", "claim_ids": ["c4"]},
+    {"date": "2020-09-22", "event": "CBI files charge sheet against Kochhar and others for alleged criminal conspiracy and cheating", "claim_ids": ["c5"]}
+  ],
+  "resolution": ["resignation"],
+  "outcome": {
+    "summary": "Kochhar resigned as ICICI Bank CEO in October 2018 and was later terminated 'for cause' in January 2019. The bank clawed back her bonuses and perquisites. The CBI filed a charge sheet against her in 2020. The matter remains pending in Indian courts.",
+    "actors": ["Chanda Kochhar", "Sandeep Bakhshi", "ICICI Board of Directors"],
+    "constraint_types": ["regulatory", "reputational"],
+    "recorded_at": "2020-09-22",
+    "sources": [
+      {"id": "s1", "type": "sec_filing", "ref": "data/incidents/7_kochhar_icici_2018/sources/icici_2018_8k.md", "date": "2018-10-04"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/7_kochhar_icici_2018/sources/cbi_2020_chargesheet.md", "date": "2020-09-22"}
+    ]
+  },
+  "claims": [
+    {
+      "id": "c1",
+      "text": "A whistleblower complaint to SEBI alleged conflict of interest in ICICI Bank's loan to Videocon Group linked to Kochhar's husband",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": []
+    },
+    {"id": "c2", "text": "ICICI's board asked Kochhar to proceed on leave pending an internal investigation", "tag": "documented", "source_ids": ["s1"], "supports": ["c1"]},
+    {"id": "c3", "text": "Kochhar resigned as MD and CEO on October 4, 2018; Sandeep Bakhshi was named successor", "tag": "documented", "source_ids": ["s1"], "supports": ["c2"]},
+    {"id": "c4", "text": "ICICI Bank terminated Kochhar's employment for cause in January 2019 and clawed back bonuses", "tag": "documented", "source_ids": ["s1"], "supports": ["c3"]},
+    {"id": "c5", "text": "The CBI filed a charge sheet against Kochhar in September 2020 for alleged criminal conspiracy and cheating", "tag": "documented", "source_ids": ["s2"], "supports": ["c1"]}
+  ],
+  "sources": [
+    {"id": "s1", "type": "sec_filing", "ref": "data/incidents/7_kochhar_icici_2018/sources/icici_2018_8k.md", "date": "2018-10-04"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/7_kochhar_icici_2018/sources/cbi_2020_chargesheet.md", "date": "2020-09-22"}
+  ],
+  "summary_embed": ""
+}
