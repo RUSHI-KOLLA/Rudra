@@ -861,7 +861,7 @@ async def run_match(
         "matches": matches,
         "corpus_size": len(curated),
         "base_rate": base_rate,
-        "silence_line": build_silence_line(card, [], as_of),
+        "silence_line": build_silence_line(card, loop_audit, as_of),
         "as_of": as_of,
         "loop_audit": loop_audit,
         "retrieval_debug": _retrieval_debug(

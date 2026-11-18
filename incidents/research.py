@@ -28,6 +28,20 @@ class ResearchAnswer:
     tag: Tag
     answer: str
 
+    def to_audit_dict(self) -> dict[str, Any]:
+        """Return a JSON-serializable dict for the loop_audit response."""
+        return {
+            "question": self.question,
+            "gap_type": self.gap_type,
+            "gap_ref": self.gap_ref,
+            "query": self.query,
+            "resolved": self.resolved,
+            "closed": self.closed,
+            "source": self.source,
+            "tag": self.tag.value if hasattr(self.tag, 'value') else str(self.tag),
+            "answer": self.answer,
+        }
+
 
 @dataclass
 class ResearchResult:
@@ -111,17 +125,19 @@ async def run_research_round(
     return ResearchResult(questions=answers, round=round_num, stopped=stopped)
 
 
-async def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[Any]:
+async def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[dict[str, Any]]:
     """Run the full gap loop (max 2 rounds).
 
-    Returns all ResearchAnswer entries with loop_audit fields.
+    Returns a list of JSON-serializable dicts (via to_audit_dict()) for the loop_audit field.
     """
-    all_answers: list[Any] = []
+    all_answers: list[dict[str, Any]] = []
     previous_results: dict[str, Any] = {}
 
     for round_num in range(1, max_rounds + 1):
         result = await run_research_round(questions, round_num=round_num, previous_results=previous_results)
-        all_answers.extend(result.questions)
+        # Convert to audit dicts for the response
+        audit_answers = [ans.to_audit_dict() for ans in result.questions]
+        all_answers.extend(audit_answers)
 
         # Build previous_results for next round's filtering
         for ans in result.questions:
