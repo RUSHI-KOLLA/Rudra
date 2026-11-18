@@ -31,6 +31,9 @@ _FOR_PHRASES = (
 )
 
 # FOR tokens (prefix matching on word tokens)
+# All tokens are STEMS (base forms) so prefix matching catches inflections:
+# "improve" matches "improve", "improves", "improving", "improved"
+# "advance" matches "advance", "advances", "advancing", "advanced"
 _FOR_TOKENS = (
     "yes",
     "support",
@@ -42,8 +45,8 @@ _FOR_TOKENS = (
     "likely",
     "probable",
     "possible",
-    "advances",
-    "improves",
+    "advance",
+    "improve",
     "favor",
     "favour",
 )
@@ -160,6 +163,11 @@ if __name__ == "__main__":
         ("Cannot assess", "neutral"),
         ("Harm is likely", "against"),
         ("No doubt it will succeed", "for"),
+        # Inflection/stem pairs — reviewer requirement: stems stored, inflections match
+        ("It improves growth", "for"),
+        ("It will improve growth", "for"),
+        ("This advances the plan", "for"),
+        ("This will advance the plan", "for"),
     ]
 
     all_pass = True
