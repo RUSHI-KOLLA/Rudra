@@ -129,7 +129,7 @@ async def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[Any]:
                 "source": ans.source,
                 "tag": ans.tag.value if hasattr(ans.tag, 'value') else str(ans.tag),
                 "closed": ans.closed,
-                "resolved": getattr(ans, 'resolved', True),  # resolved defaults to True
+                "resolved": ans.resolved,
             }
 
         if result.stopped or len(result.questions) == 0:

@@ -73,6 +73,7 @@ class Config:
     debate_enabled: bool = False
     max_research_rounds: int = 2
     questions_per_round: int = 5
+    incidents_research_enabled: bool = False
 
     # --- Search ---
     disable_web_search: bool = False
@@ -118,6 +119,7 @@ def get_config() -> Config:
         in {"1", "true", "yes", "on"},
         max_research_rounds=int(os.getenv("VG_MAX_RESEARCH_ROUNDS", "2")),
         questions_per_round=int(os.getenv("VG_QUESTIONS_PER_ROUND", "5")),
+        incidents_research_enabled=os.getenv("VG_INCIDENTS_RESEARCH_ENABLED", "").lower() in {"1", "true", "yes", "on"},
         disable_web_search=os.getenv("VG_DISABLE_WEB_SEARCH", "").lower() in {"1", "true", "yes", "on"},
     )
 

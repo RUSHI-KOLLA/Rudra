@@ -75,6 +75,8 @@ from .store import (
     save_card_json,
     upsert_card_to_chroma,
 )
+from .research import run_gap_loop
+from .gaps import generate_questions
 
 try:  # pragma: no cover - config is always present at runtime
     from vg.config import config as _vg_config
@@ -840,14 +842,28 @@ async def run_match(
         strong_cards=strong_cards, query_card=card, curated=curated
     )
 
+    # Phase 4: Research loop (behind feature flag)
+    loop_audit = []
+    if getattr(_vg_config, "incidents_research_enabled", False):
+        from .gaps import generate_questions
+        from .research import run_gap_loop
+
+        questions = generate_questions(card)
+        if questions:
+            loop_audit = await run_gap_loop(questions, max_rounds=getattr(_vg_config, "max_research_rounds", 2))
+        else:
+            loop_audit = []
+    else:
+        loop_audit = []
+
     result = {
         "status": "complete",
         "matches": matches,
         "corpus_size": len(curated),
         "base_rate": base_rate,
-        "silence_line": build_silence_line(card, [], as_of),  # loop: [] in Phase 3
+        "silence_line": build_silence_line(card, [], as_of),
         "as_of": as_of,
-        "loop_audit": [],  # Phase 4 fills this; no field added to get it
+        "loop_audit": loop_audit,
         "retrieval_debug": _retrieval_debug(
             card,
             cosine_rows=rows,
