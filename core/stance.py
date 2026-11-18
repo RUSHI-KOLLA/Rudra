@@ -30,6 +30,17 @@ _FOR_PHRASES = (
     "no question about",
 )
 
+# Negation tokens — if any appear as a token, the stance is AGAINST
+# (checked after FOR-phrases so "no doubt" stays FOR, but "no chance" -> against)
+_NEGATION_TOKENS = (
+    "no",
+    "not",
+    "never",
+    "neither",
+    "without",
+    "hardly",
+)
+
 # FOR tokens (prefix matching on word tokens)
 # All tokens are STEMS (base forms) so prefix matching catches inflections:
 # "improve" matches "improve", "improves", "improving", "improved"
@@ -122,6 +133,11 @@ def normalize_stance(stance: str) -> str:
     if _has_any_token(tokens, ("harm",)):
         return "against"
 
+    # NEGATION GATE: if any negation token appears, stance is AGAINST
+    # (checked after FOR-phrases so "no doubt" -> FOR, but "no chance" -> against)
+    if _has_any_token(tokens, _NEGATION_TOKENS):
+        return "against"
+
     # 3. FOR tokens (original FOR-first behavior preserved)
     if _has_any_token(tokens, _FOR_TOKENS):
         return "for"
@@ -163,6 +179,10 @@ if __name__ == "__main__":
         ("Cannot assess", "neutral"),
         ("Harm is likely", "against"),
         ("No doubt it will succeed", "for"),
+        # Negation gate — reviewer requirement: negation + positive word = against
+        ("There is no chance of success", "against"),
+        ("There is no chance of success at all", "against"),
+        ("Not likely to succeed", "against"),
         # Inflection/stem pairs — reviewer requirement: stems stored, inflections match
         ("It improves growth", "for"),
         ("It will improve growth", "for"),
