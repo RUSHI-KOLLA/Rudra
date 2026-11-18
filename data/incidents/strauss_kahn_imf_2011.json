@@ -15,7 +15,7 @@
         "s1"
       ],
       "supports": [],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Strauss-Kahn was arrested at JFK Airport on May 14, 2011 and charged with sexual assault"
     },
     {
@@ -26,7 +26,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Strauss-Kahn resigned as IMF Managing Director on May 18, 2011"
     },
     {
@@ -37,7 +37,7 @@
       "supports": [
         "c2"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Christine Lagarde was appointed as Strauss-Kahn's successor at the IMF"
     },
     {
@@ -48,7 +48,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Criminal charges were dropped on August 23, 2011 after prosecutors questioned the accuser's credibility"
     }
   ],
@@ -81,13 +81,13 @@
         "date": "2011-05-14",
         "id": "s1",
         "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_arrest.md",
-        "type": "court_record"
+        "type": "paraphrase"
       },
       {
         "date": "2011-08-23",
         "id": "s2",
         "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_dismissal.md",
-        "type": "court_record"
+        "type": "paraphrase"
       }
     ],
     "summary": "Strauss-Kahn resigned from the IMF in May 2011 following his arrest. The criminal case was later dropped in August 2011 after prosecutors determined the accuser's credibility was compromised. He reached a civil settlement with the accuser in 2012. Christine Lagarde succeeded him as IMF Managing Director."
@@ -102,13 +102,13 @@
       "date": "2011-05-14",
       "id": "s1",
       "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_arrest.md",
-      "type": "court_record"
+      "type": "paraphrase"
     },
     {
       "date": "2011-08-23",
       "id": "s2",
       "ref": "data/incidents/strauss_kahn_imf_2011/sources/dsk_2011_dismissal.md",
-      "type": "court_record"
+      "type": "paraphrase"
     }
   ],
   "status": "curated",

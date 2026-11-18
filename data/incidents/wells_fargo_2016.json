@@ -78,14 +78,14 @@
       {
         "date": "2016-09-08",
         "id": "s1",
-        "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_penalty.md",
-        "type": "regulatory_report"
+        "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_consentorder.md",
+        "type": "regulatory_order"
       },
       {
         "date": "2016-10-11",
         "id": "s2",
         "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md",
-        "type": "court_record"
+        "type": "sec_filing"
       }
     ],
     "summary": "John Stumpf resigned as CEO of Wells Fargo in October 2016 after the bank admitted employees had opened millions of unauthorized accounts. The bank paid $185 million in fines and faced ongoing regulatory scrutiny. Stumpf also agreed to forfeit $41 million in compensation. Tim Sloan succeeded him as CEO."
@@ -100,14 +100,14 @@
     {
       "date": "2016-09-08",
       "id": "s1",
-      "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_penalty.md",
-      "type": "regulatory_report"
+      "ref": "data/incidents/wells_fargo_2016/sources/cfpb_2016_consentorder.md",
+      "type": "regulatory_order"
     },
     {
       "date": "2016-10-11",
       "id": "s2",
       "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md",
-      "type": "court_record"
+      "type": "sec_filing"
     }
   ],
   "status": "curated",

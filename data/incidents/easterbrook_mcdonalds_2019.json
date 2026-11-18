@@ -81,7 +81,7 @@
         "date": "2020-08-07",
         "id": "s2",
         "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2020_complaint.md",
-        "type": "court_filing"
+        "type": "paraphrase"
       }
     ],
     "summary": "Easterbrook was dismissed without cause in November 2019. In 2020, McDonald's sued Easterbrook to recover severance and equity, alleging he lied about the scope of his relationships. In 2021, McDonald's reported additional evidence of relationships with three more employees. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum."
@@ -96,13 +96,13 @@
       "date": "2019-11-04",
       "id": "s1",
       "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2019_8k.md",
-      "type": "paraphrase"
+      "type": "sec_filing"
     },
     {
       "date": "2020-08-07",
       "id": "s2",
       "ref": "data/incidents/easterbrook_mcdonalds_2019/sources/mcdonalds_2020_complaint.md",
-      "type": "court_filing"
+      "type": "paraphrase"
     }
   ],
   "status": "curated",

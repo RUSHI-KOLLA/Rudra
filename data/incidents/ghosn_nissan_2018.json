@@ -26,7 +26,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Nissan's board voted to remove Ghosn as Chairman and Representative Director on November 22, 2018"
     },
     {
@@ -37,7 +37,7 @@
       "supports": [
         "c2"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Hiroto Saikawa became Nissan's CEO after Ghosn's removal"
     },
     {
@@ -84,14 +84,14 @@
       {
         "date": "2018-11-19",
         "id": "s1",
-        "ref": "data/incidents/ghosn_nissan_2018/sources/ghosn_2018_arrest.md",
-        "type": "court_record"
+        "ref": "data/incidents/ghosn_nissan_2018/sources/sec_2019_183.md",
+        "type": "sec_press_release"
       },
       {
         "date": "2018-11-22",
         "id": "s2",
         "ref": "data/incidents/ghosn_nissan_2018/sources/nissan_2018_8k.md",
-        "type": "sec_filing"
+        "type": "paraphrase"
       }
     ],
     "summary": "Ghosn was arrested in November 2018 and dismissed from Nissan's board. He was released on bail in December 2018 but fled Japan to Lebanon at the end of 2019 while awaiting trial. Nissan pursued civil claims against him for damages. The French prosecutor dropped its investigation in 2023."
@@ -105,8 +105,8 @@
     {
       "date": "2018-11-19",
       "id": "s1",
-      "ref": "data/incidents/ghosn_nissan_2018/sources/ghosn_2018_arrest.md",
-      "type": "court_record"
+      "ref": "data/incidents/ghosn_nissan_2018/sources/sec_2019_183.md",
+      "type": "sec_press_release"
     },
     {
       "date": "2018-11-22",

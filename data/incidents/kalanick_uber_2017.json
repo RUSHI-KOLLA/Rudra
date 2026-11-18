@@ -19,7 +19,7 @@
         "s1"
       ],
       "supports": [],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Susan Fowler's blog post detailed systemic sexual harassment and retaliation at Uber"
     },
     {
@@ -35,7 +35,7 @@
         "s1"
       ],
       "supports": [],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Waymo's lawsuit alleged that Uber stole self-driving car trade secrets through former Google engineer Anthony Levandowski"
     },
     {
@@ -55,7 +55,7 @@
         "c2",
         "c3"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Benchmark Capital led investor pressure demanding Kalanick take a leave of absence and step down as CEO"
     },
     {
@@ -66,7 +66,7 @@
       "supports": [
         "c5"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Kalanick resigned as CEO on June 21, 2017 but remained on Uber's board"
     }
   ],
@@ -99,13 +99,13 @@
         "date": "2017-06-21",
         "id": "s1",
         "ref": "data/incidents/kalanick_uber_2017/sources/uber_2017_8k.md",
-        "type": "sec_filing"
+        "type": "paraphrase"
       },
       {
         "date": "2018-02-09",
         "id": "s2",
         "ref": "data/incidents/kalanick_uber_2017/sources/uber_2018_settlement.md",
-        "type": "news_report"
+        "type": "paraphrase"
       }
     ],
     "summary": "Kalanick resigned as CEO under investor pressure but remained on Uber's board. Dara Khosrowshahi was appointed as successor CEO in August 2017. Uber settled the Waymo trade secrets lawsuit in February 2018 for approximately $245 million in equity. The sexual harassment investigation led to the departure of over 20 employees."
@@ -126,7 +126,7 @@
       "date": "2018-02-09",
       "id": "s2",
       "ref": "data/incidents/kalanick_uber_2017/sources/uber_2018_settlement.md",
-      "type": "news_report"
+      "type": "paraphrase"
     }
   ],
   "status": "curated",

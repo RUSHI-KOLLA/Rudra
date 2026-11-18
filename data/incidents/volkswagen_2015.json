@@ -78,14 +78,14 @@
       {
         "date": "2015-09-18",
         "id": "s1",
-        "ref": "data/incidents/volkswagen_2015/sources/epa_2015_violation.md",
-        "type": "regulatory_report"
+        "ref": "data/incidents/volkswagen_2015/sources/epa_2015_nov.md",
+        "type": "regulatory_order"
       },
       {
         "date": "2015-09-23",
         "id": "s2",
-        "ref": "data/incidents/volkswagen_2015/sources/volkswagen_2015_8k.md",
-        "type": "court_record"
+        "ref": "data/incidents/volkswagen_2015/sources/vw_2015_winterkorn.md",
+        "type": "company_press_release"
       }
     ],
     "summary": "Martin Winterkorn resigned as CEO of Volkswagen in September 2015 after the company admitted to installing emissions-cheating software in 11 million diesel vehicles worldwide. The scandal cost Volkswagen billions in fines, buybacks, and legal settlements. Winterkorn was charged by German prosecutors in 2019 but the trial was delayed due to health concerns."
@@ -99,14 +99,14 @@
     {
       "date": "2015-09-18",
       "id": "s1",
-      "ref": "data/incidents/volkswagen_2015/sources/epa_2015_violation.md",
-      "type": "regulatory_report"
+      "ref": "data/incidents/volkswagen_2015/sources/epa_2015_nov.md",
+      "type": "regulatory_order"
     },
     {
       "date": "2015-09-23",
       "id": "s2",
-      "ref": "data/incidents/volkswagen_2015/sources/volkswagen_2015_8k.md",
-      "type": "court_record"
+      "ref": "data/incidents/volkswagen_2015/sources/vw_2015_winterkorn.md",
+      "type": "company_press_release"
     }
   ],
   "status": "curated",

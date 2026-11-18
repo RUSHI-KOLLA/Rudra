@@ -59,7 +59,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "The CBI filed a charge sheet against Kochhar in September 2020 for alleged criminal conspiracy and cheating"
     }
   ],
@@ -91,14 +91,14 @@
       {
         "date": "2018-10-04",
         "id": "s1",
-        "ref": "data/incidents/kochhar_icici_2018/sources/icici_2018_8k.md",
+        "ref": "data/incidents/kochhar_icici_2018/sources/icici_2018_6k.md",
         "type": "sec_filing"
       },
       {
         "date": "2020-09-22",
         "id": "s2",
         "ref": "data/incidents/kochhar_icici_2018/sources/cbi_2020_chargesheet.md",
-        "type": "court_record"
+        "type": "paraphrase"
       }
     ],
     "summary": "Kochhar resigned as ICICI Bank CEO in October 2018 and was later terminated 'for cause' in January 2019. The bank clawed back her bonuses and perquisites. The CBI filed a charge sheet against her in 2020. The matter remains pending in Indian courts."
@@ -112,14 +112,14 @@
     {
       "date": "2018-10-04",
       "id": "s1",
-      "ref": "data/incidents/kochhar_icici_2018/sources/icici_2018_8k.md",
-      "type": "paraphrase"
+      "ref": "data/incidents/kochhar_icici_2018/sources/icici_2018_6k.md",
+      "type": "sec_filing"
     },
     {
       "date": "2020-09-22",
       "id": "s2",
       "ref": "data/incidents/kochhar_icici_2018/sources/cbi_2020_chargesheet.md",
-      "type": "court_record"
+      "type": "paraphrase"
     }
   ],
   "status": "curated",

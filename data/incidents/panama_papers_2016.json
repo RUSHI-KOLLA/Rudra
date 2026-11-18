@@ -21,7 +21,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Gunnlaugsson resigned as Prime Minister of Iceland on April 5, 2016 amid mass protests"
     },
     {
@@ -32,7 +32,7 @@
       "supports": [
         "c2"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Sigurdur Ingi Johannsson was named as acting Prime Minister on April 7, 2016"
     }
   ],
@@ -64,13 +64,13 @@
         "date": "2016-04-03",
         "id": "s1",
         "ref": "data/incidents/panama_papers_2016/sources/panama_papers_2016_leak.md",
-        "type": "news_report"
+        "type": "paraphrase"
       },
       {
         "date": "2016-04-05",
         "id": "s2",
-        "ref": "data/incidents/panama_papers_2016/sources/iceland_2016_resignation.md",
-        "type": "court_record"
+        "ref": "data/incidents/panama_papers_2016/sources/icij_20160405_iceland.md",
+        "type": "investigative_journalism"
       }
     ],
     "summary": "Sigmundur Gunnlaugsson resigned as Prime Minister of Iceland on April 5, 2016 after the Panama Papers revealed his wife's undisclosed offshore company. He was succeeded by Sigurdur Ingi Johannsson. Gunnlaugsson was not charged criminally but stepped down amid mass protests and loss of parliamentary support."
@@ -85,13 +85,13 @@
       "date": "2016-04-03",
       "id": "s1",
       "ref": "data/incidents/panama_papers_2016/sources/panama_papers_2016_leak.md",
-      "type": "news_report"
+      "type": "paraphrase"
     },
     {
       "date": "2016-04-05",
       "id": "s2",
-      "ref": "data/incidents/panama_papers_2016/sources/iceland_2016_resignation.md",
-      "type": "court_record"
+      "ref": "data/incidents/panama_papers_2016/sources/icij_20160405_iceland.md",
+      "type": "investigative_journalism"
     }
   ],
   "status": "curated",
