@@ -64,8 +64,8 @@ async def run_research_round(
     results: list[ResearchAnswer] = []
 
     for q in filtered[:5]:  # Max 5 questions per round
-        # Run search
-        search_result = search_structured(q.question, q.gap_type, q.gap_ref)
+        # Run search (gap metadata attached by caller, not search layer)
+        search_result = search_structured(q.question)
 
         # Check if we got results
         results = search_result.get("results", [])
@@ -104,7 +104,7 @@ async def run_research_round(
         results.append(answer)
 
     stopped = len(filtered) == 0
-    return ResearchResult(questions=results, round=1, stopped=stopped)
+    return ResearchResult(questions=results, round=round_num, stopped=stopped)
 
 
 def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[Any]:

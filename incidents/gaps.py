@@ -79,12 +79,24 @@ def generate_questions(card: IncidentCard) -> list[GapQuestion]:
                 break  # One below-documented claim per round max
 
     # Gap 3: Mismatch vs top match - RESTRICTED to evidence-sensitive fields
-    # Only fields where new evidence could change the classification
+    # Only fields where new evidence could change the classification:
+    # trigger_type, constraint_types, escalation_vector
     # Excluded: exit_authority, resolution, tempo, succession
     # (determined by what happened, not by what you can look up)
     # This prevents unanswerable questions about facts already established
-    # if card.matches:  # would need matches passed in
-    #     pass
+    if hasattr(card, 'matches') and card.matches:
+        for match in card.matches[:1]:  # Top match only
+            # Get mismatched evidence-sensitive fields from why_breaks
+            breaks = where_breaks(match)
+            for break_item in breaks:
+                component = break_item.get("component")
+                if component in EVIDENCE_SENSITIVE_FIELDS:
+                    if add_question(
+                        f"What is the correct {component.replace('_', ' ')}?",
+                        "gap_3_mismatch",
+                        f"{match.id}:{component}",
+                    ):
+                        break  # One mismatch question per round max
 
     # Gap 4: New shape (no strong matches)
     # The one field that would disambiguate
@@ -104,6 +116,8 @@ def filter_round_questions(questions: list[GapQuestion], round_num: int, previou
 
     - Round 1: all questions
     - Round 2: exclude questions that were answered with 'no source available' in round 1
+      (a gap that returns no source available in round 1 must not be re-asked
+       in round 2 under the same key — that is what the key is for)
     - Dedup by (gap_type, gap_ref) - duplicates don't count against cap
     """
     if round_num == 1:

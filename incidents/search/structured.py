@@ -18,24 +18,20 @@ class SearchResult:
     date: str
 
 
-def search_structured(query: str, gap_type: str, gap_ref: str) -> dict[str, Any]:
-    """Structured web search for a gap question.
+def search_structured(query: str) -> dict[str, Any]:
+    """Structured web search.
 
     Args:
         query: Search query string
-        gap_type: Type of gap (gap_1_missing_field, gap_2_below_documented,
-                  gap_3_mismatch, gap_4_new_shape)
-        gap_ref: Reference identifying the gap (field name, claim id,
-                 match_id+component, or "new_shape")
 
     Returns:
-        Dict with 'results' (list of SearchResult), 'gap_type', 'gap_ref'
+        Dict with 'results' (list of SearchResult) and optional 'error'.
+        Gap metadata is attached by the caller (research.py) to keep
+        the search layer decoupled from the question model.
     """
     if not config.tavily_api_key:
         return {
             "results": [],
-            "gap_type": gap_type,
-            "gap_ref": gap_ref,
             "error": "Tavily API key not configured"
         }
 
@@ -56,22 +52,18 @@ def search_structured(query: str, gap_type: str, gap_ref: str) -> dict[str, Any]
     except Exception as e:
         return {
             "results": [],
-            "gap_type": gap_type,
-            "gap_ref": gap_ref,
             "error": f"Search failed: {e}"
         }
 
     results = []
     for item in data.get("results", [])[:5]:
-        results.append(SearchResult(
-            title=item.get("title", ""),
-            url=item.get("url", ""),
-            snippet=item.get("content", "")[:300],
-            date=item.get("published_date", ""),
-        ))
+        results.append({
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "snippet": item.get("content", "")[:300],
+            "date": item.get("published_date", ""),
+        })
 
     return {
-        "results": [r.__dict__ for r in results],
-        "gap_type": gap_type,
-        "gap_ref": gap_ref,
+        "results": results,
     }
