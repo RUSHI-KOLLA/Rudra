@@ -5,7 +5,16 @@ Fixes:
 - "disagree" -> "against" (not "for" via "agree" substring)
 - "cannot assess" -> "neutral" (not "against")
 - "harm is likely" -> "against" (not "for" via "likely" substring)
-- Preserves FOR-first behavior for backward compatibility where needed.
+- "no chance of success" -> "against" (not "for" via "success" substring)
+- "no doubt it will succeed" -> "for" (FOR-phrase beats negation gate)
+
+Order of evaluation (FROZEN — see reviewer note 2026-11-18; do not tune token lists):
+1. FOR phrases with "no" that mean positive (no doubt, no question)
+2. Explicit neutral phrases (cannot assess, insufficient, etc.)
+3. Negation gate: whole-word negators (no, not, never, etc.) -> against
+4. FOR tokens (stems with prefix matching for inflections)
+5. AGAINST tokens (remaining)
+If this misfires, replace with model classification call — do not tune token lists.
 """
 
 import re
@@ -212,7 +221,7 @@ if __name__ == "__main__":
         ("Not likely to succeed", "against"),
         ("Without any benefit to farmers", "against"),
         ("Never a success", "against"),
-        ("Notable growth in exports", "for"),
+        ("Notable growth in exports", "neutral"),
         ("The north region will benefit", "for"),
         ("Norms will improve", "for"),
         ("The nominee supports the bill", "for"),
