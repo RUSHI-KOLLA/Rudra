@@ -12,7 +12,7 @@ from datetime import date
 
 from .gaps import GapQuestion, filter_round_questions
 from .search.structured import search_structured
-from .match import normalize_stance, _normalize_stance_bucket
+from vg.core.stance import normalize_stance
 from .schema import Tag
 
 
@@ -22,7 +22,8 @@ class ResearchAnswer:
     gap_type: str
     gap_ref: str
     query: str
-    closed: bool
+    resolved: bool  # True if the gap is resolved (answer found), False if still open
+    closed: bool  # True if the research for this gap is complete (whether resolved or not)
     source: Optional[str]
     tag: Tag
     answer: str
@@ -61,33 +62,35 @@ async def run_research_round(
     if not filtered:
         return ResearchResult(questions=[], round=round_num, stopped=True)
 
-    results: list[ResearchAnswer] = []
+    answers: list[ResearchAnswer] = []
 
     for q in filtered[:5]:  # Max 5 questions per round
         # Run search (gap metadata attached by caller, not search layer)
         search_result = search_structured(q.question)
 
         # Check if we got results
-        results = search_result.get("results", [])
+        hits = search_result.get("results", [])
         error = search_result.get("error")
 
-        if not results or error:
-            # No source available
+        if not hits or error:
+            # No source available — gap remains open (not resolved)
             answer = ResearchAnswer(
                 question=q.question,
                 gap_type=q.gap_type,
                 gap_ref=q.gap_ref,
                 query=q.question,
-                closed=True,
+                closed=True,      # research for this gap is complete (no source found)
+                resolved=False,   # gap is NOT resolved
                 source=None,
                 tag="reported_unconfirmed",
                 answer="No source available",
             )
-            results.append(answer)
+            answers.append(answer)
             continue
 
         # For now, use first result as answer (in real impl, would synthesize from multiple)
-        first = results[0]
+        # A search snippet is a secondhand summary — tag as reported_unconfirmed
+        first = hits[0]
         source = f"{first['title']} ({first['url']})"
         answer_text = first['snippet']
 
@@ -96,18 +99,19 @@ async def run_research_round(
             gap_type=q.gap_type,
             gap_ref=q.gap_ref,
             query=q.question,
-            closed=True,
+            closed=True,        # research for this gap is complete
+            resolved=True,      # gap IS resolved (we found a source)
             source=source,
-            tag="documented",
+            tag="reported_unconfirmed",  # search snippets are secondhand summaries
             answer=answer_text,
         )
-        results.append(answer)
+        answers.append(answer)
 
     stopped = len(filtered) == 0
-    return ResearchResult(questions=results, round=round_num, stopped=stopped)
+    return ResearchResult(questions=answers, round=round_num, stopped=stopped)
 
 
-def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[Any]:
+async def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[Any]:
     """Run the full gap loop (max 2 rounds).
 
     Returns all ResearchAnswer entries with loop_audit fields.
@@ -116,15 +120,16 @@ def run_gap_loop(questions: list[Any], max_rounds: int = 2) -> list[Any]:
     previous_results: dict[str, Any] = {}
 
     for round_num in range(1, max_rounds + 1):
-        result = run_research_round(questions, round_num=round_num, previous_results=previous_results)
+        result = await run_research_round(questions, round_num=round_num, previous_results=previous_results)
         all_answers.extend(result.questions)
 
         # Build previous_results for next round's filtering
         for ans in result.questions:
             previous_results[ans.gap_ref] = {
                 "source": ans.source,
-                "tag": ans.tag,
+                "tag": ans.tag.value if hasattr(ans.tag, 'value') else str(ans.tag),
                 "closed": ans.closed,
+                "resolved": getattr(ans, 'resolved', True),  # resolved defaults to True
             }
 
         if result.stopped or len(result.questions) == 0:
