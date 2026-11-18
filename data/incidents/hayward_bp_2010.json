@@ -1,169 +1,79 @@
 {
-  "actor_roles": [
-    "ceo",
-    "board"
+  "incident_id": "hayward_bp_2010",
+  "title": "Tony Hayward resigns as BP CEO after Deepwater Horizon",
+  "status": "curated",
+  "date": "2010-07-22",
+  "recorded_at": "2010-07-23",
+  "actors": ["Tony Hayward", "BP Board of Directors", "Robert Dudley"],
+  "actor_roles": ["ceo", "board", "ceo"],
+  "sector": "energy",
+  "geography": "United Kingdom / United States",
+  "trigger": "The Deepwater Horizon oil spill in April 2010 became the largest marine oil spill in history, and Hayward's perceived mishandling of the crisis—including his remark 'I'd like my life back'—led the BP board to ask for his resignation.",
+  "trigger_type": "operational_failure",
+  "constraint_types": ["regulatory", "reputational", "legal"],
+  "legal_outcome": "settled",
+  "escalation_vector": ["leak", "media_cycle", "inquiry"],
+  "tempo": "months",
+  "exit_authority": "board",
+  "succession": "internal",
+  "timeline": [
+    {"date": "2010-04-20", "event": "Deepwater Horizon drilling rig explodes in the Gulf of Mexico, killing 11 workers", "claim_ids": ["c1"]},
+    {"date": "2010-05-27", "event": "Hayward testifies before US Congress and says 'I'd like my life back'", "claim_ids": ["c2"]},
+    {"date": "2010-07-22", "event": "BP board announces Hayward will step down as CEO, replaced by Robert Dudley", "claim_ids": ["c3"]},
+    {"date": "2010-10-01", "event": "Robert Dudley officially takes over as BP CEO", "claim_ids": ["c4"]},
+    {"date": "2011-03-02", "event": "BP agrees to a record $4.5 billion criminal penalty for the disaster", "claim_ids": ["c5"]}
   ],
-  "actors": [
-    "Tony Hayward",
-    "BP Board of Directors",
-    "Robert Dudley"
-  ],
+  "resolution": ["resignation"],
+  "outcome": {
+    "summary": "Hayward resigned as BP CEO in July 2010 and was succeeded by Robert Dudley. BP faced extensive criminal and civil penalties, ultimately paying over $65 billion in fines, settlements, and cleanup costs. The company's reputation was severely damaged and it sold off assets to cover liabilities.",
+    "actors": ["Tony Hayward", "Robert Dudley", "BP Board of Directors"],
+    "constraint_types": ["regulatory", "legal", "reputational"],
+    "recorded_at": "2011-03-02",
+    "sources": [
+      {"id": "s1", "type": "sec_filing", "ref": "data/incidents/3_hayward_bp_2010/sources/bp_2010_8k.md", "date": "2010-07-22"},
+      {"id": "s2", "type": "government_report", "ref": "data/incidents/3_hayward_bp_2010/sources/bp_2011_penalty.md", "date": "2011-03-02"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
-      "tag": "reported_unconfirmed",
-      "text": "The Deepwater Horizon explosion killed 11 workers and released millions of barrels of oil into the Gulf of Mexico"
+      "text": "The Deepwater Horizon explosion killed 11 workers and released millions of barrels of oil into the Gulf of Mexico",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [],
-      "supports": [],
+      "text": "Hayward's 'I'd like my life back' comment during congressional testimony became a symbol of his perceived insensitivity",
       "tag": "reported_unconfirmed",
-      "text": "Hayward's 'I'd like my life back' comment during congressional testimony became a symbol of his perceived insensitivity"
+      "source_ids": [],
+      "supports": []
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
+      "text": "The BP board asked Hayward to step down and named Robert Dudley as his successor",
       "tag": "documented",
-      "text": "Hayward stepped down as CEO by mutual agreement with the BP board on July 22, 2010, effective October 1; Robert Dudley was named successor"
+      "source_ids": ["s1"],
+      "supports": ["c1"]
     },
     {
       "id": "c4",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c3"
-      ],
+      "text": "Robert Dudley officially assumed the CEO role on October 1, 2010",
       "tag": "documented",
-      "text": "Robert Dudley officially assumed the CEO role on October 1, 2010"
+      "source_ids": ["s1"],
+      "supports": ["c3"]
     },
     {
       "id": "c5",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c1",
-        "c3"
-      ],
-      "tag": "reported_unconfirmed",
-      "text": "BP agreed to pay $4.5 billion in criminal penalties in 2011, with additional civil settlements bringing total costs above $65 billion"
+      "text": "BP agreed to pay $4.5 billion in criminal penalties in 2011, with additional civil settlements bringing total costs above $65 billion",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c1", "c3"]
     }
   ],
-  "constraint_types": [
-    "regulatory",
-    "reputational",
-    "legal"
-  ],
-  "date": "2010-07-22",
-  "escalation_vector": [
-    "leak",
-    "media_cycle",
-    "inquiry"
-  ],
-  "exit_authority": "board",
-  "geography": "United Kingdom / United States",
-  "incident_id": "hayward_bp_2010",
-  "legal_outcome": "settled",
-  "outcome": {
-    "actors": [
-      "Tony Hayward",
-      "Robert Dudley",
-      "BP Board of Directors"
-    ],
-    "constraint_types": [
-      "regulatory",
-      "legal",
-      "reputational"
-    ],
-    "recorded_at": "2011-03-02",
-    "sources": [
-      {
-        "date": "2010-07-22",
-        "id": "s1",
-        "ref": "data/incidents/hayward_bp_2010/sources/bp_2010_6k.md",
-        "type": "sec_filing"
-      },
-      {
-        "date": "2011-03-02",
-        "id": "s2",
-        "ref": "data/incidents/hayward_bp_2010/sources/bp_2011_penalty.md",
-        "type": "paraphrase"
-      }
-    ],
-    "summary": "Hayward stepped down as BP CEO by mutual agreement with the board on July 22, 2010, effective October 1, 2010, and was succeeded by Robert Dudley. BP faced extensive criminal and civil penalties, ultimately paying over $65 billion in fines, settlements, and cleanup costs. The company's reputation was severely damaged and it sold off assets to cover liabilities."
-  },
-  "recorded_at": "2010-07-23",
-  "resolution": [
-    "resignation"
-  ],
-  "sector": "energy",
   "sources": [
-    {
-      "date": "2010-07-22",
-      "id": "s1",
-      "ref": "data/incidents/hayward_bp_2010/sources/bp_2010_6k.md",
-      "type": "sec_filing"
-    },
-    {
-      "date": "2011-03-02",
-      "id": "s2",
-      "ref": "data/incidents/hayward_bp_2010/sources/bp_2011_penalty.md",
-      "type": "paraphrase"
-    }
+    {"id": "s1", "type": "sec_filing", "ref": "data/incidents/3_hayward_bp_2010/sources/bp_2010_8k.md", "date": "2010-07-22"},
+    {"id": "s2", "type": "government_report", "ref": "data/incidents/3_hayward_bp_2010/sources/bp_2011_penalty.md", "date": "2011-03-02"}
   ],
-  "status": "curated",
-  "succession": "internal",
-  "summary_embed": "",
-  "tempo": "months",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2010-04-20",
-      "event": "Deepwater Horizon drilling rig explodes in the Gulf of Mexico, killing 11 workers"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2010-05-27",
-      "event": "Hayward testifies before US Congress and says 'I'd like my life back'"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2010-07-22",
-      "event": "BP board announces Hayward will step down as CEO by mutual agreement, replaced by Robert Dudley effective October 1"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2010-10-01",
-      "event": "Robert Dudley officially takes over as BP CEO"
-    },
-    {
-      "claim_ids": [
-        "c5"
-      ],
-      "date": "2011-03-02",
-      "event": "BP agrees to a record $4.5 billion criminal penalty for the disaster"
-    }
-  ],
-  "title": "Tony Hayward steps down as BP CEO after Deepwater Horizon",
-  "trigger": "The Deepwater Horizon oil spill in April 2010 became the largest marine oil spill in history, and Hayward's perceived mishandling of the crisis—including his remark 'I'd like my life back'—led the BP board to reach a mutual agreement for his resignation.",
-  "trigger_type": "operational_failure"
+  "summary_embed": ""
 }

@@ -1,149 +1,71 @@
 {
-  "actor_roles": [
-    "board"
+  "incident_id": "rajat_gupta_2011",
+  "title": "Rajat Gupta convicted in insider trading case",
+  "status": "curated",
+  "date": "2012-06-15",
+  "recorded_at": "2012-06-16",
+  "actors": ["Rajat Gupta", "Rajat Gupta", "Rajat Gupta"],
+  "actor_roles": ["board", "board", "board"],
+  "sector": "finance",
+  "geography": "United States / India",
+  "trigger": "Rajat Gupta, former Managing Director of McKinsey and board member of Goldman Sachs and Procter & Gamble, was convicted of insider trading for passing confidential board information to hedge fund manager Raj Rajaratnam.",
+  "trigger_type": "fraud",
+  "constraint_types": ["legal", "reputational"],
+  "legal_outcome": "convicted",
+  "escalation_vector": ["filing", "inquiry"],
+  "tempo": "months",
+  "exit_authority": "self",
+  "succession": "external",
+  "timeline": [
+    {"date": "2009-10-16", "event": "FBI raids Raj Rajaratnam's Galleon Group hedge fund", "claim_ids": ["c1"]},
+    {"date": "2010-04-06", "event": "Rajat Gupta charged with insider trading by the SEC", "claim_ids": ["c2"]},
+    {"date": "2011-05-24", "event": "Gupta convicted on four counts of insider trading", "claim_ids": ["c3"]},
+    {"date": "2012-06-15", "event": "Gupta sentenced to two years in prison and fined $5 million", "claim_ids": ["c4"]}
   ],
-  "actors": [
-    "Rajat Gupta",
-    "Rajat Gupta",
-    "Rajat Gupta"
-  ],
+  "resolution": ["conviction"],
+  "outcome": {
+    "summary": "Rajat Gupta was convicted of insider trading in 2011 and sentenced to two years in prison. He served his sentence and was released in 2016. The case damaged the reputation of McKinsey & Company, where Gupta had been Managing Director, and highlighted the need for stronger board-level insider trading controls.",
+    "actors": ["Rajat Gupta", "Rajat Gupta"],
+    "constraint_types": ["legal", "reputational"],
+    "recorded_at": "2016-01-01",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2011_conviction.md", "date": "2011-05-24"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2012_sentencing.md", "date": "2012-06-15"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
+      "text": "The FBI raided Raj Rajaratnam's Galleon Group hedge fund in October 2009",
       "tag": "documented",
-      "text": "The FBI raided Raj Rajaratnam's Galleon Group hedge fund in October 2009"
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
+      "text": "Rajat Gupta was charged with insider trading by the SEC on April 6, 2010",
       "tag": "documented",
-      "text": "Rajat Gupta was charged with insider trading by the SEC on April 6, 2010"
+      "source_ids": ["s1"],
+      "supports": ["c1"]
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c2"
-      ],
+      "text": "Gupta was convicted on four counts of insider trading on May 24, 2011",
       "tag": "documented",
-      "text": "Gupta was convicted on four counts of insider trading on May 24, 2011"
+      "source_ids": ["s1"],
+      "supports": ["c2"]
     },
     {
       "id": "c4",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c3"
-      ],
+      "text": "Gupta was sentenced to two years in prison and fined $5 million on June 15, 2012",
       "tag": "documented",
-      "text": "Gupta was sentenced to two years in prison and fined $5 million on June 15, 2012"
+      "source_ids": ["s2"],
+      "supports": ["c3"]
     }
   ],
-  "constraint_types": [
-    "legal",
-    "reputational"
-  ],
-  "date": "2012-06-15",
-  "escalation_vector": [
-    "filing",
-    "inquiry"
-  ],
-  "exit_authority": "self",
-  "geography": "United States / India",
-  "incident_id": "rajat_gupta_2011",
-  "legal_outcome": "convicted",
-  "outcome": {
-    "actors": [
-      "Rajat Gupta",
-      "Rajat Gupta"
-    ],
-    "constraint_types": [
-      "legal",
-      "reputational"
-    ],
-    "recorded_at": "2016-01-01",
-    "sources": [
-      {
-        "date": "2011-05-24",
-        "id": "s1",
-        "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2011_conviction.md",
-        "type": "court_record"
-      },
-      {
-        "date": "2012-06-15",
-        "id": "s2",
-        "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2012_sentencing.md",
-        "type": "court_record"
-      }
-    ],
-    "summary": "Rajat Gupta was convicted of insider trading in 2011 and sentenced to two years in prison. He served his sentence and was released in 2016. The case damaged the reputation of McKinsey & Company, where Gupta had been Managing Director, and highlighted the need for stronger board-level insider trading controls."
-  },
-  "recorded_at": "2012-06-16",
-  "resolution": [
-    "conviction"
-  ],
-  "sector": "finance",
   "sources": [
-    {
-      "date": "2011-05-24",
-      "id": "s1",
-      "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2011_conviction.md",
-      "type": "court_record"
-    },
-    {
-      "date": "2012-06-15",
-      "id": "s2",
-      "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2012_sentencing.md",
-      "type": "court_record"
-    }
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2011_conviction.md", "date": "2011-05-24"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/rajat_gupta_2011/sources/gupta_2012_sentencing.md", "date": "2012-06-15"}
   ],
-  "status": "curated",
-  "succession": "external",
-  "summary_embed": "",
-  "tempo": "months",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2009-10-16",
-      "event": "FBI raids Raj Rajaratnam's Galleon Group hedge fund"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2010-04-06",
-      "event": "Rajat Gupta charged with insider trading by the SEC"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2011-05-24",
-      "event": "Gupta convicted on four counts of insider trading"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2012-06-15",
-      "event": "Gupta sentenced to two years in prison and fined $5 million"
-    }
-  ],
-  "title": "Rajat Gupta convicted in insider trading case",
-  "trigger": "Rajat Gupta, former Managing Director of McKinsey and board member of Goldman Sachs and Procter & Gamble, was convicted of insider trading for passing confidential board information to hedge fund manager Raj Rajaratnam.",
-  "trigger_type": "fraud"
+  "summary_embed": ""
 }

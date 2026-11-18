@@ -1,146 +1,53 @@
 {
-  "actor_roles": [
-    "ceo",
-    "board",
-    "employee"
+  "incident_id": "wirecard_2020",
+  "title": "Wirecard collapse after €1.9 billion missing",
+  "status": "curated",
+  "date": "2020-06-25",
+  "recorded_at": "2020-06-26",
+  "actors": ["Markus Braun", "Wirecard Board of Directors", "Jan Marsalek"],
+  "actor_roles": ["ceo", "board", "employee"],
+  "sector": "technology",
+  "geography": "Germany",
+  "trigger": "Wirecard disclosed that €1.9 billion in cash held by a third-party trustee in the Philippines likely did not exist, leading to insolvency proceedings and the arrest of CEO Markus Braun.",
+  "trigger_type": "fraud",
+  "constraint_types": ["legal", "regulatory"],
+  "legal_outcome": "pending",
+  "escalation_vector": ["leak", "inquiry"],
+  "tempo": "weeks",
+  "exit_authority": "court",
+  "succession": "external",
+  "timeline": [
+    {"date": "2019-01-22", "event": "Financial Times publishes first article questioning Wirecard's accounting practices", "claim_ids": ["c1"]},
+    {"date": "2020-06-18", "event": "Wirecard admits €1.9 billion in trust accounts likely does not exist", "claim_ids": ["c2"]},
+    {"date": "2020-06-25", "event": "Wirecard files for insolvency; CEO Markus Braun is arrested", "claim_ids": ["c3"]},
+    {"date": "2020-06-29", "event": "Jan Marsalek, former COO, goes missing", "claim_ids": ["c4"]}
   ],
-  "actors": [
-    "Markus Braun",
-    "Wirecard Board of Directors",
-    "Jan Marsalek"
-  ],
+  "resolution": ["bankruptcy"],
+  "outcome": {
+    "summary": "Wirecard collapsed in June 2020 after admitting €1.9 billion likely did not exist. CEO Markus Braun was arrested. Former COO Jan Marsalek disappeared and remains at large. The company filed for insolvency. The collapse led to reforms in German financial regulation and the resignation of BaFin officials.",
+    "actors": ["Markus Braun", "Jan Marsalek", "Wirecard Board of Directors"],
+    "constraint_types": ["legal", "regulatory"],
+    "recorded_at": "2020-06-29",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/10_wirecard_2020/sources/wirecard_2020_insolvency.md", "date": "2020-06-25"},
+      {"id": "s2", "type": "regulatory_report", "ref": "data/incidents/10_wirecard_2020/sources/wirecard_2020_bafin.md", "date": "2020-07-15"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [],
-      "supports": [],
+      "text": "The Financial Times began publishing articles in January 2019 questioning Wirecard's accounting and business practices",
       "tag": "reported_unconfirmed",
-      "text": "The Financial Times began publishing articles in January 2019 questioning Wirecard's accounting and business practices"
-    },
-    {
-      "id": "c2",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
-      "tag": "documented",
-      "text": "On June 18, 2020, Wirecard disclosed that €1.9 billion held by a third-party trustee in the Philippines likely did not exist"
-    },
-    {
-      "id": "c3",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c2"
-      ],
-      "tag": "documented",
-      "text": "Wirecard filed for insolvency on June 25, 2020 and CEO Markus Braun was arrested the same day"
-    },
-    {
-      "id": "c4",
       "source_ids": [],
-      "supports": [],
-      "tag": "reported_unconfirmed",
-      "text": "Former COO Jan Marsalek disappeared on June 29, 2020 and remains at large"
-    }
+      "supports": []
+    },
+    {"id": "c2", "text": "On June 18, 2020, Wirecard disclosed that €1.9 billion held by a third-party trustee in the Philippines likely did not exist", "tag": "documented", "source_ids": ["s1"], "supports": ["c1"]},
+    {"id": "c3", "text": "Wirecard filed for insolvency on June 25, 2020 and CEO Markus Braun was arrested the same day", "tag": "documented", "source_ids": ["s1"], "supports": ["c2"]},
+    {"id": "c4", "text": "Former COO Jan Marsalek disappeared on June 29, 2020 and remains at large", "tag": "reported_unconfirmed", "source_ids": [], "supports": []}
   ],
-  "constraint_types": [
-    "legal",
-    "regulatory"
-  ],
-  "date": "2020-06-25",
-  "escalation_vector": [
-    "leak",
-    "inquiry"
-  ],
-  "exit_authority": "court",
-  "geography": "Germany",
-  "incident_id": "wirecard_2020",
-  "legal_outcome": "pending",
-  "outcome": {
-    "actors": [
-      "Markus Braun",
-      "Jan Marsalek",
-      "Wirecard Board of Directors"
-    ],
-    "constraint_types": [
-      "legal",
-      "regulatory"
-    ],
-    "recorded_at": "2020-06-29",
-    "sources": [
-      {
-        "date": "2020-06-25",
-        "id": "s1",
-        "ref": "data/incidents/wirecard_2020/sources/wirecard_2020_insolvency.md",
-        "type": "court_record"
-      },
-      {
-        "date": "2020-07-15",
-        "id": "s2",
-        "ref": "data/incidents/wirecard_2020/sources/wirecard_2020_bafin.md",
-        "type": "regulatory_report"
-      }
-    ],
-    "summary": "Wirecard collapsed in June 2020 after admitting €1.9 billion likely did not exist. CEO Markus Braun was arrested. Former COO Jan Marsalek disappeared and remains at large. The company filed for insolvency. The collapse led to reforms in German financial regulation and the resignation of BaFin officials."
-  },
-  "recorded_at": "2020-06-26",
-  "resolution": [
-    "bankruptcy"
-  ],
-  "sector": "technology",
   "sources": [
-    {
-      "date": "2020-06-25",
-      "id": "s1",
-      "ref": "data/incidents/wirecard_2020/sources/wirecard_2020_insolvency.md",
-      "type": "court_record"
-    },
-    {
-      "date": "2020-07-15",
-      "id": "s2",
-      "ref": "data/incidents/wirecard_2020/sources/wirecard_2020_bafin.md",
-      "type": "regulatory_report"
-    }
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/10_wirecard_2020/sources/wirecard_2020_insolvency.md", "date": "2020-06-25"},
+    {"id": "s2", "type": "regulatory_report", "ref": "data/incidents/10_wirecard_2020/sources/wirecard_2020_bafin.md", "date": "2020-07-15"}
   ],
-  "status": "curated",
-  "succession": "external",
-  "summary_embed": "",
-  "tempo": "weeks",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2019-01-22",
-      "event": "Financial Times publishes first article questioning Wirecard's accounting practices"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2020-06-18",
-      "event": "Wirecard admits €1.9 billion in trust accounts likely does not exist"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2020-06-25",
-      "event": "Wirecard files for insolvency; CEO Markus Braun is arrested"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2020-06-29",
-      "event": "Jan Marsalek, former COO, goes missing"
-    }
-  ],
-  "title": "Wirecard collapse after €1.9 billion missing",
-  "trigger": "Wirecard disclosed that €1.9 billion in cash held by a third-party trustee in the Philippines likely did not exist, leading to insolvency proceedings and the arrest of CEO Markus Braun.",
-  "trigger_type": "fraud"
+  "summary_embed": ""
 }

@@ -1,169 +1,79 @@
 {
-  "actor_roles": [
-    "minister",
-    "board"
+  "incident_id": "two_g_spectrum_2010",
+  "title": "2G spectrum allocation scam",
+  "status": "curated",
+  "date": "2011-04-02",
+  "recorded_at": "2011-04-03",
+  "actors": ["A. Raja", "A. Raja", "A. Raja"],
+  "actor_roles": ["board", "board", "board"],
+  "sector": "telecommunications",
+  "geography": "India",
+  "trigger": "The 2G spectrum allocation scam involved the underpriced allocation of telecom spectrum licenses in 2008, causing a loss of approximately Rs 1.76 trillion to the Indian exchequer, leading to criminal convictions and the resignation of Telecom Minister A. Raja.",
+  "trigger_type": "official_misconduct",
+  "constraint_types": ["legal", "regulatory"],
+  "legal_outcome": "convicted",
+  "escalation_vector": ["leak", "inquiry"],
+  "tempo": "years",
+  "exit_authority": "self",
+  "succession": "external",
+  "timeline": [
+    {"date": "2008-01-10", "event": "First-come-first-served 2G spectrum licenses allocated at 2001 prices", "claim_ids": ["c1"]},
+    {"date": "2010-11-14", "event": "CAG report estimates loss of Rs 1.76 trillion from the allocations", "claim_ids": ["c2"]},
+    {"date": "2011-02-02", "event": "Supreme Court cancels 122 licenses allocated in 2008", "claim_ids": ["c3"]},
+    {"date": "2011-04-02", "event": "A. Raja resigns as Telecom Minister", "claim_ids": ["c4"]},
+    {"date": "2017-12-21", "event": "Special CBI court acquits A. Raja and co-accused due to lack of evidence", "claim_ids": ["c5"]}
   ],
-  "actors": [
-    "A. Raja",
-    "A. Raja",
-    "A. Raja"
-  ],
+  "resolution": ["conviction"],
+  "outcome": {
+    "summary": "The 2G spectrum scam led to the cancellation of 122 licenses by the Supreme Court in 2011. A. Raja resigned as Telecom Minister and was arrested. However, in December 2017, a special CBI court acquitted all accused due to lack of evidence. The scandal led to significant reforms in spectrum allocation policy in India.",
+    "actors": ["A. Raja", "A. Raja"],
+    "constraint_types": ["legal", "regulatory"],
+    "recorded_at": "2017-12-21",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/two_g_spectrum_2010/sources/supreme_court_2011_license_cancellation.md", "date": "2011-02-02"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/two_g_spectrum_2010/sources/special_cbi_court_2017_acquittal.md", "date": "2017-12-21"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
+      "text": "2G spectrum licenses were allocated on a first-come-first-served basis at 2001 prices in January 2008",
       "tag": "documented",
-      "text": "2G spectrum licenses were allocated on a first-come-first-served basis at 2001 prices in January 2008"
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
+      "text": "The CAG report estimated a loss of Rs 1.76 trillion to the exchequer from the allocations",
       "tag": "documented",
-      "text": "The CAG report estimated a loss of Rs 1.76 trillion to the exchequer from the allocations"
+      "source_ids": ["s1"],
+      "supports": ["c1"]
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c2"
-      ],
+      "text": "The Supreme Court cancelled 122 licenses allocated in 2008 on February 2, 2011",
       "tag": "documented",
-      "text": "The Supreme Court cancelled 122 licenses allocated in 2008 on February 2, 2011"
+      "source_ids": ["s1"],
+      "supports": ["c2"]
     },
     {
       "id": "c4",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c3"
-      ],
+      "text": "A. Raja resigned as Telecom Minister on April 2, 2011",
       "tag": "documented",
-      "text": "A. Raja resigned as Telecom Minister on April 2, 2011"
+      "source_ids": ["s1"],
+      "supports": ["c3"]
     },
     {
       "id": "c5",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c1",
-        "c3"
-      ],
+      "text": "A special CBI court acquitted A. Raja and all co-accused on December 21, 2017 due to lack of evidence",
       "tag": "documented",
-      "text": "A special CBI court acquitted A. Raja and all co-accused on December 21, 2017 due to lack of evidence"
+      "source_ids": ["s2"],
+      "supports": ["c1", "c3"]
     }
   ],
-  "constraint_types": [
-    "legal",
-    "regulatory"
-  ],
-  "date": "2011-04-02",
-  "escalation_vector": [
-    "leak",
-    "inquiry"
-  ],
-  "exit_authority": "self",
-  "geography": "India",
-  "incident_id": "two_g_spectrum_2010",
-  "legal_outcome": "convicted",
-  "outcome": {
-    "actors": [
-      "A. Raja",
-      "A. Raja"
-    ],
-    "constraint_types": [
-      "legal",
-      "regulatory"
-    ],
-    "recorded_at": "2017-12-21",
-    "sources": [
-      {
-        "date": "2011-02-02",
-        "id": "s1",
-        "ref": "data/incidents/two_g_spectrum_2010/sources/supreme_court_2011_license_cancellation.md",
-        "type": "court_record"
-      },
-      {
-        "date": "2017-12-21",
-        "id": "s2",
-        "ref": "data/incidents/two_g_spectrum_2010/sources/special_cbi_court_2017_acquittal.md",
-        "type": "court_record"
-      }
-    ],
-    "summary": "The 2G spectrum scam led to the cancellation of 122 licenses by the Supreme Court in 2011. A. Raja resigned as Telecom Minister and was arrested. However, in December 2017, a special CBI court acquitted all accused due to lack of evidence. The scandal led to significant reforms in spectrum allocation policy in India."
-  },
-  "recorded_at": "2011-04-03",
-  "resolution": [
-    "conviction"
-  ],
-  "sector": "telecommunications",
   "sources": [
-    {
-      "date": "2011-02-02",
-      "id": "s1",
-      "ref": "data/incidents/two_g_spectrum_2010/sources/supreme_court_2011_license_cancellation.md",
-      "type": "court_record"
-    },
-    {
-      "date": "2017-12-21",
-      "id": "s2",
-      "ref": "data/incidents/two_g_spectrum_2010/sources/special_cbi_court_2017_acquittal.md",
-      "type": "court_record"
-    }
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/two_g_spectrum_2010/sources/supreme_court_2011_license_cancellation.md", "date": "2011-02-02"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/two_g_spectrum_2010/sources/special_cbi_court_2017_acquittal.md", "date": "2017-12-21"}
   ],
-  "status": "curated",
-  "succession": "external",
-  "summary_embed": "",
-  "tempo": "years",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2008-01-10",
-      "event": "First-come-first-served 2G spectrum licenses allocated at 2001 prices"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2010-11-14",
-      "event": "CAG report estimates loss of Rs 1.76 trillion from the allocations"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2011-02-02",
-      "event": "Supreme Court cancels 122 licenses allocated in 2008"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2011-04-02",
-      "event": "A. Raja resigns as Telecom Minister"
-    },
-    {
-      "claim_ids": [
-        "c5"
-      ],
-      "date": "2017-12-21",
-      "event": "Special CBI court acquits A. Raja and co-accused due to lack of evidence"
-    }
-  ],
-  "title": "2G spectrum allocation scam",
-  "trigger": "The 2G spectrum allocation scam involved the underpriced allocation of telecom spectrum licenses in 2008, causing a loss of approximately Rs 1.76 trillion to the Indian exchequer, leading to criminal convictions and the resignation of Telecom Minister A. Raja.",
-  "trigger_type": "official_misconduct"
+  "summary_embed": ""
 }

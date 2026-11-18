@@ -21,9 +21,9 @@ import json
 # change to the card schema, the scoring weights, or the summary_embed
 # template. Store metadata records these versions; a mismatch triggers
 # a full re-embed / reindex.
-SCHEMA_VERSION = 5
-WEIGHTS_VERSION = 5
-TEMPLATE_VERSION = 5
+SCHEMA_VERSION = 4
+WEIGHTS_VERSION = 4
+TEMPLATE_VERSION = 4
 
 
 # ---------------------------------------------------------------------------
@@ -141,10 +141,6 @@ ACTOR_ROLES = (
     "investor",
     "customer",
     "media",
-    "president",
-    "prime_minister",
-    "minister",
-    "party_official",
 )
 
 # Constraint type dominance precedence (highest first).

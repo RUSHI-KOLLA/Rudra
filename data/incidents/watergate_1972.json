@@ -1,167 +1,79 @@
 {
-  "actor_roles": [
-    "president"
+  "incident_id": "watergate_1972",
+  "title": "Richard Nixon resignation after Watergate",
+  "status": "curated",
+  "date": "1974-08-09",
+  "recorded_at": "1974-08-10",
+  "actors": ["Richard Nixon", "Richard Nixon", "Gerald Ford"],
+  "actor_roles": ["ceo", "ceo", "ceo"],
+  "sector": "government",
+  "geography": "United States",
+  "trigger": "The Watergate scandal involved the break-in at the Democratic National Committee headquarters and the subsequent cover-up by the Nixon administration, leading to Nixon's resignation before impeachment.",
+  "trigger_type": "official_misconduct",
+  "constraint_types": ["legal", "reputational"],
+  "legal_outcome": "pardoned",
+  "escalation_vector": ["leak", "inquiry"],
+  "tempo": "years",
+  "exit_authority": "legislature",
+  "succession": "internal",
+  "timeline": [
+    {"date": "1972-06-17", "event": "Five burglars arrested at Democratic National Committee headquarters in the Watergate complex", "claim_ids": ["c1"]},
+    {"date": "1973-07-13", "event": "Senate Watergate Committee begins hearings", "claim_ids": ["c2"]},
+    {"date": "1974-08-08", "event": "Nixon announces his resignation, effective August 9", "claim_ids": ["c3"]},
+    {"date": "1974-08-09", "event": "Gerald Ford sworn in as 38th President of the United States", "claim_ids": ["c4"]},
+    {"date": "1974-09-08", "event": "Gerald Ford grants Nixon a full pardon", "claim_ids": ["c5"]}
   ],
-  "actors": [
-    "Richard Nixon",
-    "Richard Nixon",
-    "Gerald Ford"
-  ],
+  "resolution": ["resignation"],
+  "outcome": {
+    "summary": "Richard Nixon resigned the presidency on August 9, 1974, facing near-certain impeachment over the Watergate scandal. Gerald Ford succeeded him and granted Nixon a full pardon one month later. The scandal led to reforms in campaign finance, government ethics, and congressional oversight.",
+    "actors": ["Richard Nixon", "Gerald Ford"],
+    "constraint_types": ["legal", "reputational"],
+    "recorded_at": "1974-09-08",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/watergate_1972/sources/senate_watergate_hearings_1973.md", "date": "1973-07-13"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/watergate_1972/sources/nixon_pardon_1974.md", "date": "1974-09-08"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
+      "text": "Five burglars were arrested at the Democratic National Committee headquarters in the Watergate complex on June 17, 1972",
       "tag": "documented",
-      "text": "Five burglars were arrested at the Democratic National Committee headquarters in the Watergate complex on June 17, 1972"
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
+      "text": "The Senate Watergate Committee began hearings on July 13, 1973",
       "tag": "documented",
-      "text": "The Senate Watergate Committee began hearings on July 13, 1973"
+      "source_ids": ["s1"],
+      "supports": ["c1"]
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c2"
-      ],
+      "text": "Richard Nixon announced his resignation on August 8, 1974, effective August 9",
       "tag": "documented",
-      "text": "Richard Nixon announced his resignation on August 8, 1974, effective August 9"
+      "source_ids": ["s1"],
+      "supports": ["c2"]
     },
     {
       "id": "c4",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c3"
-      ],
+      "text": "Gerald Ford was sworn in as 38th President on August 9, 1974",
       "tag": "documented",
-      "text": "Gerald Ford was sworn in as 38th President on August 9, 1974"
+      "source_ids": ["s1"],
+      "supports": ["c3"]
     },
     {
       "id": "c5",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c4"
-      ],
+      "text": "Gerald Ford granted Richard Nixon a full pardon on September 8, 1974",
       "tag": "documented",
-      "text": "Gerald Ford granted Richard Nixon a full pardon on September 8, 1974"
+      "source_ids": ["s2"],
+      "supports": ["c4"]
     }
   ],
-  "constraint_types": [
-    "legal",
-    "reputational"
-  ],
-  "date": "1974-08-09",
-  "escalation_vector": [
-    "leak",
-    "inquiry"
-  ],
-  "exit_authority": "legislature",
-  "geography": "United States",
-  "incident_id": "watergate_1972",
-  "legal_outcome": "pardoned",
-  "outcome": {
-    "actors": [
-      "Richard Nixon",
-      "Gerald Ford"
-    ],
-    "constraint_types": [
-      "legal",
-      "reputational"
-    ],
-    "recorded_at": "1974-09-08",
-    "sources": [
-      {
-        "date": "1973-07-13",
-        "id": "s1",
-        "ref": "data/incidents/watergate_1972/sources/senate_watergate_hearings_1973.md",
-        "type": "court_record"
-      },
-      {
-        "date": "1974-09-08",
-        "id": "s2",
-        "ref": "data/incidents/watergate_1972/sources/nixon_pardon_1974.md",
-        "type": "court_record"
-      }
-    ],
-    "summary": "Richard Nixon resigned the presidency on August 9, 1974, facing near-certain impeachment over the Watergate scandal. Gerald Ford succeeded him and granted Nixon a full pardon one month later. The scandal led to reforms in campaign finance, government ethics, and congressional oversight."
-  },
-  "recorded_at": "1974-08-10",
-  "resolution": [
-    "resignation"
-  ],
-  "sector": "government",
   "sources": [
-    {
-      "date": "1973-07-13",
-      "id": "s1",
-      "ref": "data/incidents/watergate_1972/sources/senate_watergate_hearings_1973.md",
-      "type": "court_record"
-    },
-    {
-      "date": "1974-09-08",
-      "id": "s2",
-      "ref": "data/incidents/watergate_1972/sources/nixon_pardon_1974.md",
-      "type": "court_record"
-    }
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/watergate_1972/sources/senate_watergate_hearings_1973.md", "date": "1973-07-13"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/watergate_1972/sources/nixon_pardon_1974.md", "date": "1974-09-08"}
   ],
-  "status": "curated",
-  "succession": "internal",
-  "summary_embed": "",
-  "tempo": "years",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "1972-06-17",
-      "event": "Five burglars arrested at Democratic National Committee headquarters in the Watergate complex"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "1973-07-13",
-      "event": "Senate Watergate Committee begins hearings"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "1974-08-08",
-      "event": "Nixon announces his resignation, effective August 9"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "1974-08-09",
-      "event": "Gerald Ford sworn in as 38th President of the United States"
-    },
-    {
-      "claim_ids": [
-        "c5"
-      ],
-      "date": "1974-09-08",
-      "event": "Gerald Ford grants Nixon a full pardon"
-    }
-  ],
-  "title": "Richard Nixon resignation after Watergate",
-  "trigger": "The Watergate scandal involved the break-in at the Democratic National Committee headquarters and the subsequent cover-up by the Nixon administration, leading to Nixon's resignation before impeachment.",
-  "trigger_type": "official_misconduct"
+  "summary_embed": ""
 }

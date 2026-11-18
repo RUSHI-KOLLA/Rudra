@@ -1,145 +1,71 @@
 {
-  "actor_roles": [
-    "ceo"
+  "incident_id": "nirav_modi_pnb_2018",
+  "title": "Nirav Modi Punjab National Bank fraud",
+  "status": "curated",
+  "date": "2018-02-14",
+  "recorded_at": "2018-02-15",
+  "actors": ["Nirav Modi", "Nirav Modi", "Nirav Modi"],
+  "actor_roles": ["ceo", "ceo", "ceo"],
+  "sector": "finance",
+  "geography": "India",
+  "trigger": "Nirav Modi, a diamantaire, orchestrated a fraudulent issuance of letters of undertaking through Punjab National Bank, causing a loss of approximately Rs 114 billion, leading to regulatory action and his flight from India.",
+  "trigger_type": "fraud",
+  "constraint_types": ["legal", "regulatory"],
+  "legal_outcome": "pending",
+  "escalation_vector": ["filing", "inquiry"],
+  "tempo": "years",
+  "exit_authority": "self",
+  "succession": "external",
+  "timeline": [
+    {"date": "2018-01-29", "event": "Punjab National Bank detects fraudulent letters of undertaking issued to Nirav Modi's companies", "claim_ids": ["c1"]},
+    {"date": "2018-02-14", "event": "Punjab National Bank files complaint with CBI against Nirav Modi and companies", "claim_ids": ["c2"]},
+    {"date": "2018-02-26", "event": "Enforcement Directorate attaches Nirav Modi's assets under Prevention of Money Laundering Act", "claim_ids": ["c3"]},
+    {"date": "2019-03-30", "event": "Nirav Modi arrested in London by UK authorities", "claim_ids": ["c4"]}
   ],
-  "actors": [
-    "Nirav Modi",
-    "Nirav Modi",
-    "Nirav Modi"
-  ],
+  "resolution": ["ongoing"],
+  "outcome": {
+    "summary": "Nirav Modi orchestrated a fraudulent issuance of letters of undertaking through Punjab National Bank, causing a loss of approximately Rs 114 billion. He fled India before the fraud was discovered. He was arrested in London in March 2019 and is fighting extradition to India. PNB and other banks continue to pursue recovery through civil and criminal proceedings.",
+    "actors": ["Nirav Modi", "Nirav Modi"],
+    "constraint_types": ["legal", "regulatory"],
+    "recorded_at": "2019-03-30",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/nirav_modi_pnb_2018/sources/pnb_2018_cbi_complaint.md", "date": "2018-02-14"},
+      {"id": "s2", "type": "regulatory_report", "ref": "data/incidents/nirav_modi_pnb_2018/sources/ed_2018_pmla_attachment.md", "date": "2018-02-26"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
+      "text": "Punjab National Bank detected fraudulent letters of undertaking issued to Nirav Modi's companies on January 29, 2018",
       "tag": "documented",
-      "text": "Punjab National Bank detected fraudulent letters of undertaking issued to Nirav Modi's companies on January 29, 2018"
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
+      "text": "PNB filed a complaint with the CBI against Nirav Modi and his companies on February 14, 2018",
       "tag": "documented",
-      "text": "PNB filed a complaint with the CBI against Nirav Modi and his companies on February 14, 2018"
+      "source_ids": ["s1"],
+      "supports": ["c1"]
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c1"
-      ],
+      "text": "The Enforcement Directorate attached Nirav Modi's assets under the Prevention of Money Laundering Act on February 26, 2018",
       "tag": "documented",
-      "text": "The Enforcement Directorate attached Nirav Modi's assets under the Prevention of Money Laundering Act on February 26, 2018"
+      "source_ids": ["s2"],
+      "supports": ["c1"]
     },
     {
       "id": "c4",
-      "source_ids": [],
-      "supports": [],
+      "text": "Nirav Modi was arrested in London on March 30, 2019 by UK authorities",
       "tag": "reported_unconfirmed",
-      "text": "Nirav Modi was arrested in London on March 30, 2019 by UK authorities"
+      "source_ids": [],
+      "supports": []
     }
   ],
-  "constraint_types": [
-    "legal",
-    "regulatory"
-  ],
-  "date": "2018-02-14",
-  "escalation_vector": [
-    "filing",
-    "inquiry"
-  ],
-  "exit_authority": "self",
-  "geography": "India",
-  "incident_id": "nirav_modi_pnb_2018",
-  "legal_outcome": "pending",
-  "outcome": {
-    "actors": [
-      "Nirav Modi",
-      "Nirav Modi"
-    ],
-    "constraint_types": [
-      "legal",
-      "regulatory"
-    ],
-    "recorded_at": "2019-03-30",
-    "sources": [
-      {
-        "date": "2018-02-14",
-        "id": "s1",
-        "ref": "data/incidents/nirav_modi_pnb_2018/sources/pnb_2018_cbi_complaint.md",
-        "type": "court_record"
-      },
-      {
-        "date": "2018-02-26",
-        "id": "s2",
-        "ref": "data/incidents/nirav_modi_pnb_2018/sources/ed_2018_pmla_attachment.md",
-        "type": "regulatory_report"
-      }
-    ],
-    "summary": "Nirav Modi orchestrated a fraudulent issuance of letters of undertaking through Punjab National Bank, causing a loss of approximately Rs 114 billion. He fled India before the fraud was discovered. He was arrested in London in March 2019 and is fighting extradition to India. PNB and other banks continue to pursue recovery through civil and criminal proceedings."
-  },
-  "recorded_at": "2018-02-15",
-  "resolution": [
-    "ongoing"
-  ],
-  "sector": "finance",
   "sources": [
-    {
-      "date": "2018-02-14",
-      "id": "s1",
-      "ref": "data/incidents/nirav_modi_pnb_2018/sources/pnb_2018_cbi_complaint.md",
-      "type": "court_record"
-    },
-    {
-      "date": "2018-02-26",
-      "id": "s2",
-      "ref": "data/incidents/nirav_modi_pnb_2018/sources/ed_2018_pmla_attachment.md",
-      "type": "regulatory_report"
-    }
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/nirav_modi_pnb_2018/sources/pnb_2018_cbi_complaint.md", "date": "2018-02-14"},
+    {"id": "s2", "type": "regulatory_report", "ref": "data/incidents/nirav_modi_pnb_2018/sources/ed_2018_pmla_attachment.md", "date": "2018-02-26"}
   ],
-  "status": "curated",
-  "succession": "external",
-  "summary_embed": "",
-  "tempo": "years",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2018-01-29",
-      "event": "Punjab National Bank detects fraudulent letters of undertaking issued to Nirav Modi's companies"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2018-02-14",
-      "event": "Punjab National Bank files complaint with CBI against Nirav Modi and companies"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2018-02-26",
-      "event": "Enforcement Directorate attaches Nirav Modi's assets under Prevention of Money Laundering Act"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2019-03-30",
-      "event": "Nirav Modi arrested in London by UK authorities"
-    }
-  ],
-  "title": "Nirav Modi Punjab National Bank fraud",
-  "trigger": "Nirav Modi, a diamantaire, orchestrated a fraudulent issuance of letters of undertaking through Punjab National Bank, causing a loss of approximately Rs 114 billion, leading to regulatory action and his flight from India.",
-  "trigger_type": "fraud"
+  "summary_embed": ""
 }

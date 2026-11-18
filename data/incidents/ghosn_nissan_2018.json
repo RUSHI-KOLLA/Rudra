@@ -1,162 +1,79 @@
 {
-  "actor_roles": [
-    "ceo",
-    "board"
+  "incident_id": "ghosn_nissan_2018",
+  "title": "Carlos Ghosn dismissed as Nissan Chairman after arrest",
+  "status": "curated",
+  "date": "2018-11-22",
+  "recorded_at": "2018-11-23",
+  "actors": ["Carlos Ghosn", "Nissan Board of Directors", "Hiroto Saikawa"],
+  "actor_roles": ["ceo", "board", "ceo"],
+  "sector": "automotive",
+  "geography": "Japan / France",
+  "trigger": "Carlos Ghosn was arrested in Japan on suspicion of financial misconduct including underreporting his compensation, leading Nissan's board to dismiss him as Chairman and Representative Director.",
+  "trigger_type": "official_misconduct",
+  "constraint_types": ["legal", "regulatory"],
+  "legal_outcome": "fled",
+  "escalation_vector": ["leak", "filing", "inquiry"],
+  "tempo": "weeks",
+  "exit_authority": "board",
+  "succession": "internal",
+  "timeline": [
+    {"date": "2018-11-19", "event": "Ghosn arrested in Tokyo on suspicion of underreporting his income by about $44 million over eight years", "claim_ids": ["c1"]},
+    {"date": "2018-11-22", "event": "Nissan board votes to remove Ghosn as Chairman and Representative Director", "claim_ids": ["c2"]},
+    {"date": "2018-12-05", "event": "Hiroto Saikawa becomes Nissan CEO", "claim_ids": ["c3"]},
+    {"date": "2018-12-29", "event": "Ghosn released on bail after more than a month in detention", "claim_ids": ["c4"]},
+    {"date": "2019-12-29", "event": "Ghosn flees Japan to Lebanon while awaiting trial", "claim_ids": ["c5"]}
   ],
-  "actors": [
-    "Carlos Ghosn",
-    "Nissan Board of Directors",
-    "Hiroto Saikawa"
-  ],
+  "resolution": ["dismissal"],
+  "outcome": {
+    "summary": "Ghosn was arrested in November 2018 and dismissed from Nissan's board. He was released on bail in December 2018 but fled Japan to Lebanon at the end of 2019 while awaiting trial. Nissan pursued civil claims against him for damages. The French prosecutor dropped its investigation in 2023.",
+    "actors": ["Carlos Ghosn", "Hiroto Saikawa", "Nissan Board of Directors"],
+    "constraint_types": ["legal", "regulatory"],
+    "recorded_at": "2023-02-15",
+    "sources": [
+      {"id": "s1", "type": "court_record", "ref": "data/incidents/6_ghosn_nissan_2018/sources/ghosn_2018_arrest.md", "date": "2018-11-19"},
+      {"id": "s2", "type": "sec_filing", "ref": "data/incidents/6_ghosn_nissan_2018/sources/nissan_2018_8k.md", "date": "2018-11-22"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
+      "text": "Ghosn was arrested in Tokyo on November 19, 2018 on suspicion of underreporting his compensation",
       "tag": "documented",
-      "text": "Ghosn was arrested in Tokyo in November 2018; the SEC alleges he concealed more than $90 million in compensation from public disclosure"
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c1"
-      ],
-      "tag": "reported_unconfirmed",
-      "text": "Nissan's board voted to remove Ghosn as Chairman and Representative Director on November 22, 2018"
+      "text": "Nissan's board voted to remove Ghosn as Chairman and Representative Director on November 22, 2018",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c1"]
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c2"
-      ],
-      "tag": "reported_unconfirmed",
-      "text": "Hiroto Saikawa became Nissan's CEO after Ghosn's removal"
+      "text": "Hiroto Saikawa became Nissan's CEO after Ghosn's removal",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c2"]
     },
     {
       "id": "c4",
-      "source_ids": [],
-      "supports": [],
+      "text": "Ghosn was released on bail on December 25, 2018 after over a month in detention",
       "tag": "reported_unconfirmed",
-      "text": "Ghosn was released on bail on December 25, 2018 after over a month in detention"
+      "source_ids": [],
+      "supports": []
     },
     {
       "id": "c5",
-      "source_ids": [],
-      "supports": [],
+      "text": "Ghosn fled Japan to Lebanon on December 29, 2019 while awaiting trial",
       "tag": "reported_unconfirmed",
-      "text": "Ghosn fled Japan to Lebanon on December 29, 2019 while awaiting trial"
+      "source_ids": [],
+      "supports": []
     }
   ],
-  "constraint_types": [
-    "legal",
-    "regulatory"
-  ],
-  "date": "2018-11-22",
-  "escalation_vector": [
-    "leak",
-    "filing",
-    "inquiry"
-  ],
-  "exit_authority": "board",
-  "geography": "Japan / France",
-  "incident_id": "ghosn_nissan_2018",
-  "legal_outcome": "fled",
-  "outcome": {
-    "actors": [
-      "Carlos Ghosn",
-      "Hiroto Saikawa",
-      "Nissan Board of Directors"
-    ],
-    "constraint_types": [
-      "legal",
-      "regulatory"
-    ],
-    "recorded_at": "2023-02-15",
-    "sources": [
-      {
-        "date": "2018-11-19",
-        "id": "s1",
-        "ref": "data/incidents/ghosn_nissan_2018/sources/sec_2019_183.md",
-        "type": "sec_press_release"
-      },
-      {
-        "date": "2018-11-22",
-        "id": "s2",
-        "ref": "data/incidents/ghosn_nissan_2018/sources/nissan_2018_8k.md",
-        "type": "paraphrase"
-      }
-    ],
-    "summary": "Ghosn was arrested in Tokyo in November 2018; the SEC alleges he concealed more than $90 million in compensation from public disclosure. Nissan's board removed him as Chairman. He was released on bail in December 2018 but fled Japan to Lebanon in December 2019 while awaiting trial. Nissan pursued civil claims against him for damages. The French prosecutor dropped its investigation in 2023."
-  },
-  "recorded_at": "2018-11-23",
-  "resolution": [
-    "dismissal"
-  ],
-  "sector": "automotive",
   "sources": [
-    {
-      "date": "2018-11-19",
-      "id": "s1",
-      "ref": "data/incidents/ghosn_nissan_2018/sources/sec_2019_183.md",
-      "type": "sec_press_release"
-    },
-    {
-      "date": "2018-11-22",
-      "id": "s2",
-      "ref": "data/incidents/ghosn_nissan_2018/sources/nissan_2018_8k.md",
-      "type": "paraphrase"
-    }
+    {"id": "s1", "type": "court_record", "ref": "data/incidents/6_ghosn_nissan_2018/sources/ghosn_2018_arrest.md", "date": "2018-11-19"},
+    {"id": "s2", "type": "sec_filing", "ref": "data/incidents/6_ghosn_nissan_2018/sources/nissan_2018_8k.md", "date": "2018-11-22"}
   ],
-  "status": "curated",
-  "succession": "internal",
-  "summary_embed": "",
-  "tempo": "weeks",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2018-11-19",
-      "event": "Ghosn arrested in Tokyo; SEC alleges concealed >$90M compensation over eight years"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2018-11-22",
-      "event": "Nissan board votes to remove Ghosn as Chairman and Representative Director"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2018-12-05",
-      "event": "Hiroto Saikawa becomes Nissan CEO"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2018-12-25",
-      "event": "Ghosn released on bail after over a month in detention"
-    },
-    {
-      "claim_ids": [
-        "c5"
-      ],
-      "date": "2019-12-29",
-      "event": "Ghosn flees Japan to Lebanon while awaiting trial"
-    }
-  ],
-  "title": "Carlos Ghosn arrested and dismissed as Nissan Chairman",
-  "trigger": "Carlos Ghosn was arrested in Japan on suspicion of financial misconduct; the SEC alleges he concealed more than $90 million in compensation from public disclosure over eight years, leading Nissan's board to dismiss him as Chairman and Representative Director.",
-  "trigger_type": "official_misconduct"
+  "summary_embed": ""
 }

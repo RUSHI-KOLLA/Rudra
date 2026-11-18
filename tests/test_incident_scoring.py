@@ -40,7 +40,7 @@ def test_weights_sum_to_one():
 
 def test_weights_version_is_4():
     """WEIGHTS_VERSION tracks schema changes."""
-    assert WEIGHTS_VERSION == 5
+    assert WEIGHTS_VERSION == 4
 
 
 def test_expected_top5_ordering():

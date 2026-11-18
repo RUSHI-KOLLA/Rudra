@@ -38,7 +38,7 @@ WEIGHTS = {
     "outcome": 0.05 / 0.75,        # 0.0667
 }
 
-WEIGHTS_VERSION = 5
+WEIGHTS_VERSION = 4
 
 assert abs(sum(WEIGHTS.values()) - 1.0) < 1e-9, "WEIGHTS must sum to 1.0"
 

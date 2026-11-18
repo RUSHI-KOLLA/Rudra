@@ -1,149 +1,71 @@
 {
-  "actor_roles": [
-    "ceo"
+  "incident_id": "volkswagen_2015",
+  "title": "Martin Winterkorn resigns as Volkswagen CEO",
+  "status": "curated",
+  "date": "2015-09-23",
+  "recorded_at": "2015-09-24",
+  "actors": ["Martin Winterkorn"],
+  "actor_roles": ["ceo"],
+  "sector": "automotive",
+  "geography": "Germany",
+  "trigger": "Volkswagen admitted to installing software in diesel vehicles that cheated emissions tests. CEO Martin Winterkorn resigned amid the scandal, known as dieselgate.",
+  "trigger_type": "fraud",
+  "constraint_types": ["legal", "regulatory", "reputational"],
+  "legal_outcome": "pending",
+  "escalation_vector": ["leak", "inquiry"],
+  "tempo": "weeks",
+  "exit_authority": "self",
+  "succession": "internal",
+  "timeline": [
+    {"date": "2015-09-18", "event": "US EPA issues notice of violation to Volkswagen for using defeat devices in diesel vehicles", "claim_ids": ["c1"]},
+    {"date": "2015-09-22", "event": "Volkswagen admits 11 million diesel vehicles worldwide contain emissions-cheating software", "claim_ids": ["c2"]},
+    {"date": "2015-09-23", "event": "Martin Winterkorn resigns as CEO of Volkswagen", "claim_ids": ["c3"]},
+    {"date": "2015-09-25", "event": "Matthias Müller named as new CEO of Volkswagen", "claim_ids": ["c4"]}
   ],
-  "actors": [
-    "Martin Winterkorn"
-  ],
+  "resolution": ["resignation"],
+  "outcome": {
+    "summary": "Martin Winterkorn resigned as CEO of Volkswagen in September 2015 after the company admitted to installing emissions-cheating software in 11 million diesel vehicles worldwide. The scandal cost Volkswagen billions in fines, buybacks, and legal settlements. Winterkorn was charged by German prosecutors in 2019 but the trial was delayed due to health concerns.",
+    "actors": ["Martin Winterkorn", "Matthias Müller"],
+    "constraint_types": ["legal", "regulatory", "reputational"],
+    "recorded_at": "2015-09-25",
+    "sources": [
+      {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/volkswagen_2015/sources/epa_2015_violation.md", "date": "2015-09-18"},
+      {"id": "s2", "type": "court_record", "ref": "data/incidents/volkswagen_2015/sources/volkswagen_2015_8k.md", "date": "2015-09-23"}
+    ]
+  },
   "claims": [
     {
       "id": "c1",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [],
+      "text": "US EPA issued a notice of violation to Volkswagen on September 18, 2015 for using defeat devices in diesel vehicles",
       "tag": "documented",
-      "text": "US EPA issued a notice of violation to Volkswagen on September 18, 2015 for using defeat devices in diesel vehicles"
+      "source_ids": ["s1"],
+      "supports": []
     },
     {
       "id": "c2",
-      "source_ids": [
-        "s1"
-      ],
-      "supports": [
-        "c1"
-      ],
-      "tag": "reported_unconfirmed",
-      "text": "Volkswagen admitted on September 22, 2015 that 11 million diesel vehicles worldwide contain emissions-cheating software"
+      "text": "Volkswagen admitted on September 22, 2015 that 11 million diesel vehicles worldwide contain emissions-cheating software",
+      "tag": "documented",
+      "source_ids": ["s1"],
+      "supports": ["c1"]
     },
     {
       "id": "c3",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c2"
-      ],
+      "text": "Martin Winterkorn resigned as CEO of Volkswagen on September 23, 2015",
       "tag": "documented",
-      "text": "Martin Winterkorn requested the Supervisory Board to terminate his function as CEO on September 23, 2015, and resigned"
+      "source_ids": ["s2"],
+      "supports": ["c2"]
     },
     {
       "id": "c4",
-      "source_ids": [
-        "s2"
-      ],
-      "supports": [
-        "c3"
-      ],
-      "tag": "reported_unconfirmed",
-      "text": "Matthias Müller was named as the new CEO of Volkswagen on September 25, 2015"
+      "text": "Matthias Müller was named as the new CEO of Volkswagen on September 25, 2015",
+      "tag": "documented",
+      "source_ids": ["s2"],
+      "supports": ["c3"]
     }
   ],
-  "constraint_types": [
-    "legal",
-    "regulatory",
-    "reputational"
-  ],
-  "date": "2015-09-23",
-  "escalation_vector": [
-    "leak",
-    "inquiry"
-  ],
-  "exit_authority": "self",
-  "geography": "Germany",
-  "incident_id": "volkswagen_2015",
-  "legal_outcome": "pending",
-  "outcome": {
-    "actors": [
-      "Martin Winterkorn",
-      "Matthias Müller"
-    ],
-    "constraint_types": [
-      "legal",
-      "regulatory",
-      "reputational"
-    ],
-    "recorded_at": "2015-09-25",
-    "sources": [
-      {
-        "date": "2015-09-18",
-        "id": "s1",
-        "ref": "data/incidents/volkswagen_2015/sources/epa_2015_nov.md",
-        "type": "regulatory_order"
-      },
-      {
-        "date": "2015-09-23",
-        "id": "s2",
-        "ref": "data/incidents/volkswagen_2015/sources/vw_2015_winterkorn.md",
-        "type": "company_press_release"
-      }
-    ],
-    "summary": "Martin Winterkorn requested the Supervisory Board terminate his function as CEO on September 23, 2015, and resigned, after the EPA issued a notice of violation for defeat devices in diesel vehicles. The scandal cost Volkswagen billions in fines, buybacks, and legal settlements. Winterkorn was charged by German prosecutors in 2019 but the trial was delayed due to health concerns."
-  },
-  "recorded_at": "2015-09-24",
-  "resolution": [
-    "resignation"
-  ],
-  "sector": "automotive",
   "sources": [
-    {
-      "date": "2015-09-18",
-      "id": "s1",
-      "ref": "data/incidents/volkswagen_2015/sources/epa_2015_nov.md",
-      "type": "regulatory_order"
-    },
-    {
-      "date": "2015-09-23",
-      "id": "s2",
-      "ref": "data/incidents/volkswagen_2015/sources/vw_2015_winterkorn.md",
-      "type": "company_press_release"
-    }
+    {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/volkswagen_2015/sources/epa_2015_violation.md", "date": "2015-09-18"},
+    {"id": "s2", "type": "court_record", "ref": "data/incidents/volkswagen_2015/sources/volkswagen_2015_8k.md", "date": "2015-09-23"}
   ],
-  "status": "curated",
-  "succession": "internal",
-  "summary_embed": "",
-  "tempo": "weeks",
-  "timeline": [
-    {
-      "claim_ids": [
-        "c1"
-      ],
-      "date": "2015-09-18",
-      "event": "US EPA issues notice of violation to Volkswagen for using defeat devices in diesel vehicles"
-    },
-    {
-      "claim_ids": [
-        "c2"
-      ],
-      "date": "2015-09-22",
-      "event": "Volkswagen admits 11 million diesel vehicles worldwide contain emissions-cheating software"
-    },
-    {
-      "claim_ids": [
-        "c3"
-      ],
-      "date": "2015-09-23",
-      "event": "Martin Winterkorn requests Supervisory Board terminate his CEO role and resigns"
-    },
-    {
-      "claim_ids": [
-        "c4"
-      ],
-      "date": "2015-09-25",
-      "event": "Matthias Müller named as new CEO of Volkswagen"
-    }
-  ],
-  "title": "Martin Winterkorn requests termination of CEO role at Volkswagen",
-  "trigger": "Volkswagen admitted to installing software in diesel vehicles that cheated emissions tests. The EPA issued a notice of violation for defeat devices. CEO Martin Winterkorn requested the Supervisory Board terminate his function and resigned.",
-  "trigger_type": "fraud"
+  "summary_embed": ""
 }
