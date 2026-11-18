@@ -46,7 +46,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Petraeus pleaded guilty to a misdemeanor charge of mishandling classified information in 2013"
     }
   ],
@@ -88,7 +88,7 @@
         "type": "government_statement"
       }
     ],
-    "summary": "Petraeus resigned as CIA Director in November 2012 after the discovery of his affair with biographer Paula Broadwell. He pleaded guilty to a misdemeanor charge of mishandling classified information and received two years' probation and a $100,000 fine. Jim Clapper served as acting Director until John Brennan was confirmed."
+    "summary": "Petraeus resigned as CIA Director in November 2012 after the discovery of his affair with biographer Paula Broadwell. The White House statement confirms Obama accepted his resignation on November 9, 2012. He later pleaded guilty to a misdemeanor charge of mishandling classified information and received two years' probation and a $100,000 fine. Jim Clapper served as acting Director until John Brennan was confirmed."
   },
   "recorded_at": "2012-11-10",
   "resolution": [

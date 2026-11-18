@@ -23,7 +23,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "The board conducted an investigation with outside counsel before making a decision"
     },
     {
@@ -34,7 +34,7 @@
       "supports": [
         "c2"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "Easterbrook was dismissed without cause on November 3, 2019 for violating company policy"
     },
     {
@@ -84,7 +84,7 @@
         "type": "paraphrase"
       }
     ],
-    "summary": "Easterbrook was dismissed without cause in November 2019. In 2020, McDonald's sued Easterbrook to recover severance and equity, alleging he lied about the scope of his relationships. In 2021, McDonald's reported additional evidence of relationships with three more employees. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum."
+    "summary": "Easterbrook was separated from his officer and director positions effective November 1, 2019, with a separation agreement and severance. The 8-K does not state cause. In 2020, McDonald's sued Easterbrook to recover severance and equity, alleging he lied about the scope of his relationships. In 2021, McDonald's reported additional evidence of relationships with three more employees. The case was settled in 2023 with Easterbrook agreeing to pay McDonald's an undisclosed sum."
   },
   "recorded_at": "2019-11-04",
   "resolution": [
@@ -140,7 +140,7 @@
       "event": "Chris Kempczinski named as new CEO"
     }
   ],
-  "title": "Steve Easterbrook dismissed as McDonald's CEO",
-  "trigger": "McDonald's board dismissed CEO Steve Easterbrook after determining he had violated company policy by engaging in consensual relationships with company employees.",
+  "title": "Steve Easterbrook separated as McDonald's CEO",
+  "trigger": "McDonald's board separated CEO Steve Easterbrook from his officer and director positions effective November 1, 2019, with a separation agreement. The 8-K does not state cause. A 2020 complaint alleges he misrepresented the scope of his relationships with employees.",
   "trigger_type": "personal_conduct"
 }

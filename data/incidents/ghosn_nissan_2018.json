@@ -16,7 +16,7 @@
       ],
       "supports": [],
       "tag": "documented",
-      "text": "Ghosn was arrested in Tokyo on November 19, 2018 on suspicion of underreporting his compensation"
+      "text": "Ghosn was arrested in Tokyo in November 2018; the SEC alleges he concealed more than $90 million in compensation from public disclosure"
     },
     {
       "id": "c2",
@@ -94,7 +94,7 @@
         "type": "paraphrase"
       }
     ],
-    "summary": "Ghosn was arrested in November 2018 and dismissed from Nissan's board. He was released on bail in December 2018 but fled Japan to Lebanon at the end of 2019 while awaiting trial. Nissan pursued civil claims against him for damages. The French prosecutor dropped its investigation in 2023."
+    "summary": "Ghosn was arrested in Tokyo in November 2018; the SEC alleges he concealed more than $90 million in compensation from public disclosure. Nissan's board removed him as Chairman. He was released on bail in December 2018 but fled Japan to Lebanon in December 2019 while awaiting trial. Nissan pursued civil claims against him for damages. The French prosecutor dropped its investigation in 2023."
   },
   "recorded_at": "2018-11-23",
   "resolution": [
@@ -125,7 +125,7 @@
         "c1"
       ],
       "date": "2018-11-19",
-      "event": "Ghosn arrested in Tokyo on suspicion of underreporting his income by about $44 million over eight years"
+      "event": "Ghosn arrested in Tokyo; SEC alleges concealed >$90M compensation over eight years"
     },
     {
       "claim_ids": [
@@ -145,8 +145,8 @@
       "claim_ids": [
         "c4"
       ],
-      "date": "2018-12-29",
-      "event": "Ghosn released on bail after more than a month in detention"
+      "date": "2018-12-25",
+      "event": "Ghosn released on bail after over a month in detention"
     },
     {
       "claim_ids": [
@@ -156,7 +156,7 @@
       "event": "Ghosn flees Japan to Lebanon while awaiting trial"
     }
   ],
-  "title": "Carlos Ghosn dismissed as Nissan Chairman after arrest",
-  "trigger": "Carlos Ghosn was arrested in Japan on suspicion of financial misconduct including underreporting his compensation, leading Nissan's board to dismiss him as Chairman and Representative Director.",
+  "title": "Carlos Ghosn arrested and dismissed as Nissan Chairman",
+  "trigger": "Carlos Ghosn was arrested in Japan on suspicion of financial misconduct; the SEC alleges he concealed more than $90 million in compensation from public disclosure over eight years, leading Nissan's board to dismiss him as Chairman and Representative Director.",
   "trigger_type": "official_misconduct"
 }

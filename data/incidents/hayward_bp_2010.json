@@ -15,7 +15,7 @@
         "s1"
       ],
       "supports": [],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "The Deepwater Horizon explosion killed 11 workers and released millions of barrels of oil into the Gulf of Mexico"
     },
     {
@@ -34,7 +34,7 @@
         "c1"
       ],
       "tag": "documented",
-      "text": "The BP board asked Hayward to step down and named Robert Dudley as his successor"
+      "text": "Hayward stepped down as CEO by mutual agreement with the BP board on July 22, 2010, effective October 1; Robert Dudley was named successor"
     },
     {
       "id": "c4",
@@ -101,7 +101,7 @@
         "type": "paraphrase"
       }
     ],
-    "summary": "Hayward resigned as BP CEO in July 2010 and was succeeded by Robert Dudley. BP faced extensive criminal and civil penalties, ultimately paying over $65 billion in fines, settlements, and cleanup costs. The company's reputation was severely damaged and it sold off assets to cover liabilities."
+    "summary": "Hayward stepped down as BP CEO by mutual agreement with the board on July 22, 2010, effective October 1, 2010, and was succeeded by Robert Dudley. BP faced extensive criminal and civil penalties, ultimately paying over $65 billion in fines, settlements, and cleanup costs. The company's reputation was severely damaged and it sold off assets to cover liabilities."
   },
   "recorded_at": "2010-07-23",
   "resolution": [
@@ -146,7 +146,7 @@
         "c3"
       ],
       "date": "2010-07-22",
-      "event": "BP board announces Hayward will step down as CEO, replaced by Robert Dudley"
+      "event": "BP board announces Hayward will step down as CEO by mutual agreement, replaced by Robert Dudley effective October 1"
     },
     {
       "claim_ids": [
@@ -163,7 +163,7 @@
       "event": "BP agrees to a record $4.5 billion criminal penalty for the disaster"
     }
   ],
-  "title": "Tony Hayward resigns as BP CEO after Deepwater Horizon",
-  "trigger": "The Deepwater Horizon oil spill in April 2010 became the largest marine oil spill in history, and Hayward's perceived mishandling of the crisis—including his remark 'I'd like my life back'—led the BP board to ask for his resignation.",
+  "title": "Tony Hayward steps down as BP CEO after Deepwater Horizon",
+  "trigger": "The Deepwater Horizon oil spill in April 2010 became the largest marine oil spill in history, and Hayward's perceived mishandling of the crisis—including his remark 'I'd like my life back'—led the BP board to reach a mutual agreement for his resignation.",
   "trigger_type": "operational_failure"
 }

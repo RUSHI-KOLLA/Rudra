@@ -15,7 +15,7 @@
         "s1"
       ],
       "supports": [],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "A whistleblower complaint to SEBI alleged conflict of interest in ICICI Bank's loan to Videocon Group linked to Kochhar's husband"
     },
     {
@@ -26,7 +26,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "ICICI's board asked Kochhar to proceed on leave pending an internal investigation"
     },
     {
@@ -38,7 +38,7 @@
         "c2"
       ],
       "tag": "documented",
-      "text": "Kochhar resigned as MD and CEO on October 4, 2018; Sandeep Bakhshi was named successor"
+      "text": "Kochhar sought early retirement on October 4, 2018; Sandeep Bakhshi was appointed MD & CEO"
     },
     {
       "id": "c4",
@@ -48,7 +48,7 @@
       "supports": [
         "c3"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "ICICI Bank terminated Kochhar's employment for cause in January 2019 and clawed back bonuses"
     },
     {
@@ -101,7 +101,7 @@
         "type": "paraphrase"
       }
     ],
-    "summary": "Kochhar resigned as ICICI Bank CEO in October 2018 and was later terminated 'for cause' in January 2019. The bank clawed back her bonuses and perquisites. The CBI filed a charge sheet against her in 2020. The matter remains pending in Indian courts."
+    "summary": "Kochhar sought early retirement as ICICI Bank MD & CEO on October 4, 2018; Sandeep Bakhshi was appointed successor. The bank later terminated her employment 'for cause' in January 2019 and clawed back bonuses. The CBI filed a charge sheet in 2020. The matter remains pending in Indian courts."
   },
   "recorded_at": "2018-10-05",
   "resolution": [
@@ -147,7 +147,7 @@
         "c3"
       ],
       "date": "2018-10-04",
-      "event": "Kochhar resigns as MD and CEO; Sandeep Bakhshi appointed as successor"
+      "event": "Kochhar seeks early retirement as MD and CEO; Sandeep Bakhshi appointed as successor"
     },
     {
       "claim_ids": [
@@ -164,7 +164,7 @@
       "event": "CBI files charge sheet against Kochhar and others for alleged criminal conspiracy and cheating"
     }
   ],
-  "title": "Chanda Kochhar resigns as ICICI Bank CEO",
+  "title": "Chanda Kochhar seeks early retirement as ICICI Bank CEO",
   "trigger": "Allegations of conflict of interest in ICICI Bank's loan to the Videocon Group, linked to Kochhar's husband's business, led the board to ask for her resignation.",
   "trigger_type": "personal_conduct"
 }

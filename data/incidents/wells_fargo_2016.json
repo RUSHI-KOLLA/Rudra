@@ -23,7 +23,7 @@
       "supports": [
         "c1"
       ],
-      "tag": "documented",
+      "tag": "reported_unconfirmed",
       "text": "John Stumpf testified before the Senate Banking Committee on September 20, 2016 about the fake accounts scandal"
     },
     {
@@ -35,7 +35,7 @@
         "c2"
       ],
       "tag": "documented",
-      "text": "John Stumpf announced his resignation as CEO on October 11, 2016, effective immediately"
+      "text": "John Stumpf retired as Chairman and CEO on October 12, 2016, effective immediately"
     },
     {
       "id": "c4",
@@ -82,13 +82,13 @@
         "type": "regulatory_order"
       },
       {
-        "date": "2016-10-11",
+        "date": "2016-10-12",
         "id": "s2",
         "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md",
         "type": "sec_filing"
       }
     ],
-    "summary": "John Stumpf resigned as CEO of Wells Fargo in October 2016 after the bank admitted employees had opened millions of unauthorized accounts. The bank paid $185 million in fines and faced ongoing regulatory scrutiny. Stumpf also agreed to forfeit $41 million in compensation. Tim Sloan succeeded him as CEO."
+    "summary": "John Stumpf retired as Chairman and CEO of Wells Fargo on October 12, 2016, effective immediately, after the bank admitted employees had opened millions of unauthorized accounts. The bank paid $185 million in fines ($100M CFPB + $35M OCC + $50M LA) and faced ongoing regulatory scrutiny. Stumpf also agreed to forfeit $41 million in compensation. Tim Sloan succeeded him as CEO."
   },
   "recorded_at": "2016-10-13",
   "resolution": [
@@ -104,7 +104,7 @@
       "type": "regulatory_order"
     },
     {
-      "date": "2016-10-11",
+      "date": "2016-10-12",
       "id": "s2",
       "ref": "data/incidents/wells_fargo_2016/sources/wells_fargo_2016_8k.md",
       "type": "sec_filing"
@@ -133,8 +133,8 @@
       "claim_ids": [
         "c3"
       ],
-      "date": "2016-10-11",
-      "event": "Stumpf announces his resignation as CEO effective immediately"
+      "date": "2016-10-12",
+      "event": "Stumpf retires as Chairman and CEO effective immediately"
     },
     {
       "claim_ids": [
@@ -144,7 +144,7 @@
       "event": "Tim Sloan named as new CEO of Wells Fargo"
     }
   ],
-  "title": "John Stumpf resigns as Wells Fargo CEO",
-  "trigger": "Wells Fargo employees created millions of unauthorized bank and credit card accounts without customers' consent to meet sales targets. CEO John Stumpf resigned after the scandal became public and he faced intense scrutiny from Congress and regulators.",
+  "title": "John Stumpf retires as Wells Fargo CEO",
+  "trigger": "Wells Fargo employees created millions of unauthorized bank and credit card accounts without customers' consent to meet sales targets. CEO John Stumpf retired after the scandal became public and he faced intense scrutiny from Congress and regulators.",
   "trigger_type": "official_misconduct"
 }
