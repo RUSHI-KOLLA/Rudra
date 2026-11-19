@@ -38,11 +38,16 @@ EXCLUDED_FROM_GAP_3 = (
 )
 
 
-def generate_questions(card: IncidentCard) -> list[GapQuestion]:
+def generate_questions(card: IncidentCard, matches: list[dict[str, Any]] | None = None) -> list[GapQuestion]:
     """Generate research questions from a card's gaps.
 
-    Returns at most 5 questions (one per round max, deduplicated by (gap_type, gap_ref)).
+    Returns at most 5 questions (one per gap family per round max, deduplicated by (gap_type, gap_ref)).
     A question that cannot name its gap_type and gap_ref is never dispatched.
+
+    Args:
+        card: The incident card to analyze for gaps.
+        matches: List of scored match dicts (from run_match), each with 'id' and 'breaks'.
+                 Required for Gap 3 (mismatch) and Gap 4 (new shape) detection.
     """
     questions: list[GapQuestion] = []
     seen_keys: set[tuple[str, str]] = set()
@@ -57,6 +62,7 @@ def generate_questions(card: IncidentCard) -> list[GapQuestion]:
         return True
 
     # Gap 1: Missing structural fields (from SILENCE_FIELDS)
+    # One probe per gap family per round - cap of 5 questions total handles the rest
     from .match import SILENCE_FIELDS
     for field in SILENCE_FIELDS:
         val = getattr(card, field, None)
@@ -84,8 +90,8 @@ def generate_questions(card: IncidentCard) -> list[GapQuestion]:
     # Excluded: exit_authority, resolution, tempo, succession
     # (determined by what happened, not by what you can look up)
     # This prevents unanswerable questions about facts already established
-    if hasattr(card, 'matches') and card.matches:
-        for match in card.matches[:1]:  # Top match only
+    if matches:
+        for match in matches[:1]:  # Top match only
             # Get mismatched evidence-sensitive fields from pre-computed breaks
             breaks = match.get("breaks", [])
             match_id = match.get("id", "unknown")
@@ -101,7 +107,7 @@ def generate_questions(card: IncidentCard) -> list[GapQuestion]:
 
     # Gap 4: New shape (no strong matches)
     # The one field that would disambiguate
-    if not getattr(card, 'matches', None):  # no strong matches
+    if not matches:  # no strong matches
         if add_question(
             "What event or field would disambiguate this new shape?",
             "gap_4_new_shape",

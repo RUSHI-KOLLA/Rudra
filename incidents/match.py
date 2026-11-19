@@ -848,10 +848,7 @@ async def run_match(
         from .gaps import generate_questions
         from .research import run_gap_loop
 
-        # Attach matches to card for gap detection (Gap 3 needs match.breaks)
-        card.matches = matches
-
-        questions = generate_questions(card)
+        questions = generate_questions(card, matches)
         if questions:
             loop_audit = await run_gap_loop(questions, max_rounds=getattr(_vg_config, "max_research_rounds", 2))
         else:
