@@ -399,7 +399,7 @@ attaches the underlying document to the card. Every question object must carry
 *   `config.py` — new keys following the existing env-var pattern, resolved to absolute
     paths anchored at the package root: `incidents_data_path`, `incidents_collection`,
     `incident_weak_threshold` (default 0.45 until calibrated), `debate_enabled` (default
-    false), `max_research_rounds` (2), `questions_per_round` (5).
+    false), `max_research_rounds` (1), `questions_per_round` (5).
 *   `rag/builder.py` — `build_all()` gains `build_incidents()` (read JSON corpus, embed
     `summary_embed`, upsert into `incidents` with cosine space) so the Docker image
     pre-bakes the collection the same way it pre-bakes the wisdom collections.
@@ -802,7 +802,7 @@ its phase.
     *   `incidents_collection` — env var `VG_INCIDENTS_COLLECTION`, default `"incidents"`.
     *   `incident_weak_threshold` — env var `VG_INCIDENT_WEAK_THRESHOLD`, default `0.45`.
     *   `debate_enabled` — env var `VG_DEBATE_ENABLED`, default `false`.
-    *   `max_research_rounds` — env var `VG_MAX_RESEARCH_ROUNDS`, default `2`.
+    *   `max_research_rounds` — env var `VG_MAX_RESEARCH_ROUNDS`, default `1`. The second round is reserved for when card write-back exists (not in v1).
     *   `questions_per_round` — env var `VG_QUESTIONS_PER_ROUND`, default `5`.
     Placed in the `Config` dataclass after the existing debate section; read through
     `get_config()` via `os.getenv` with the defaults above. `Path` resolution happens at
@@ -1006,7 +1006,7 @@ its phase.
     derivable. No usable result → the question is marked "no source available" and stays
     open. Round 2 runs only if round-1 write-backs exposed new closable gaps. Mechanical
     stop rule: stop when no open gap remains, when all remaining open gaps have returned
-    "no source available", or when `max_research_rounds` (2) is reached — never on a
+    "no source available", or when `max_research_rounds` (1) is reached — never on a
     model's judgement (no model participates in the loop).
 
 #### 32. `incidents/match.py` (Modify)
