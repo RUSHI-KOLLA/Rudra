@@ -37,6 +37,7 @@ from typing import Any, Awaitable, Callable, Iterable, Optional
 from .schema import (
     ACTOR_ROLES,
     SCHEMA_VERSION,
+    Claim,
     ConstraintType,
     EscalationVector,
     ExitAuthority,
@@ -44,6 +45,7 @@ from .schema import (
     LegalOutcome,
     Outcome,
     Resolution,
+    Source,
     Status,
     Succession,
     SUMMARY_EMBED_FIELDS,
@@ -473,11 +475,44 @@ def build_card(
         timeline=timeline,
         resolution=_list("resolution", Resolution),
         outcome=None,
-        claims=[],
-        sources=[],
+        claims=_build_claims(extracted),
+        sources=_build_sources(extracted),
         summary_embed="",           # built by __post_init__ from canonical fields
     )
     return card
+
+
+def _build_claims(extracted: dict[str, Any]) -> list[Claim]:
+    """Build Claim objects from extracted claims data."""
+    claims = []
+    for c in extracted.get("claims") or []:
+        try:
+            claims.append(Claim(
+                id=c["id"],
+                text=c["text"],
+                tag=Tag(c["tag"]),
+                source_ids=c.get("source_ids", []),
+                supports=c.get("supports", []),
+            ))
+        except (KeyError, ValueError):
+            continue
+    return claims
+
+
+def _build_sources(extracted: dict[str, Any]) -> list[Source]:
+    """Build Source objects from extracted sources data."""
+    sources = []
+    for s in extracted.get("sources") or []:
+        try:
+            sources.append(Source(
+                id=s["id"],
+                type=s["type"],
+                ref=s["ref"],
+                date=s.get("date", ""),
+            ))
+        except (KeyError, ValueError):
+            continue
+    return sources
 
 
 # ---------------------------------------------------------------------------
