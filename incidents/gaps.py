@@ -86,21 +86,22 @@ def generate_questions(card: IncidentCard) -> list[GapQuestion]:
     # This prevents unanswerable questions about facts already established
     if hasattr(card, 'matches') and card.matches:
         for match in card.matches[:1]:  # Top match only
-            # Get mismatched evidence-sensitive fields from why_breaks
-            breaks = where_breaks(match)
+            # Get mismatched evidence-sensitive fields from pre-computed breaks
+            breaks = match.get("breaks", [])
+            match_id = match.get("id", "unknown")
             for break_item in breaks:
                 component = break_item.get("component")
                 if component in EVIDENCE_SENSITIVE_FIELDS:
                     if add_question(
                         f"What is the correct {component.replace('_', ' ')}?",
                         "gap_3_mismatch",
-                        f"{match.id}:{component}",
+                        f"{match_id}:{component}",
                     ):
                         break  # One mismatch question per round max
 
     # Gap 4: New shape (no strong matches)
     # The one field that would disambiguate
-    if not card.matches:  # placeholder - would check actual matches
+    if not getattr(card, 'matches', None):  # no strong matches
         if add_question(
             "What event or field would disambiguate this new shape?",
             "gap_4_new_shape",

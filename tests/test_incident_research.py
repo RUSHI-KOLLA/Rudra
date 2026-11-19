@@ -190,15 +190,48 @@ class TestRunGapLoop:
 
     @pytest.mark.asyncio
     async def test_two_rounds_max(self, sample_questions):
+        """Test that round 2 excludes gaps with no source in round 1.
+
+        Gaps that HAD a source in round 1 are re-asked in round 2 (current behavior).
+        Only no-source gaps are filtered out.
+        """
         with patch("vg.incidents.research.search_structured") as mock_search:
-            mock_search.return_value = {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]}
+            # Round 1: first question no source, second and third get hits
+            # Round 2: only second and third questions (first was filtered out)
+            mock_search.side_effect = [
+                # Round 1 calls (3 questions)
+                {"results": [], "error": "no results"},  # trigger_type - no source
+                {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]},  # c1 - hit
+                {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]},  # nvidia_2026:trigger_type - hit
+                # Round 2 calls (2 questions, since trigger_type was filtered)
+                {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]},  # c1 - hit
+                {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]},  # nvidia_2026:trigger_type - hit
+            ]
 
-            answers = await run_gap_loop(sample_questions, max_rounds=2)
+            loop_audit = await run_gap_loop(sample_questions, max_rounds=2)
 
-            # Should have answers from both rounds, deduped
-            gap_refs = {a["gap_ref"] for a in await run_gap_loop(sample_questions, max_rounds=2)}
-            # All 3 gap_refs should appear at least once
-            assert "trigger_type" in gap_refs or "trigger_type" not in gap_refs  # placeholder
+            # Should have 5 answers total: 3 from round 1 + 2 from round 2 (trigger_type filtered)
+            assert len(loop_audit) == 5, f"Expected 5 answers, got {len(loop_audit)}"
+
+            # Gap that returned no source in round 1 should not appear in round 2
+            trigger_type_count = sum(
+                1 for a in loop_audit 
+                if a["gap_type"] == "gap_1_missing_field" and a["gap_ref"] == "trigger_type"
+            )
+            assert trigger_type_count == 1, "trigger_type gap (no source) should only appear once (filtered in round 2)"
+
+            # Gaps that HAD a source in round 1 ARE re-asked in round 2 (current behavior)
+            c1_count = sum(
+                1 for a in loop_audit 
+                if a["gap_type"] == "gap_2_below_documented" and a["gap_ref"] == "c1"
+            )
+            assert c1_count == 2, "c1 gap (had source) should appear in both rounds"
+
+            nvidia_count = sum(
+                1 for a in loop_audit 
+                if a["gap_type"] == "gap_3_mismatch" and a["gap_ref"] == "nvidia_2026:trigger_type"
+            )
+            assert nvidia_count == 2, "nvidia trigger_type gap (had source) should appear in both rounds"
 
 
 class TestFlagWiring:
@@ -249,77 +282,61 @@ class TestFlagWiring:
 
     @pytest.mark.asyncio
     async def test_flag_on_audit_is_json_serialisable(self):
-        """Flag ON: loop_audit JSON-serializable without default=str, all required fields present, tag is string."""
+        """Flag ON: loop_audit JSON-serializable without default=str, all required fields present, tag is string.
+
+        Tests the full wiring: run_match with incidents_research_enabled=True, stubbed dependencies,
+        and verifies the response carries the audit correctly.
+        """
         from vg.config import config
-        from vg.incidents.research import run_gap_loop
-        from vg.incidents.gaps import GapQuestion
+        from vg.incidents.match import run_match
 
         original = config.incidents_research_enabled
         config.incidents_research_enabled = True
         try:
-            with patch("vg.incidents.research.search_structured") as mock_search:
+            with patch("vg.incidents.research.search_structured") as mock_search, \
+                 patch("vg.incidents.match._retrieve_candidates") as mock_retrieve, \
+                 patch("vg.incidents.match.score"), \
+                 patch("vg.incidents.match.cache_get", return_value=None), \
+                 patch("vg.incidents.match.cache_put"), \
+                 patch("vg.incidents.gaps.generate_questions") as mock_generate:
+
                 mock_search.return_value = {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]}
+                mock_retrieve.return_value = []
 
-                # Mock generate_questions to return some test questions
+                # Mock generate_questions to return test questions
                 from vg.incidents.gaps import GapQuestion
-                with patch("vg.incidents.gaps.generate_questions") as mock_generate:
-                    mock_generate.return_value = [
-                        GapQuestion(question="What is the trigger_type?", gap_type="gap_1_missing_field", gap_ref="trigger_type"),
-                        GapQuestion(question="What is the constraint?", gap_type="gap_2_below_documented", gap_ref="c1"),
-                    ]
+                mock_generate.return_value = [
+                    GapQuestion(question="What is the trigger_type?", gap_type="gap_1_missing_field", gap_ref="trigger_type"),
+                    GapQuestion(question="What is the constraint?", gap_type="gap_2_below_documented", gap_ref="c1"),
+                ]
 
-                    # Test run_gap_loop directly
-                    questions = [
-                        GapQuestion(question="What is the trigger_type?", gap_type="gap_1_missing_field", gap_ref="trigger_type"),
-                        GapQuestion(question="What is the constraint?", gap_type="gap_2_below_documented", gap_ref="c1"),
-                    ]
-                    loop_audit = await run_gap_loop([
-                        GapQuestion(question="What is the trigger_type?", gap_type="gap_1_missing_field", gap_ref="trigger_type"),
-                        GapQuestion(question="What is the constraint?", gap_type="gap_2_below_documented", gap_ref="c1"),
-                    ], max_rounds=2)
+                # Call run_match with the flag ON
+                result = await run_match(
+                    paste="Test incident for flag on",
+                    api_key="test_key",
+                    extracted={"trigger_type": "fraud", "actors": ["A", "B"], "actor_roles": ["ceo", "board"],
+                               "tempo": "days", "exit_authority": "board", "succession": "internal",
+                               "sector": "tech", "constraint_types": [], "escalation_vector": [], "resolution": [],
+                               "title": "Test Incident", "date": "2024-01-01", "geography": "us", "legal_outcome": "none"}
+                )
 
-                    assert isinstance(loop_audit, list), "loop_audit should be a list"
-
-                    # Should have at least one entry (the Nvidia query should generate questions)
-                    assert len(loop_audit) > 0, "Expected at least one audit entry"
-
-                    for entry in loop_audit:
-                        # Verify all required fields present
-                        required_fields = {"question", "gap_type", "gap_ref", "query", "resolved", "closed", "source", "tag", "answer"}
-                        assert set(entry.keys()) == required_fields, f"Missing fields: {set(entry.keys()) ^ {'question', 'gap_type', 'gap_ref', 'query', 'resolved', 'closed', 'source', 'tag', 'answer'}}"
-                        assert isinstance(entry["tag"], str), f"tag should be string, got {type(entry['tag'])}"
-                        assert entry["tag"] in ("documented", "reported_unconfirmed", "inferred")
-                        assert isinstance(entry["resolved"], bool)
-                        assert isinstance(entry["closed"], bool)
-
-                    # Critical: must be JSON-serializable WITHOUT default=str
-                    import json
-                    loop_audit = await run_gap_loop([
-                        GapQuestion(question="What is the trigger_type?", gap_type="gap_1_missing_field", gap_ref="trigger_type"),
-                        GapQuestion(question="What is the constraint?", gap_type="gap_2_below_documented", gap_ref="c1"),
-                    ], max_rounds=2)
-
-                    json_str = json.dumps({"loop_audit": loop_audit})  # No default=str
-                    assert isinstance(json_str, str)
-
-            # Verify loop_audit is present and JSON-serializable without default=str
-            import json
+            # Verify loop_audit is present and non-empty
+            loop_audit = result["loop_audit"]
             assert isinstance(loop_audit, list), "loop_audit should be a list"
+            assert len(loop_audit) > 0, "Expected at least one audit entry with flag ON"
 
-            # Should have at least one entry (the Nvidia query should generate questions)
-            assert len(loop_audit) > 0, "Expected at least one audit entry"
-
+            # Verify every entry has the nine required keys
+            required_fields = {"question", "gap_type", "gap_ref", "query", "resolved", "closed", "source", "tag", "answer"}
             for entry in loop_audit:
-                # Verify all required fields present
-                required_fields = {"question", "gap_type", "gap_ref", "query", "resolved", "closed", "source", "tag", "answer"}
-                assert set(entry.keys()) == required_fields, f"Missing fields: {set(required_fields) - set(entry.keys())}"
+                assert set(entry.keys()) == required_fields, f"Missing fields: {required_fields - set(entry.keys())}"
                 assert isinstance(entry["tag"], str), f"tag should be string, got {type(entry['tag'])}"
                 assert entry["tag"] in ("documented", "reported_unconfirmed", "inferred")
                 assert isinstance(entry["resolved"], bool)
                 assert isinstance(entry["closed"], bool)
 
-            # Critical: must be JSON-serializable WITHOUT default=str
-            json_str = json.dumps({"loop_audit": loop_audit})  # No default=str
+            # Critical: the ENTIRE response must be JSON-serializable WITHOUT default=str
+            import json
+            json_str = json.dumps(result)  # No default=str
             assert isinstance(json_str, str)
 
             config.incidents_research_enabled = original
