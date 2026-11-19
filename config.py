@@ -71,7 +71,7 @@ class Config:
     incidents_collection: str = "incidents"
     incident_weak_threshold: float = 0.3222
     debate_enabled: bool = False
-    max_research_rounds: int = 2
+    max_research_rounds: int = 1
     questions_per_round: int = 5
     incidents_research_enabled: bool = False
 
@@ -117,7 +117,7 @@ def get_config() -> Config:
         ),
         debate_enabled=os.getenv("VG_DEBATE_ENABLED", "").lower()
         in {"1", "true", "yes", "on"},
-        max_research_rounds=int(os.getenv("VG_MAX_RESEARCH_ROUNDS", "2")),
+        max_research_rounds=int(os.getenv("VG_MAX_RESEARCH_ROUNDS", "1")),
         questions_per_round=int(os.getenv("VG_QUESTIONS_PER_ROUND", "5")),
         incidents_research_enabled=os.getenv("VG_INCIDENTS_RESEARCH_ENABLED", "").lower() in {"1", "true", "yes", "on"},
         disable_web_search=os.getenv("VG_DISABLE_WEB_SEARCH", "").lower() in {"1", "true", "yes", "on"},

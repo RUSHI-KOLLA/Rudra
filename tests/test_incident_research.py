@@ -189,11 +189,12 @@ class TestRunGapLoop:
     """Integration tests for the full gap loop."""
 
     @pytest.mark.asyncio
-    async def test_two_rounds_max(self, sample_questions):
-        """Test that round 2 excludes gaps with no source in round 1.
+    async def test_two_rounds_capability(self, sample_questions):
+        """Test that round 2 excludes gaps with no source in round 1 (capability test).
 
         Gaps that HAD a source in round 1 are re-asked in round 2 (current behavior).
         Only no-source gaps are filtered out.
+        This tests the capability of 2 rounds; v1 default is 1 round.
         """
         with patch("vg.incidents.research.search_structured") as mock_search:
             # Round 1: first question no source, second and third get hits
@@ -232,6 +233,13 @@ class TestRunGapLoop:
                 if a["gap_type"] == "gap_3_mismatch" and a["gap_ref"] == "nvidia_2026:trigger_type"
             )
             assert nvidia_count == 2, "nvidia trigger_type gap (had source) should appear in both rounds"
+
+    @pytest.mark.asyncio
+    async def test_default_is_one_round(self, sample_questions):
+        """Test that v1 default max_research_rounds = 1."""
+        from vg.config import config
+        # Default should be 1
+        assert config.max_research_rounds == 1
 
 
 class TestFlagWiring:
@@ -298,7 +306,7 @@ class TestFlagWiring:
                  patch("vg.incidents.match.score"), \
                  patch("vg.incidents.match.cache_get", return_value=None), \
                  patch("vg.incidents.match.cache_put"), \
-                 patch("vg.incidents.gaps.generate_questions") as mock_generate:
+                 patch("vg.incidents.match.generate_questions") as mock_generate:
 
                 mock_search.return_value = {"results": [{"title": "T", "url": "u", "snippet": "s", "date": "2024-01-01"}]}
                 mock_retrieve.return_value = []
