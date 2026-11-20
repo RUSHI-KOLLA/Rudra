@@ -44,6 +44,7 @@ from vg.incidents.match import (
     record_outcome,
     run_match,
 )
+from vg.incidents.investigation import investigate
 from vg.incidents.store import IncidentStoreError
 
 
@@ -111,11 +112,12 @@ class VGWebHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         route = urlparse(self.path).path
 
-        # Dispatch table over the three routes (design doc §22).
+        # Dispatch table over the routes (design doc §22).
         dispatch: dict[str, Callable[[dict[str, Any]], None]] = {
             "/api/analyze": self._handle_analyze,
             "/api/incident-match": self._handle_incident_match,
             "/api/incident-outcome": self._handle_incident_outcome,
+            "/api/incident-investigate": self._handle_incident_investigate,
         }
 
         handler = dispatch.get(route)
@@ -316,6 +318,41 @@ class VGWebHandler(BaseHTTPRequestHandler):
         except Exception as exc:
             self._send_match_error(exc)
             return
+
+        self._send_json(HTTPStatus.OK, result)
+
+    # ─── Incident investigate endpoint ───────────────────────────────
+    def _handle_incident_investigate(self, body: dict[str, Any]) -> None:
+        """POST /api/incident-investigate — question-driven mini CID investigation.
+
+        Returns structured findings with provenance tags (documented,
+        reported_unconfirmed, inferred, speculative), contradictions, and synthesis.
+        """
+        if not self._require_key():
+            return
+
+        question = str(body.get("question", "") or "").strip()
+
+        if not question:
+            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Question is required."})
+            return
+
+        try:
+            result = investigate(question)
+        except Exception as exc:
+            self._send_json(
+                HTTPStatus.INTERNAL_SERVER_ERROR,
+                {"error": "Investigation failed.", "detail": str(exc)},
+            )
+            return
+
+        # Flag any matched corpus cards that are unverified
+        # This is informational — the investigation pipeline doesn't match cards,
+        # but the UI may cross-reference. We include the list for the panel.
+        result["unverified_cards"] = [
+            "kalanick_uber_2017",
+            "strauss_kahn_imf_2011",
+        ]
 
         self._send_json(HTTPStatus.OK, result)
 

@@ -418,6 +418,91 @@
             color: rgba(0, 255, 65, 0.6);
         }
 
+        /* ─── Investigate results styles ─── */
+        .io-tag-documented { background: var(--matrix-green); color: #000; }
+        .io-tag-reported_unconfirmed { background: var(--bright-gold); color: #000; }
+        .io-tag-inferred { background: var(--cold-cyan); color: #000; }
+        .io-tag-speculative { background: var(--dark-ember); color: #000; }
+
+        .io-claim {
+            border-left: 2px solid var(--matrix-green);
+            background: rgba(0, 255, 65, 0.05);
+            padding: 8px 12px;
+            margin: 6px 0;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .io-claim .io-tag {
+            font-family: var(--font-mono);
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 8px;
+            text-transform: uppercase;
+        }
+
+        .io-claim strong {
+            color: var(--off-white);
+            margin-right: 8px;
+        }
+
+        .io-claim .io-snippet {
+            color: rgba(237, 232, 224, 0.8);
+            overflow-wrap: break-word;
+        }
+
+        .io-src-link {
+            color: var(--cold-cyan);
+            font-size: 11px;
+            margin-left: 8px;
+        }
+
+        .io-synthesis {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid rgba(79, 184, 201, 0.3);
+            border-left: 3px solid var(--cold-cyan);
+            padding: 16px;
+            margin-top: 8px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--off-white);
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+
+        .io-investigate-input {
+            width: 100%;
+            min-height: 120px;
+            font-family: var(--font-body);
+        }
+
+        .io-investigate-results {
+            max-height: 70vh;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .io-investigate-results .io-section-h {
+            font-family: var(--font-mono);
+            font-size: 11px;
+            letter-spacing: 0.2em;
+            color: var(--ember-gold);
+            margin: 16px 0 8px;
+            border-bottom: 1px solid rgba(201, 148, 58, 0.3);
+            padding-bottom: 4px;
+        }
+
+        .io-investigate-results .io-bullets {
+            margin: 4px 0 8px 20px;
+            font-size: 12px;
+        }
+
+        .io-investigate-results .io-bullets li {
+            margin: 2px 0;
+        }
+
         /* ─── Persistent question block (right verdict panel) ─── */
         .question-block {
             border: 1px solid rgba(201, 148, 58, 0.35);
@@ -1425,6 +1510,7 @@
                 <span class="io-sub">SAME PATTERN, NOT SAME WORDS</span>
                 <div class="io-modes" id="io-modes">
                     <button type="button" class="io-mode active" data-mode="incident">INCIDENT</button>
+                    <button type="button" class="io-mode" data-mode="investigate">INVESTIGATE</button>
                     <!-- Debate rendered only when health.debate_enabled -->
                 </div>
                 <span class="io-state" id="io-state">IDLE</span>
@@ -1458,6 +1544,22 @@
                 <section class="io-view" id="io-view-results" hidden>
                     <div class="io-banner" id="io-results-banner" hidden></div>
                     <div id="io-results"></div>
+                </section>
+
+                <!-- investigate: question-driven mini CID -->
+                <section class="io-view" id="io-view-investigate" hidden>
+                    <div class="io-banner" id="io-investigate-banner" hidden></div>
+                    <label class="io-label" for="io-question">ASK A QUESTION</label>
+                    <textarea id="io-question" class="io-paste" spellcheck="false"
+                        placeholder="Why did the CEO resign? What changed in the weeks before? Who benefited financially?"></textarea>
+                    <button type="button" class="io-primary" id="io-investigate-run">INVESTIGATE</button>
+                    <div class="io-banner" id="io-investigate-banner" hidden></div>
+                </section>
+
+                <!-- investigate results: six lenses, contradictions, synthesis -->
+                <section class="io-view" id="io-view-investigate-results" hidden>
+                    <div class="io-banner" id="io-investigate-results-banner" hidden></div>
+                    <div id="io-investigate-results"></div>
                 </section>
             </div>
         </div>
@@ -1940,6 +2042,8 @@
             const viewPaste = document.getElementById('io-view-paste');
             const viewReview = document.getElementById('io-view-review');
             const viewResults = document.getElementById('io-view-results');
+            const viewInvestigate = document.getElementById('io-view-investigate');
+            const viewInvestigateResults = document.getElementById('io-view-investigate-results');
 
             const pasteBox = document.getElementById('io-paste');
             const charCount = document.getElementById('io-charcount');
@@ -1949,12 +2053,17 @@
             const reviewGrid = document.getElementById('io-review-grid');
             const resultsBanner = document.getElementById('io-results-banner');
             const resultsEl = document.getElementById('io-results');
+            const questionBox = document.getElementById('io-question');
+            const investigateBanner = document.getElementById('io-investigate-banner');
+            const investigateResultsBanner = document.getElementById('io-investigate-results-banner');
+            const investigateResultsEl = document.getElementById('io-investigate-results');
 
             const btnRun = document.getElementById('io-run');
             const btnConfirm = document.getElementById('io-confirm');
             const btnBack = document.getElementById('io-review-back');
             const btnClose = document.getElementById('io-close');
             const btnReopen = document.getElementById('btn-incident-open');
+            const btnInvestigateRun = document.getElementById('io-investigate-run');
 
             const MAX_PASTE = 4000;
 
@@ -1988,6 +2097,8 @@
                 viewPaste.hidden = which !== 'paste';
                 viewReview.hidden = which !== 'review';
                 viewResults.hidden = which !== 'results';
+                viewInvestigate.hidden = which !== 'investigate';
+                viewInvestigateResults.hidden = which !== 'investigate-results';
                 bodyEl.scrollTop = 0;
             }
 
@@ -2026,6 +2137,10 @@
                     closePanel();
                     const ci = document.getElementById('cmd-input');
                     if (ci) ci.focus();
+                } else if (m === 'investigate') {
+                    openPanel();
+                    showView('investigate');
+                    if (questionBox) questionBox.focus();
                 } else {
                     openPanel();
                 }
@@ -2044,6 +2159,9 @@
                 }
                 modesEl.querySelectorAll('.io-mode[data-mode="incident"]').forEach(b => {
                     b.onclick = () => applyMode('incident', true);
+                });
+                modesEl.querySelectorAll('.io-mode[data-mode="investigate"]').forEach(b => {
+                    b.onclick = () => applyMode('investigate', true);
                 });
             }
 
@@ -2119,6 +2237,35 @@
                     btnRun.textContent = 'EXTRACT & MATCH';
                 }
             });
+
+            // ── Investigate: question-driven mini CID ──
+            if (btnInvestigateRun) {
+                btnInvestigateRun.addEventListener('click', async () => {
+                    const question = questionBox.value.trim();
+                    if (!question) { banner(investigateBanner, 'Ask a question first.', 'err'); return; }
+                    banner(investigateBanner, '');
+                    setState('investigating');
+                    btnInvestigateRun.disabled = true;
+                    btnInvestigateRun.textContent = 'INVESTIGATING...';
+                    try {
+                        const { res, data } = await postJSON('/api/incident-investigate', { question });
+                        if (res.ok) {
+                            setState('investigate-complete');
+                            renderInvestigateResults(data);
+                            showView('investigate-results');
+                        } else {
+                            setState('error');
+                            banner(investigateBanner, data.error || data.detail || ('Request failed (' + res.status + ').'), 'err');
+                        }
+                    } catch (err) {
+                        setState('error');
+                        banner(investigateBanner, 'Connection failed: ' + err.message, 'err');
+                    } finally {
+                        btnInvestigateRun.disabled = false;
+                        btnInvestigateRun.textContent = 'INVESTIGATE';
+                    }
+                });
+            }
 
             // ── Phase 2: review / manual entry form ──
             function openReview(extracted, manualInfo) {
@@ -2421,6 +2568,90 @@
                 }
 
                 resultsEl.innerHTML = parts.join('');
+                if (typeof playConnectSound === 'function') playConnectSound();
+            }
+
+            // ── Render investigate results: six lenses, contradictions, synthesis ──
+            function renderInvestigateResults(data) {
+                showView('investigate-results');
+                banner(investigateResultsBanner, '');
+
+                const parts = [];
+
+                // Question header
+                parts.push(`<div class="io-line" style="font-weight:600;margin-bottom:12px;">${esc(data.question || '')}</div>`);
+
+                // Provenance summary
+                const prov = data.provenance || {};
+                const tags = prov.tag_counts || {};
+                if (Object.keys(tags).length) {
+                    const tagLine = Object.entries(tags).map(([t, c]) => `${t}: ${c}`).join(' · ');
+                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Total: ${prov.total_findings || 0}</div>`);
+                }
+
+                // Lenses
+                const lensResults = data.lens_results || {};
+                const lensOrder = ['money', 'power', 'secrecy', 'timing', 'network', 'counter_case'];
+                lensOrder.forEach(lens => {
+                    const lr = lensResults[lens];
+                    if (!lr) return;
+                    const findings = lr.findings || [];
+                    const queries = lr.queries || [];
+                    if (!findings.length && !queries.length) return;
+
+                    parts.push(`<div class="io-section-h">${lens.toUpperCase()} LENS</div>`);
+
+                    if (queries.length) {
+                        const qItems = queries.map(q => `<li>${esc(q)}</li>`).join('');
+                        parts.push(`<div class="io-section-h" style="font-size:13px;margin-top:4px;">QUERIES</div><ul class="io-bullets">${qItems}</ul>`);
+                    }
+
+                    findings.forEach(f => {
+                        const tag = f.tag || 'speculative';
+                        const tagClass = `io-tag-${tag}`;
+                        const title = esc(f.title || '');
+                        const snippet = esc(f.snippet || '');
+                        const url = f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener" class="io-src-link">source</a>` : '';
+                        parts.push(`
+                            <div class="io-claim">
+                                <span class="io-tag ${tagClass}">${tag.toUpperCase()}</span>
+                                <strong>${title}</strong>
+                                <span class="io-snippet">${snippet}</span>
+                                ${url}
+                            </div>`);
+                    });
+                });
+
+                // Contradictions
+                const contradictions = data.contradictions || [];
+                if (contradictions.length) {
+                    parts.push(`<div class="io-section-h" style="margin-top:16px;color:var(--dark-ember);">⚠ CONTRADICTIONS DETECTED</div>`);
+                    contradictions.forEach(c => {
+                        parts.push(`
+                            <div class="io-claim" style="border-left-color:var(--dark-ember);">
+                                <span class="io-tag" style="background:var(--dark-ember);">${c.type}</span>
+                                <strong>${esc(c.lens_a)}</strong> vs <strong>${esc(c.lens_b)}</strong>
+                                <span class="io-snippet">${esc(c.finding_a)} ↔ ${esc(c.finding_b)}</span>
+                            </div>`);
+                    });
+                } else {
+                    parts.push(`<div class="io-section-h" style="margin-top:16px;color:var(--matrix-green);">✓ No contradictions detected across lenses</div>`);
+                }
+
+                // Synthesis
+                if (data.synthesis) {
+                    parts.push(`<div class="io-section-h" style="margin-top:16px;">SYNTHESIS</div>
+                        <div class="io-synthesis">${esc(data.synthesis)}</div>`);
+                }
+
+                // Unverified cards note
+                if (data.unverified_cards && data.unverified_cards.length) {
+                    parts.push(`<div class="io-banner warn" style="margin-top:16px;">
+                        <strong>Unverified cards in corpus:</strong> ${data.unverified_cards.join(', ')} — these cards have paraphrase-only sources and are flagged as unverified.
+                    </div>`);
+                }
+
+                investigateResultsEl.innerHTML = parts.join('');
                 if (typeof playConnectSound === 'function') playConnectSound();
             }
 
