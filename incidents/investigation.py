@@ -109,7 +109,7 @@ _LENS_FUNCS = {
 }
 
 
-def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list[str]]) -> dict[str, Any]:
+def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list[str]], question: str) -> dict[str, Any]:
     """Run one investigative lens against extracted entities.
 
     Returns {'queries': [...], 'findings': [...]} where each finding has
@@ -253,7 +253,7 @@ def investigate(question: str) -> dict[str, Any]:
     # Run all six lenses
     lens_results: dict[str, dict[str, Any]] = {}
     for lens_name in _LENS_FUNCS:
-        lens_results[lens_name] = _run_lens(lens_name, entities, dates_amounts)
+        lens_results[lens_name] = _run_lens(lens_name, entities, dates_amounts, question)
 
     # Detect contradictions across lenses
     contradictions = _detect_contradictions(lens_results)
