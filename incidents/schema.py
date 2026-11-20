@@ -21,9 +21,9 @@ import json
 # change to the card schema, the scoring weights, or the summary_embed
 # template. Store metadata records these versions; a mismatch triggers
 # a full re-embed / reindex.
-SCHEMA_VERSION = 6
-WEIGHTS_VERSION = 6
-TEMPLATE_VERSION = 6
+SCHEMA_VERSION = 7
+WEIGHTS_VERSION = 7
+TEMPLATE_VERSION = 7
 
 
 # ---------------------------------------------------------------------------
@@ -315,6 +315,7 @@ class IncidentCard:
     sources: list[Source] = field(default_factory=list)
     summary_embed: str = ""
     external_pressure: str = ""
+    unverified: bool = False
 
     def __post_init__(self) -> None:
         # Build summary_embed if empty (model never writes it directly)
@@ -388,6 +389,7 @@ class IncidentCard:
             claims=claims,
             sources=sources,
             summary_embed=data.get("summary_embed", ""),
+            unverified=data.get("unverified", False),
         )
 
     def validate(self) -> None:

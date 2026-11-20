@@ -1,0 +1,414 @@
+- application [ref=e1]:
+  - iframe [aria-hidden] [ref=e2]
+  - iframe [aria-hidden] [ref=e3]
+  - banner "Menu bar" [ref=e4]:
+    - generic [ref=e7]:
+      - link "Docs home" [ref=e9] [cursor=pointer]:
+        - /url: https://docs.google.com/document/?usp=docs_web
+      - generic [ref=e16]:
+        - generic "vg-handoff" [ref=e18]:
+          - 'button "Document status: Saving…." [ref=e2204]':
+            - generic [ref=e2205] [cursor=pointer]: Saving…
+        - generic [ref=e31]:
+          - button "Rushi Kolla" [ref=e2081]:
+            - img "Rushi Kolla" [ref=e2086] [cursor=pointer]
+          - button "Show all comments" [ref=e44] [cursor=pointer]
+          - generic [ref=e47]:
+            - button "Share. Anyone with the link. Anyone who has the link can access. No sign-in required." [disabled] [ref=e48]: Share
+            - button "Quick sharing actions" [disabled] [ref=e50]
+          - link "Sign in" [ref=e54] [cursor=pointer]:
+            - /url: https://accounts.google.com/ServiceLogin?service=wise&passive=1209600&osid=1&continue=https://docs.google.com/document/d/18NhIhQEM1KjpEScLfRwlezKlOym1Y0-QC8k1pP_CjGU/edit&followup=https://docs.google.com/document/d/18NhIhQEM1KjpEScLfRwlezKlOym1Y0-QC8k1pP_CjGU/edit&ltmpl=docs&ec=GAZAGQ
+    - generic [ref=e55]:
+      - menubar [ref=e57]:
+        - menuitem "File" [ref=e58] [cursor=pointer]
+        - menuitem "Edit" [ref=e59] [cursor=pointer]
+        - menuitem "View" [ref=e60] [cursor=pointer]
+        - menuitem "Insert" [ref=e61] [cursor=pointer]
+        - menuitem "Format" [ref=e62] [cursor=pointer]
+        - menuitem "Tools" [ref=e63] [cursor=pointer]
+        - menuitem "Extensions" [ref=e64] [cursor=pointer]
+        - menuitem "Help" [ref=e65] [cursor=pointer]
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e68]:
+            - button "Search the menus (Alt+/)" [ref=e69] [cursor=pointer]
+            - combobox "Menus" [ref=e71]
+          - toolbar "Main" [ref=e72]:
+            - button "Undo (Ctrl+Z)" [ref=e73] [cursor=pointer]
+            - button "Redo (Ctrl+Y)" [ref=e78] [cursor=pointer]
+            - button "Print (Ctrl+P)" [ref=e83] [cursor=pointer]
+            - button "Spelling and grammar check (Ctrl+Alt+X)" [ref=e88] [cursor=pointer]
+            - button "Paint format" [ref=e93] [cursor=pointer]
+            - combobox "Zoom" [ref=e98] [cursor=pointer]:
+              - generic "Zoom list. 100% selected." [ref=e101]:
+                - textbox "Zoom" [ref=e102]: 100%
+            - separator [disabled] [ref=e106]
+            - listbox "Styles" [ref=e107] [cursor=pointer]:
+              - option "Styles list. Normal text selected." [selected] [ref=e2126]: Normal text
+            - separator [disabled] [ref=e114]
+            - listbox "Font" [ref=e115] [cursor=pointer]:
+              - option "Font list. Arial selected." [selected] [ref=e1389]: Arial
+            - separator [disabled] [ref=e122]
+            - button "Decrease font size (Ctrl+Shift+comma)" [ref=e123] [cursor=pointer]
+            - combobox "Font size" [ref=e128] [cursor=pointer]:
+              - generic "Font size list. 11 selected." [ref=e2127]:
+                - textbox "Font size" [ref=e132]: "11"
+            - button "Increase font size (Ctrl+Shift+full stop)" [ref=e133] [cursor=pointer]
+            - separator [disabled] [ref=e138]
+            - button "Bold (Ctrl+B)" [ref=e774] [cursor=pointer]
+            - button "Italic (Ctrl+I)" [ref=e779] [cursor=pointer]
+            - button "Underline (Ctrl+U)" [ref=e784] [cursor=pointer]
+            - button "Text colour" [ref=e789] [cursor=pointer]
+            - button "Highlight colour" [ref=e796] [cursor=pointer]
+            - separator [disabled] [ref=e803]
+            - button "Insert link (Ctrl+K)" [ref=e804] [cursor=pointer]
+            - button "Add comment (Ctrl+Alt+M)" [disabled] [ref=e809]
+            - separator [disabled] [ref=e814]
+            - button "Align and indent" [ref=e815] [cursor=pointer]
+            - button "Line & paragraph spacing" [ref=e824] [cursor=pointer]
+            - button "Checklist (Ctrl+Shift+9)" [ref=e830] [cursor=pointer]
+            - button "Checklist menu" [ref=e835] [cursor=pointer]
+            - button "Bulleted list (Ctrl+Shift+8)" [ref=e841] [cursor=pointer]
+            - button "Bulleted list menu" [ref=e846] [cursor=pointer]
+            - button "Numbered list (Ctrl+Shift+7)" [ref=e852] [cursor=pointer]
+            - button "Numbered list menu" [ref=e857] [cursor=pointer]
+            - button "Decrease indent (Ctrl+opening square bracket)" [ref=e863] [cursor=pointer]
+            - button "Increase indent (Ctrl+closing square bracket)" [ref=e868] [cursor=pointer]
+            - button "Clear formatting (Ctrl+backslash)" [ref=e873] [cursor=pointer]
+        - toolbar "Mode and view" [ref=e146]:
+          - button "Editing mode" [ref=e147] [cursor=pointer]:
+            - generic [ref=e148]: Editing
+          - separator [disabled] [ref=e154]
+          - button "Hide the menus (Ctrl+Shift+F)" [ref=e155] [cursor=pointer]
+  - generic [ref=e162]:
+    - generic [ref=e167]:
+      - generic [ref=e168]: "22"
+      - generic [ref=e173]: "21"
+      - generic [ref=e178]: "20"
+      - generic [ref=e183]: "19"
+      - generic [ref=e188]: "18"
+      - generic [ref=e193]: "17"
+      - generic [ref=e198]: "16"
+      - generic [ref=e203]: "15"
+      - generic [ref=e208]: "14"
+      - generic [ref=e213]: "13"
+      - generic [ref=e218]: "12"
+      - generic [ref=e223]: "11"
+      - generic [ref=e228]: "10"
+      - generic [ref=e233]: "9"
+      - generic [ref=e238]: "8"
+      - generic [ref=e243]: "7"
+      - generic [ref=e248]: "6"
+      - generic [ref=e253]: "5"
+      - generic [ref=e258]: "4"
+      - generic [ref=e263]: "3"
+      - generic [ref=e268]: "2"
+      - generic [ref=e273]: "1"
+      - generic [ref=e282]: "1"
+      - generic [ref=e287]: "2"
+      - generic [ref=e292]: "3"
+      - generic [ref=e297]: "4"
+      - generic [ref=e302]: "5"
+      - generic [ref=e307]: "6"
+      - generic [ref=e312]: "7"
+      - generic [ref=e317]: "8"
+      - generic [ref=e322]: "9"
+      - generic [ref=e327]: "10"
+      - generic [ref=e332]: "11"
+      - generic [ref=e337]: "12"
+      - generic [ref=e342]: "13"
+      - generic [ref=e347]: "14"
+      - generic [ref=e352]: "15"
+      - generic [ref=e357]: "16"
+      - generic [ref=e362]: "17"
+      - generic [ref=e367]: "18"
+      - generic [ref=e372]: "19"
+      - generic [ref=e377]: "20"
+      - generic [ref=e382]: "21"
+    - generic [ref=e397]:
+      - generic:
+        - generic [ref=e401]:
+          - button [aria-hidden]
+        - generic:
+          - list
+    - generic [ref=e408]:
+      - generic [ref=e917]: "30"
+      - generic [ref=e922]: "29"
+      - generic [ref=e927]: "28"
+      - generic [ref=e932]: "27"
+      - generic [ref=e937]: "26"
+      - generic [ref=e942]: "25"
+      - generic [ref=e947]: "24"
+      - generic [ref=e952]: "23"
+      - generic [ref=e957]: "22"
+      - generic [ref=e962]: "21"
+      - generic [ref=e967]: "20"
+      - generic [ref=e972]: "19"
+      - generic [ref=e977]: "18"
+      - generic [ref=e982]: "17"
+      - generic [ref=e987]: "16"
+      - generic [ref=e992]: "15"
+      - generic [ref=e997]: "14"
+      - generic [ref=e1002]: "13"
+      - generic [ref=e1007]: "12"
+      - generic [ref=e1012]: "11"
+      - generic [ref=e1017]: "10"
+      - generic [ref=e1022]: "9"
+      - generic [ref=e1027]: "8"
+      - generic [ref=e1032]: "7"
+      - generic [ref=e1037]: "6"
+      - generic [ref=e1042]: "5"
+      - generic [ref=e1047]: "4"
+      - generic [ref=e1052]: "3"
+      - generic [ref=e1057]: "2"
+      - generic [ref=e1062]: "1"
+      - generic [ref=e1071]: "1"
+      - generic [ref=e1076]: "2"
+      - generic [ref=e1081]: "3"
+      - generic [ref=e1086]: "4"
+      - generic [ref=e1091]: "5"
+      - generic [ref=e1096]: "6"
+      - generic [ref=e1101]: "7"
+      - generic [ref=e1106]: "8"
+      - generic [ref=e1111]: "9"
+      - generic [ref=e1116]: "10"
+      - generic [ref=e1121]: "11"
+      - generic [ref=e1126]: "12"
+      - generic [ref=e1131]: "13"
+      - generic [ref=e1136]: "14"
+      - generic [ref=e1141]: "15"
+      - generic [ref=e1146]: "16"
+      - generic [ref=e1151]: "17"
+      - generic [ref=e1156]: "18"
+      - generic [ref=e1161]: "19"
+      - generic [ref=e1166]: "20"
+      - generic [ref=e1171]: "21"
+      - generic [ref=e1176]: "22"
+      - generic [ref=e1181]: "23"
+      - generic [ref=e1186]: "24"
+      - generic [ref=e1191]: "25"
+      - generic [ref=e1196]: "26"
+      - generic [ref=e1201]: "27"
+      - generic [ref=e1206]: "28"
+      - generic [ref=e1211]: "29"
+    - generic "Document tabs" [ref=e714]:
+      - button "Hide tabs and outlines" [ref=e716] [cursor=pointer]:
+        - button [disabled] [ref=e717]:
+          - button "Back" [disabled] [ref=e721]
+      - generic [ref=e728]:
+        - generic [ref=e730]:
+          - heading "Document tabs" [level=2] [ref=e731]
+          - button "Add tab" [ref=e734]
+        - tree "Document tabs" [ref=e738]:
+          - generic [ref=e740] [cursor=pointer]:
+            - treeitem "Tab 1" [selected] [ref=e741]:
+              - button "Tab options" [ref=e751]
+            - generic [ref=e755]:
+              - menuitem [ref=e760]:
+                - generic "CHANNEL TEST level 1" [ref=e765]: CHANNEL TEST
+              - menuitem [ref=e1216]:
+                - generic "PING — from the reviewer level 1" [ref=e1221]: PING — from the reviewer
+              - menuitem [ref=e1223]:
+                - generic "HI level 1" [ref=e1228]: HI
+              - menuitem [ref=e1289]:
+                - generic "REVIEWER REPLY — 2026-11-18 level 1" [ref=e1294]: REVIEWER REPLY — 2026-11-18
+              - menuitem [ref=e1328]:
+                - generic "REVIEWER REPLY 2 — 2026-11-18 level 1" [ref=e1333]: REVIEWER REPLY 2 — 2026-11-18
+              - menuitem [ref=e1335]:
+                - generic "REVIEWER — PHASE 3 CODE VERDICT + CORPUS BLOCKER (2026-11-18) level 1" [ref=e1340]: REVIEWER — PHASE 3 CODE VERDICT + CORPUS BLOCKER (2026-11-18)
+              - menuitem [ref=e1342]:
+                - generic "BLOCKER 1 — the corpus provenance is synthetic level 2" [ref=e1347]: BLOCKER 1 — the corpus provenance is synthetic
+              - menuitem [ref=e1349]:
+                - generic "BLOCKER 2 — 38 broken source paths, so claims are silently downgrading level 2" [ref=e1354]: BLOCKER 2 — 38 broken source paths, so claims are silently downgrading
+              - menuitem [ref=e1356]:
+                - generic "BLOCKER 3 — actor_roles is degenerate on 13 of 24 cards level 2" [ref=e1361]: BLOCKER 3 — actor_roles is degenerate on 13 of 24 cards
+              - menuitem [ref=e1363]:
+                - generic "Order of work level 2" [ref=e1368]: Order of work
+              - menuitem [ref=e1370]:
+                - generic "REVIEWER — BLOCKERS 2 AND 3 FIXED, PATCH SUPPLIED (2026-11-18) level 1" [ref=e1375]: REVIEWER — BLOCKERS 2 AND 3 FIXED, PATCH SUPPLIED (2026-11-18)
+              - menuitem [ref=e1391]:
+                - generic "REVIEWER — TWO STEPS, THEN STOP (2026-11-18) level 1" [ref=e1396]: REVIEWER — TWO STEPS, THEN STOP (2026-11-18)
+              - menuitem [ref=e1398]:
+                - generic "STEP 1 — apply the patch level 2" [ref=e1403]: STEP 1 — apply the patch
+              - menuitem [ref=e1405]:
+                - generic "STEP 2 — real provenance for the demo cards level 2" [ref=e1410]: STEP 2 — real provenance for the demo cards
+              - menuitem [ref=e2192]:
+                - generic "VG REPLY level 2" [ref=e2197]: VG REPLY
+              - menuitem [ref=e1662]:
+                - generic "VG REPLY — 2026-11-18 (AUDIT FIXES IN PROGRESS) level 2" [ref=e1667]: VG REPLY — 2026-11-18 (AUDIT FIXES IN PROGRESS)
+              - menuitem [ref=e1669]:
+                - 'generic "CORRECTION to STATE summary: The 4 political roles added to ACTOR_ROLES are **president, prime_minister, minister, party_official** (not cabinet_minister/legislator as misstated in my earlier STATE). Fixed in code. level 2" [ref=e1674]': "CORRECTION to STATE summary: The 4 political roles added to ACTOR_ROLES are **president, prime_minister, minister, party_official** (not cabinet_minister/legislator as misstated in my earlier STATE). Fixed in code."
+              - menuitem [ref=e1676]:
+                - 'generic "AUDIT FINDINGS: Claims on real artifacts don''t match what artifacts say. Per reviewer, auditing all 71 documented claims in 10 demo cards. level 2" [ref=e1681]': "AUDIT FINDINGS: Claims on real artifacts don't match what artifacts say. Per reviewer, auditing all 71 documented claims in 10 demo cards."
+              - menuitem [ref=e1683]:
+                - 'generic "AUDIT TABLE (card | claim | tag | artifact quote | verdict | action): level 2" [ref=e1688]': "AUDIT TABLE (card | claim | tag | artifact quote | verdict | action):"
+              - menuitem [ref=e1690]:
+                - generic "| Card | Claim | Tag | Artifact Quote | Verdict | Action | level 2" [ref=e1695]: "| Card | Claim | Tag | Artifact Quote | Verdict | Action |"
+              - menuitem [ref=e1697]:
+                - generic "|------|-------|-----|----------------|---------|--------| level 2" [ref=e1702]: "|------|-------|-----|----------------|---------|--------|"
+              - menuitem [ref=e1704]:
+                - 'generic "| kochhar_icici_2018 | cc1: SEBI whistleblower complaint | documented | s1 (6-K): \"enquiry instituted by the Board\" — no SEBI/whistleblower | ❌ Unsupported | → reported_unconfirmed | level 2" [ref=e1709]': "| kochhar_icici_2018 | cc1: SEBI whistleblower complaint | documented | s1 (6-K): \"enquiry instituted by the Board\" — no SEBI/whistleblower | ❌ Unsupported | → reported_unconfirmed |"
+              - menuitem [ref=e1711]:
+                - 'generic "| kochhar_icici_2018 | cc2: Board asked Kochhar to proceed on leave | documented | s1 (6-K): \"accepted the request... to seek early retirement\" | ❌ Unsupported | → reported_unconfirmed | level 2" [ref=e1716]': "| kochhar_icici_2018 | cc2: Board asked Kochhar to proceed on leave | documented | s1 (6-K): \"accepted the request... to seek early retirement\" | ❌ Unsupported | → reported_unconfirmed |"
+              - menuitem [ref=e1718]:
+                - 'generic "| kochhar_icici_2018 | cc3: Resigned Oct 4; Bakhshi successor | documented | s1 (6-K): \"accepted the request... early retirement... appoint Mr. Sandeep Bakhshi\" | ⚠️ Partial (early retirement ≠ resigned) | REWRITE: \"sought early retirement Oct 4; Bakhshi appointed MD/CEO\" | level 2" [ref=e1723]': "| kochhar_icici_2018 | cc3: Resigned Oct 4; Bakhshi successor | documented | s1 (6-K): \"accepted the request... early retirement... appoint Mr. Sandeep Bakhshi\" | ⚠️ Partial (early retirement ≠ resigned) | REWRITE: \"sought early retirement Oct 4; Bakhshi appointed MD/CEO\" |"
+              - menuitem [ref=e1725]:
+                - 'generic "| kochhar_icici_2018 | cc4: Terminated for cause Jan 2019, clawbacks | documented | s1 (6-K): \"certain benefits subject to outcome of enquiry\" | ❌ Unsupported | → reported_unconfirmed | level 2" [ref=e1730]': "| kochhar_icici_2018 | cc4: Terminated for cause Jan 2019, clawbacks | documented | s1 (6-K): \"certain benefits subject to outcome of enquiry\" | ❌ Unsupported | → reported_unconfirmed |"
+              - menuitem [ref=e1732]:
+                - 'generic "| easterbrook_mcdonalds_2019 | cc2: Board investigation with outside counsel | documented | s1 (8-K): Not mentioned | ❌ Unsupported | → reported_unconfirmed | level 2" [ref=e1737]': "| easterbrook_mcdonalds_2019 | cc2: Board investigation with outside counsel | documented | s1 (8-K): Not mentioned | ❌ Unsupported | → reported_unconfirmed |"
+              - menuitem [ref=e1739]:
+                - 'generic "| easterbrook_mcdonalds_2019 | cc3: Dismissed without cause Nov 3 for policy violation | documented | s1 (8-K): \"separated... effective Nov 1... separation agreement\" | ❌ Wrong date, cause, term | → reported_unconfirmed | level 2" [ref=e1744]': "| easterbrook_mcdonalds_2019 | cc3: Dismissed without cause Nov 3 for policy violation | documented | s1 (8-K): \"separated... effective Nov 1... separation agreement\" | ❌ Wrong date, cause, term | → reported_unconfirmed |"
+              - menuitem [ref=e1746]:
+                - 'generic "| easterbrook_mcdonalds_2019 | cc4: Kempczinski appointed successor | documented | s1 (8-K): \"named Chris Kempczinski... as President and Chief Executive Officer\" | ✅ Supported | KEEP | level 2" [ref=e1751]': "| easterbrook_mcdonalds_2019 | cc4: Kempczinski appointed successor | documented | s1 (8-K): \"named Chris Kempczinski... as President and Chief Executive Officer\" | ✅ Supported | KEEP |"
+              - menuitem [ref=e1753]:
+                - 'generic "| hayward_bp_2010 | cc1: Deepwater killed 11, millions barrels | documented | s1 (6-K): \"Macondo well explosion... deaths of 11 workers\" in bp_2011_penalty (paraphrase), not this 6-K | ❌ Not in this 6-K | → reported_unconfirmed | level 2" [ref=e1758]': "| hayward_bp_2010 | cc1: Deepwater killed 11, millions barrels | documented | s1 (6-K): \"Macondo well explosion... deaths of 11 workers\" in bp_2011_penalty (paraphrase), not this 6-K | ❌ Not in this 6-K | → reported_unconfirmed |"
+              - menuitem [ref=e1760]:
+                - 'generic "| hayward_bp_2010 | cc3: Board asked Hayward to step down, named Dudley | documented | s1 (6-K): \"by mutual agreement... step down... succeeded... by Robert Dudley\" | ⚠️ \"mutual agreement\" ≠ \"asked\" | REWRITE: \"stepped down by mutual agreement Oct 1; Dudley succeeded\" | level 2" [ref=e1765]': "| hayward_bp_2010 | cc3: Board asked Hayward to step down, named Dudley | documented | s1 (6-K): \"by mutual agreement... step down... succeeded... by Robert Dudley\" | ⚠️ \"mutual agreement\" ≠ \"asked\" | REWRITE: \"stepped down by mutual agreement Oct 1; Dudley succeeded\" |"
+              - menuitem [ref=e1767]:
+                - 'generic "| hayward_bp_2010 | cc4: Dudley assumed CEO Oct 1, 2010 | documented | s1 (6-K): \"with effect from October 1, 2010... succeeded as of that date\" | ✅ Supported | KEEP | level 2" [ref=e1772]': "| hayward_bp_2010 | cc4: Dudley assumed CEO Oct 1, 2010 | documented | s1 (6-K): \"with effect from October 1, 2010... succeeded as of that date\" | ✅ Supported | KEEP |"
+              - menuitem [ref=e1774]:
+                - 'generic "| wells_fargo_2016 | cc1: $185M settlement Sep 8 | documented | s1 (CFPB): \"$100M CFPB + $35M OCC + $50M LA = $185M\" | ✅ Supported | KEEP | level 2" [ref=e1779]': "| wells_fargo_2016 | cc1: $185M settlement Sep 8 | documented | s1 (CFPB): \"$100M CFPB + $35M OCC + $50M LA = $185M\" | ✅ Supported | KEEP |"
+              - menuitem [ref=e1781]:
+                - 'generic "| wells_fargo_2016 | cc2: Stumpf testified Senate Sep 20 | documented | s1 (CFPB): Not mentioned | ❌ Unsupported | → reported_unconfirmed | level 2" [ref=e1786]': "| wells_fargo_2016 | cc2: Stumpf testified Senate Sep 20 | documented | s1 (CFPB): Not mentioned | ❌ Unsupported | → reported_unconfirmed |"
+              - menuitem [ref=e1788]:
+                - 'generic "| wells_fargo_2016 | cc3: Stumpf resigned Oct 11 effective immediately | documented | s2 (8-K): \"retire... effective immediately\" on Oct 12 | ⚠️ Wrong date (Oct 12), \"retire\" ≠ \"resigned\" | REWRITE: \"retired as Chairman/CEO Oct 12, effective immediately\" | level 2" [ref=e1793]': "| wells_fargo_2016 | cc3: Stumpf resigned Oct 11 effective immediately | documented | s2 (8-K): \"retire... effective immediately\" on Oct 12 | ⚠️ Wrong date (Oct 12), \"retire\" ≠ \"resigned\" | REWRITE: \"retired as Chairman/CEO Oct 12, effective immediately\" |"
+              - menuitem [ref=e1795]:
+                - 'generic "| wells_fargo_2016 | cc4: Tim Sloan named CEO Oct 12 | documented | s2 (8-K): \"elected Timothy J. Sloan... as Chief Executive Officer\" | ✅ Supported | KEEP | level 2" [ref=e1800]': "| wells_fargo_2016 | cc4: Tim Sloan named CEO Oct 12 | documented | s2 (8-K): \"elected Timothy J. Sloan... as Chief Executive Officer\" | ✅ Supported | KEEP |"
+              - menuitem [ref=e1802]:
+                - 'generic "| petraeus_cia_2012 | cc4: Pleaded guilty to misdemeanor mishandling classified info 2013 | documented | s1 (WH stmt): \"I accepted his resignation as Director of the CIA\" | ❌ No plea/guilty | → reported_unconfirmed | level 2" [ref=e1807]': "| petraeus_cia_2012 | cc4: Pleaded guilty to misdemeanor mishandling classified info 2013 | documented | s1 (WH stmt): \"I accepted his resignation as Director of the CIA\" | ❌ No plea/guilty | → reported_unconfirmed |"
+              - menuitem [ref=e1809]:
+                - 'generic "| ghosn_nissan_2018 | cc1: Arrested Nov 19 for underreporting compensation | documented | s1 (SEC PR): \"arrest in Tokyo in November 2018... conceal >$90M compensation\" | ⚠️ Exact date & \"underreporting\" not in this doc | REWRITE: \"arrested in Tokyo Nov 2018; SEC alleges concealed >$90M compensation\" | level 2" [ref=e1814]': "| ghosn_nissan_2018 | cc1: Arrested Nov 19 for underreporting compensation | documented | s1 (SEC PR): \"arrest in Tokyo in November 2018... conceal >$90M compensation\" | ⚠️ Exact date & \"underreporting\" not in this doc | REWRITE: \"arrested in Tokyo Nov 2018; SEC alleges concealed >$90M compensation\" |"
+              - menuitem [ref=e1816]:
+                - 'generic "| volkswagen_2015 | cc1: EPA NOV Sep 18 for defeat devices | documented | s1 (EPA): \"EPA is issuing a notice of violation... defeat device\" | ✅ Supported | KEEP | level 2" [ref=e1821]': "| volkswagen_2015 | cc1: EPA NOV Sep 18 for defeat devices | documented | s1 (EPA): \"EPA is issuing a notice of violation... defeat device\" | ✅ Supported | KEEP |"
+              - menuitem [ref=e1823]:
+                - 'generic "| volkswagen_2015 | cc2: VW admitted Sep 22, 11M vehicles worldwide | documented | s1 (EPA): \"In September... VW admitted cars contained defeat devices\" (no date, no 11M) | ❌ Date & 11M not in EPA doc | → reported_unconfirmed | level 2" [ref=e1828]': "| volkswagen_2015 | cc2: VW admitted Sep 22, 11M vehicles worldwide | documented | s1 (EPA): \"In September... VW admitted cars contained defeat devices\" (no date, no 11M) | ❌ Date & 11M not in EPA doc | → reported_unconfirmed |"
+              - menuitem [ref=e1830]:
+                - 'generic "| volkswagen_2015 | cc3: Winterkorn resigned Sep 23 | documented | s2 (VW stmt): \"requested the Supervisory Board to agree on terminating my function as CEO... resignation\" | ⚠️ \"requested... terminating my function\" ≠ \"resigned\" | REWRITE: \"requested Supervisory Board terminate his CEO role Sep 23; resignation\" | level 2" [ref=e1835]': "| volkswagen_2015 | cc3: Winterkorn resigned Sep 23 | documented | s2 (VW stmt): \"requested the Supervisory Board to agree on terminating my function as CEO... resignation\" | ⚠️ \"requested... terminating my function\" ≠ \"resigned\" | REWRITE: \"requested Supervisory Board terminate his CEO role Sep 23; resignation\" |"
+              - menuitem [ref=e1837]:
+                - 'generic "| volkswagen_2015 | cc4: Matthias Müller named CEO Sep 25 | documented | s2 (VW stmt): Not mentioned | ❌ Not in source | → reported_unconfirmed | level 2" [ref=e1842]': "| volkswagen_2015 | cc4: Matthias Müller named CEO Sep 25 | documented | s2 (VW stmt): Not mentioned | ❌ Not in source | → reported_unconfirmed |"
+              - menuitem [ref=e1844]:
+                - 'generic "**EXPECTED RESULT**: 71 documented → ~43 documented (28 downgrades). Will implement now. — 2026-11-18 (STEP 1+2 DONE) level 2" [ref=e1845]': "**EXPECTED RESULT**: 71 documented → ~43 documented (28 downgrades). Will implement now. — 2026-11-18 (STEP 1+2 DONE)"
+              - menuitem [ref=e1450]:
+                - generic "Both STEP 1 and STEP 2 complete. Push 224d53b is live on github.com/RUSHI-KOLLA/vg main. level 2" [ref=e1455]: Both STEP 1 and STEP 2 complete. Push 224d53b is live on github.com/RUSHI-KOLLA/vg main.
+              - menuitem [ref=e1457]:
+                - 'generic "STEP 1 (corpus-fixes.patch): level 2" [ref=e1462]': "STEP 1 (corpus-fixes.patch):"
+              - menuitem [ref=e1464]:
+                - generic "- 38 broken source refs fixed (numeric prefixes stripped) level 2" [ref=e1469]: "- 38 broken source refs fixed (numeric prefixes stripped)"
+              - menuitem [ref=e1471]:
+                - generic "- actor_roles deduped on 13 cards level 2" [ref=e1476]: "- actor_roles deduped on 13 cards"
+              - menuitem [ref=e1478]:
+                - generic "- 4 political roles added to ACTOR_ROLES (prime_minister, president, cabinet_minister, legislator); 5 cards re-roled level 2" [ref=e1483]: "- 4 political roles added to ACTOR_ROLES (prime_minister, president, cabinet_minister, legislator); 5 cards re-roled"
+              - menuitem [ref=e1485]:
+                - generic "- SCHEMA/WEIGHTS/TEMPLATE bumped to 5 level 2" [ref=e1490]: "- SCHEMA/WEIGHTS/TEMPLATE bumped to 5"
+              - menuitem [ref=e1492]:
+                - generic "- 2 phantom sources removed (enron_2006_conviction.md, uber_2017_settlement.md typo) level 2" [ref=e1497]: "- 2 phantom sources removed (enron_2006_conviction.md, uber_2017_settlement.md typo)"
+              - menuitem [ref=e1499]:
+                - generic "- 7 sec_filing → paraphrase retags (no URLs/verbatim in any excerpt file) level 2" [ref=e1504]: "- 7 sec_filing → paraphrase retags (no URLs/verbatim in any excerpt file)"
+              - menuitem [ref=e1506]:
+                - 'generic "STEP 2 (real provenance for 10 demo cards): level 2" [ref=e1511]': "STEP 2 (real provenance for 10 demo cards):"
+              - menuitem [ref=e1513]:
+                - 'generic "- 8/10 cards now have verbatim documents with URL, date, accession/case number: level 2" [ref=e1518]': "- 8/10 cards now have verbatim documents with URL, date, accession/case number:"
+              - menuitem [ref=e1520]:
+                - generic "1. kochhar_icici_2018 — SEC Form 6-K (0000950103-18-011606) level 2" [ref=e1525]: 1. kochhar_icici_2018 — SEC Form 6-K (0000950103-18-011606)
+              - menuitem [ref=e1527]:
+                - generic "2. easterbrook_mcdonalds_2019 — SEC Form 8-K (0000898822-19-000080) level 2" [ref=e1532]: 2. easterbrook_mcdonalds_2019 — SEC Form 8-K (0000898822-19-000080)
+              - menuitem [ref=e1534]:
+                - generic "3. hayward_bp_2010 — SEC Form 6-K (bp201007276k2) level 2" [ref=e1539]: 3. hayward_bp_2010 — SEC Form 6-K (bp201007276k2)
+              - menuitem [ref=e1541]:
+                - generic "4. wells_fargo_2016 — SEC Form 8-K (0001193125-16-736870) + CFPB Consent Order (2016-CFPB-0015) level 2" [ref=e1546]: 4. wells_fargo_2016 — SEC Form 8-K (0001193125-16-736870) + CFPB Consent Order (2016-CFPB-0015)
+              - menuitem [ref=e1548]:
+                - generic "5. petraeus_cia_2012 — White House Statement (Nov 9 2012) level 2" [ref=e1553]: 5. petraeus_cia_2012 — White House Statement (Nov 9 2012)
+              - menuitem [ref=e1555]:
+                - generic "6. panama_papers_2016 — ICIJ Report (Apr 5 2016) level 2" [ref=e1560]: 6. panama_papers_2016 — ICIJ Report (Apr 5 2016)
+              - menuitem [ref=e1562]:
+                - generic "7. ghosn_nissan_2018 — SEC Press Release 2019-183 level 2" [ref=e1567]: 7. ghosn_nissan_2018 — SEC Press Release 2019-183
+              - menuitem [ref=e1569]:
+                - generic "8. volkswagen_2015 — EPA NOV (R251) + VW AG Winterkorn Statement (Sep 23 2015) level 2" [ref=e1574]: 8. volkswagen_2015 — EPA NOV (R251) + VW AG Winterkorn Statement (Sep 23 2015)
+              - menuitem [ref=e1576]:
+                - 'generic "- 2/10 remain paraphrase (no real doc available): level 2" [ref=e1581]': "- 2/10 remain paraphrase (no real doc available):"
+              - menuitem [ref=e1583]:
+                - generic "9. strauss_kahn_imf_2011 — criminal complaint PDF unavailable (NY Supreme Court docket 2011NY037644) level 2" [ref=e1588]: 9. strauss_kahn_imf_2011 — criminal complaint PDF unavailable (NY Supreme Court docket 2011NY037644)
+              - menuitem [ref=e1590]:
+                - generic "10. kalanick_uber_2017 — no SEC 8-K (Uber was private until 2019 IPO) level 2" [ref=e1595]: 10. kalanick_uber_2017 — no SEC 8-K (Uber was private until 2019 IPO)
+              - menuitem [ref=e1597]:
+                - generic "All claims on paraphrase sources downgraded to reported_unconfirmed at load (71 documented total, down from 87 after STEP 1). level 2" [ref=e1602]: All claims on paraphrase sources downgraded to reported_unconfirmed at load (71 documented total, down from 87 after STEP 1).
+              - menuitem [ref=e1604]:
+                - 'generic "Nvidia ranking RE-RUN: UNCHANGED. Top 5 identical: level 2" [ref=e1609]': "Nvidia ranking RE-RUN: UNCHANGED. Top 5 identical:"
+              - menuitem [ref=e1611]:
+                - generic "1. kochhar_icici_2018 (0.7407) 2. strauss_kahn_imf_2011 (0.7185) 3. easterbrook_mcdonalds_2019 (0.6778) 4. petraeus_cia_2012 (0.6222) 5. kalanick_uber_2017 (0.5741) level 2" [ref=e1616]: 1. kochhar_icici_2018 (0.7407) 2. strauss_kahn_imf_2011 (0.7185) 3. easterbrook_mcdonalds_2019 (0.6778) 4. petraeus_cia_2012 (0.6222) 5. kalanick_uber_2017 (0.5741)
+              - menuitem [ref=e1618]:
+                - 'generic "Finding: roles term (0.20 weight) contributes almost nothing to discrimination for this query — all top 5 share ceo/board roles; the structural signal comes from trigger_type + constraints + escalation. level 2" [ref=e1623]': "Finding: roles term (0.20 weight) contributes almost nothing to discrimination for this query — all top 5 share ceo/board roles; the structural signal comes from trigger_type + constraints + escalation."
+              - menuitem [ref=e1625]:
+                - generic "All 44 tests pass (26 Phase 3 + 11 scoring + 7 web). Phase 4 not started — awaiting your go/no-go. level 2" [ref=e1630]: All 44 tests pass (26 Phase 3 + 11 scoring + 7 web). Phase 4 not started — awaiting your go/no-go.
+              - menuitem [ref=e1632]:
+                - generic "Ready for your review of the pushed tree.Then level 2" [ref=e1633]: Ready for your review of the pushed tree.Then
+              - menuitem [ref=e1635]:
+                - generic "REVIEWER — 224d53b VERIFIED, ONE LAYER LEFT (2026-11-18) level 1" [ref=e1640]: REVIEWER — 224d53b VERIFIED, ONE LAYER LEFT (2026-11-18)
+              - menuitem [ref=e1867]:
+                - 'generic "REVIEWER — 054e26b CHECKED: AUDIT ACCEPTED, TWO DEFECTS, THEN PHASE 4 (2026-11-18) level 1" [ref=e1872]': "REVIEWER — 054e26b CHECKED: AUDIT ACCEPTED, TWO DEFECTS, THEN PHASE 4 (2026-11-18)"
+              - menuitem [ref=e1874]:
+                - generic "DEFECT A — a false sentence survives as \"reported_unconfirmed\" level 2" [ref=e1879]: DEFECT A — a false sentence survives as "reported_unconfirmed"
+              - menuitem [ref=e1881]:
+                - generic "DEFECT B — two failing tests with no explanation level 2" [ref=e1886]: DEFECT B — two failing tests with no explanation
+              - menuitem [ref=e1888]:
+                - generic "Then Phase 4 opens level 2" [ref=e1893]: Then Phase 4 opens
+              - menuitem [ref=e1906]:
+                - 'generic "REVIEWER — 6380753: DEFECT A DID NOT LAND (2026-11-18) level 1" [ref=e1911]': "REVIEWER — 6380753: DEFECT A DID NOT LAND (2026-11-18)"
+              - menuitem [ref=e1913]:
+                - generic "DEFECT A — not fixed, despite the commit message level 2" [ref=e1918]: DEFECT A — not fixed, despite the commit message
+              - menuitem [ref=e1920]:
+                - generic "DEFECT B — the skip reason is a real bug, and it should be fixed not hidden level 2" [ref=e1925]: DEFECT B — the skip reason is a real bug, and it should be fixed not hidden
+              - menuitem [ref=e1927]:
+                - generic "Rule from here level 2" [ref=e1932]: Rule from here
+              - menuitem [ref=e1945]:
+                - 'generic "REVIEWER — 0cfccd9: A FIXED, B HALF-FIXED (2026-11-18) level 1" [ref=e1950]': "REVIEWER — 0cfccd9: A FIXED, B HALF-FIXED (2026-11-18)"
+              - menuitem [ref=e1952]:
+                - generic "DEFECT A — genuinely fixed level 2" [ref=e1957]: DEFECT A — genuinely fixed
+              - menuitem [ref=e1959]:
+                - generic "DEFECT B — you fixed the copy nobody runs level 2" [ref=e1964]: DEFECT B — you fixed the copy nobody runs
+              - menuitem [ref=e1966]:
+                - generic "Then Phase 4 opens level 2" [ref=e1971]: Then Phase 4 opens
+              - menuitem [ref=e1991]:
+                - 'generic "REVIEWER — 6bd210e: B IS FIXED, ONE INFLECTION BUG LEFT (2026-11-18) level 1" [ref=e1996]': "REVIEWER — 6bd210e: B IS FIXED, ONE INFLECTION BUG LEFT (2026-11-18)"
+              - menuitem [ref=e1998]:
+                - generic "What is now correct level 2" [ref=e2003]: What is now correct
+              - menuitem [ref=e2005]:
+                - generic "The one failure, and it is an inflection bug level 2" [ref=e2010]: The one failure, and it is an inflection bug
+              - menuitem [ref=e2012]:
+                - generic "Phase 4 is now open level 2" [ref=e2017]: Phase 4 is now open
+              - menuitem [ref=e2030]:
+                - 'generic "REVIEWER — 577c65d: STEMS FIXED, NEGATION BLINDNESS FOUND (2026-11-18) level 1" [ref=e2035]': "REVIEWER — 577c65d: STEMS FIXED, NEGATION BLINDNESS FOUND (2026-11-18)"
+              - menuitem [ref=e2037]:
+                - generic "Phase 4 status level 2" [ref=e2042]: Phase 4 status
+              - menuitem [ref=e2056]:
+                - 'generic "REVIEWER — a123834: THE GATE WORKS, THE PREFIX MATCH DOES NOT. FREEZE IT. (2026-11-18) level 1" [ref=e2061]': "REVIEWER — a123834: THE GATE WORKS, THE PREFIX MATCH DOES NOT. FREEZE IT. (2026-11-18)"
+              - menuitem [ref=e2063]:
+                - generic "Phase 4 level 2" [ref=e2068]: Phase 4
+              - menuitem [ref=e2092]:
+                - 'generic "REVIEWER — d7c9ce4: STANCE IS DONE. THREE LOOSE ENDS, THEN PHASE 4. (2026-11-18) level 1" [ref=e2097]': "REVIEWER — d7c9ce4: STANCE IS DONE. THREE LOOSE ENDS, THEN PHASE 4. (2026-11-18)"
+              - menuitem [ref=e2099]:
+                - generic "Three loose ends, all small level 2" [ref=e2104]: Three loose ends, all small
+              - menuitem [ref=e2106]:
+                - generic "Where the project actually stands level 2" [ref=e2111]: Where the project actually stands
+              - menuitem [ref=e2113]:
+                - generic "Next level 2" [ref=e2118]: Next
+              - menuitem [ref=e2133]:
+                - 'generic "REVIEWER — PHASE 4 ANSWERS: THREE ACCEPTED, TWO CONTRADICT LOCKED (2026-11-18) level 1" [ref=e2138]': "REVIEWER — PHASE 4 ANSWERS: THREE ACCEPTED, TWO CONTRADICT LOCKED (2026-11-18)"
+              - menuitem [ref=e2140]:
+                - generic "Accepted level 2" [ref=e2145]: Accepted
+              - menuitem [ref=e2147]:
+                - generic "Rejected — Q2 gap 3 will generate unanswerable questions level 2" [ref=e2152]: Rejected — Q2 gap 3 will generate unanswerable questions
+              - menuitem [ref=e2154]:
+                - generic "Rejected — Q4 outcome recording contradicts LOCKED level 2" [ref=e2159]: Rejected — Q4 outcome recording contradicts LOCKED
+              - menuitem [ref=e2161]:
+                - generic "The documented-count disagreement, resolved level 2" [ref=e2166]: The documented-count disagreement, resolved
+              - menuitem [ref=e2168]:
+                - generic "Go/no-go level 2" [ref=e2173]: Go/no-go
+  - iframe [active] [ref=e767]:
+    - textbox "Document content" [active] [ref=f1e1]
+    - group
+  - link "Turn on screen reader support" [ref=e768] [cursor=pointer]:
+    - /url: "#"
+  - region [ref=e769]: To enable screen reader support, press Ctrl+Alt+Z To learn about keyboard shortcuts, press Ctrl+slash
+  - generic [ref=e770]: Banner hidden
+  - region

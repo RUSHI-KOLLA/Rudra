@@ -1,0 +1,107 @@
+- application [ref=e1]:
+  - banner "Menu bar" [ref=e2]:
+    - generic [ref=e5]:
+      - link "Docs home" [ref=e7] [cursor=pointer]:
+        - /url: https://docs.google.com/document/?usp=docs_web
+      - generic [ref=e14]:
+        - generic "vg-handoff" [ref=e16]:
+          - 'button "Document status: Saved to Drive." [ref=e22]':
+            - generic [ref=e23] [cursor=pointer]: Saved to Drive
+        - generic [ref=e30]:
+          - button [disabled] [ref=e32]
+          - generic [ref=e35]:
+            - button "Share" [disabled] [ref=e36]
+            - button "Quick sharing actions" [ref=e38]
+          - link "Sign in" [ref=e42] [cursor=pointer]:
+            - /url: https://accounts.google.com/ServiceLogin?service=wise&passive=1209600&osid=1&continue=https://docs.google.com/document/d/18NhIhQEM1KjpEScLfRwlezKlOym1Y0-QC8k1pP_CjGU/edit&followup=https://docs.google.com/document/d/18NhIhQEM1KjpEScLfRwlezKlOym1Y0-QC8k1pP_CjGU/edit&ltmpl=docs&ec=GAZAGQ
+    - generic [ref=e43]:
+      - menubar [ref=e45]:
+        - menuitem "File" [ref=e46] [cursor=pointer]
+        - menuitem "Edit" [ref=e47] [cursor=pointer]
+        - menuitem "View" [ref=e48] [cursor=pointer]
+        - menuitem "Insert" [ref=e49] [cursor=pointer]
+        - menuitem "Format" [ref=e50] [cursor=pointer]
+        - menuitem "Tools" [ref=e51] [cursor=pointer]
+        - menuitem "Extensions" [ref=e52] [cursor=pointer]
+        - menuitem "Help" [ref=e53] [cursor=pointer]
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e56]:
+            - button "Search the menus (Alt+/)" [ref=e57] [cursor=pointer]
+            - combobox "Menus" [ref=e59]
+          - toolbar "Main" [ref=e60]:
+            - button "Undo (Ctrl+Z)" [ref=e61] [cursor=pointer]
+            - button "Redo (Ctrl+Y)" [ref=e66] [cursor=pointer]
+            - button "Print (Ctrl+P)" [disabled] [ref=e71]
+            - button "Spelling and grammar check (Ctrl+Alt+X)" [disabled] [ref=e76]
+            - button "Paint format" [disabled] [ref=e81]
+            - combobox "Zoom" [ref=e86] [cursor=pointer]:
+              - generic "Zoom list. 100% selected." [ref=e89]:
+                - textbox "Zoom" [ref=e90]: 100%
+            - separator [disabled] [ref=e94]
+            - listbox "Styles" [disabled] [ref=e95]:
+              - option "Styles" [disabled] [selected] [ref=e98]: Normal text
+            - separator [disabled] [ref=e102]
+            - listbox "Font" [ref=e103] [cursor=pointer]:
+              - option "Font list. Arial selected." [selected] [ref=e106]: Arial
+            - separator [disabled] [ref=e110]
+            - button "Decrease font size (Ctrl+Shift+comma)" [ref=e111] [cursor=pointer]
+            - combobox "Font size" [ref=e116] [cursor=pointer]:
+              - generic "Font size list. 11 selected." [ref=e119]:
+                - textbox "Font size" [ref=e120]: "11"
+            - button "Increase font size (Ctrl+Shift+full stop)" [ref=e121] [cursor=pointer]
+            - separator [disabled] [ref=e126]
+            - button "More" [disabled] [ref=e127] [cursor=pointer]
+        - toolbar "Mode and view" [ref=e134]:
+          - button [disabled] [ref=e135]
+          - separator [disabled] [ref=e139]
+          - button "Hide the menus (Ctrl+Shift+F)" [ref=e140] [cursor=pointer]
+  - generic [ref=e152]:
+    - generic [ref=e153]: "22"
+    - generic [ref=e158]: "21"
+    - generic [ref=e163]: "20"
+    - generic [ref=e168]: "19"
+    - generic [ref=e173]: "18"
+    - generic [ref=e178]: "17"
+    - generic [ref=e183]: "16"
+    - generic [ref=e188]: "15"
+    - generic [ref=e193]: "14"
+    - generic [ref=e198]: "13"
+    - generic [ref=e203]: "12"
+    - generic [ref=e208]: "11"
+    - generic [ref=e213]: "10"
+    - generic [ref=e218]: "9"
+    - generic [ref=e223]: "8"
+    - generic [ref=e228]: "7"
+    - generic [ref=e233]: "6"
+    - generic [ref=e238]: "5"
+    - generic [ref=e243]: "4"
+    - generic [ref=e248]: "3"
+    - generic [ref=e253]: "2"
+    - generic [ref=e258]: "1"
+    - generic [ref=e267]: "1"
+    - generic [ref=e272]: "2"
+    - generic [ref=e277]: "3"
+    - generic [ref=e282]: "4"
+    - generic [ref=e287]: "5"
+    - generic [ref=e292]: "6"
+    - generic [ref=e297]: "7"
+    - generic [ref=e302]: "8"
+    - generic [ref=e307]: "9"
+    - generic [ref=e312]: "10"
+    - generic [ref=e317]: "11"
+    - generic [ref=e322]: "12"
+    - generic [ref=e327]: "13"
+    - generic [ref=e332]: "14"
+    - generic [ref=e337]: "15"
+    - generic [ref=e342]: "16"
+    - generic [ref=e347]: "17"
+    - generic [ref=e352]: "18"
+    - generic [ref=e357]: "19"
+    - generic [ref=e362]: "20"
+    - generic [ref=e367]: "21"
+  - iframe [active] [ref=e389]:
+    - textbox "Document content" [active] [ref=f1e1]
+    - group
+  - link "Turn on screen reader support" [ref=e390] [cursor=pointer]:
+    - /url: "#"

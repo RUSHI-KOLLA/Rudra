@@ -1,87 +1,184 @@
 {
-  "incident_id": "kalanick_uber_2017",
-  "title": "Travis Kalanick resigns as Uber CEO",
-  "status": "curated",
-  "date": "2017-06-21",
-  "recorded_at": "2017-06-22",
-  "actors": ["Travis Kalanick", "Benchmark Capital", "Emil Michael", "Liane Hornsey", "Arianna Huffington"],
-  "actor_roles": ["ceo", "investor", "employee", "board", "board"],
-  "sector": "technology",
-  "geography": "United States",
-  "trigger": "A viral video of Kalanick arguing with an Uber driver, combined with sexual harassment allegations from a former employee and a Waymo trade secrets lawsuit, led major investors led by Benchmark Capital to demand his resignation.",
-  "trigger_type": "personal_conduct",
-  "constraint_types": ["regulatory", "reputational"],
-  "legal_outcome": "settled",
-  "escalation_vector": ["leak", "media_cycle"],
-  "tempo": "weeks",
-  "exit_authority": "investors",
-  "succession": "internal",
-  "timeline": [
-    {"date": "2017-02-13", "event": "Former engineer Susan Fowler publishes blog post detailing sexual harassment at Uber", "claim_ids": ["c1"]},
-    {"date": "2017-03-06", "event": "Viral video surfaces showing Kalanick arguing with an Uber driver over fares", "claim_ids": ["c2"]},
-    {"date": "2017-03-13", "event": "Waymo sues Uber over alleged trade secrets theft involving former Google engineer Anthony Levandowski", "claim_ids": ["c3"]},
-    {"date": "2017-06-13", "event": "Emil Michael and two other executives leave Uber", "claim_ids": ["c4"]},
-    {"date": "2017-06-20", "event": "Benchmark Capital and other major investors send letter to Kalanick demanding he take a leave of absence and step down as CEO", "claim_ids": ["c5"]},
-    {"date": "2017-06-21", "event": "Kalanick resigns as CEO of Uber, remains on board", "claim_ids": ["c6"]}
+  "actor_roles": [
+    "ceo",
+    "investor",
+    "employee",
+    "board"
   ],
-  "resolution": ["resignation"],
-  "outcome": {
-    "summary": "Kalanick resigned as CEO under investor pressure but remained on Uber's board. Dara Khosrowshahi was appointed as successor CEO in August 2017. Uber settled the Waymo trade secrets lawsuit in February 2018 for approximately $245 million in equity. The sexual harassment investigation led to the departure of over 20 employees.",
-    "actors": ["Travis Kalanick", "Dara Khosrowshahi", "Benchmark Capital"],
-    "constraint_types": ["regulatory", "reputational"],
-    "recorded_at": "2018-02-09",
-    "sources": [
-      {"id": "s1", "type": "sec_filing", "ref": "data/incidents/1_kalanick_uber_2017/sources/uber_2017_8k.md", "date": "2017-06-21"},
-      {"id": "s2", "type": "news_report", "ref": "data/incidents/1_kalanick_uber_2017/sources/uber_2017_settlement.md", "date": "2018-02-09"}
-    ]
-  },
+  "actors": [
+    "Travis Kalanick",
+    "Benchmark Capital",
+    "Emil Michael",
+    "Liane Hornsey",
+    "Arianna Huffington"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "Susan Fowler's blog post detailed systemic sexual harassment and retaliation at Uber",
-      "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
+      "tag": "reported_unconfirmed",
+      "text": "Susan Fowler's blog post detailed systemic sexual harassment and retaliation at Uber"
     },
     {
       "id": "c2",
-      "text": "The viral video showed Kalanick berating an Uber driver about fare reductions",
-      "tag": "reported_unconfirmed",
       "source_ids": [],
-      "supports": []
+      "supports": [],
+      "tag": "reported_unconfirmed",
+      "text": "The viral video showed Kalanick berating an Uber driver about fare reductions"
     },
     {
       "id": "c3",
-      "text": "Waymo's lawsuit alleged that Uber stole self-driving car trade secrets through former Google engineer Anthony Levandowski",
-      "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
+      "tag": "reported_unconfirmed",
+      "text": "Waymo's lawsuit alleged that Uber stole self-driving car trade secrets through former Google engineer Anthony Levandowski"
     },
     {
       "id": "c4",
-      "text": "Emil Michael and two other executives left Uber amid the leadership crisis",
-      "tag": "reported_unconfirmed",
       "source_ids": [],
-      "supports": []
+      "supports": [],
+      "tag": "reported_unconfirmed",
+      "text": "Emil Michael and two other executives left Uber amid the leadership crisis"
     },
     {
       "id": "c5",
-      "text": "Benchmark Capital led investor pressure demanding Kalanick take a leave of absence and step down as CEO",
-      "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1", "c2", "c3"]
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1",
+        "c2",
+        "c3"
+      ],
+      "tag": "reported_unconfirmed",
+      "text": "Benchmark Capital led investor pressure demanding Kalanick take a leave of absence and step down as CEO"
     },
     {
       "id": "c6",
-      "text": "Kalanick resigned as CEO on June 21, 2017 but remained on Uber's board",
-      "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c5"]
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c5"
+      ],
+      "tag": "reported_unconfirmed",
+      "text": "Kalanick resigned as CEO on June 21, 2017 but remained on Uber's board"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "sec_filing", "ref": "data/incidents/1_kalanick_uber_2017/sources/uber_2017_8k.md", "date": "2017-06-21"},
-    {"id": "s2", "type": "news_report", "ref": "data/incidents/1_kalanick_uber_2017/sources/uber_2018_settlement.md", "date": "2018-02-09"}
+  "constraint_types": [
+    "regulatory",
+    "reputational"
   ],
-  "summary_embed": ""
+  "date": "2017-06-21",
+  "escalation_vector": [
+    "leak",
+    "media_cycle"
+  ],
+  "exit_authority": "investors",
+  "geography": "United States",
+  "incident_id": "kalanick_uber_2017",
+  "legal_outcome": "settled",
+  "outcome": {
+    "actors": [
+      "Travis Kalanick",
+      "Dara Khosrowshahi",
+      "Benchmark Capital"
+    ],
+    "constraint_types": [
+      "regulatory",
+      "reputational"
+    ],
+    "recorded_at": "2018-02-09",
+    "sources": [
+      {
+        "date": "2017-06-21",
+        "id": "s1",
+        "ref": "data/incidents/kalanick_uber_2017/sources/uber_2017_8k.md",
+        "type": "paraphrase"
+      },
+      {
+        "date": "2018-02-09",
+        "id": "s2",
+        "ref": "data/incidents/kalanick_uber_2017/sources/uber_2018_settlement.md",
+        "type": "paraphrase"
+      }
+    ],
+    "summary": "Kalanick resigned as CEO under investor pressure but remained on Uber's board. Dara Khosrowshahi was appointed as successor CEO in August 2017. Uber settled the Waymo trade secrets lawsuit in February 2018 for approximately $245 million in equity. The sexual harassment investigation led to the departure of over 20 employees."
+  },
+  "recorded_at": "2017-06-22",
+  "resolution": [
+    "resignation"
+  ],
+  "sector": "technology",
+  "sources": [
+    {
+      "date": "2017-06-21",
+      "id": "s1",
+      "ref": "data/incidents/kalanick_uber_2017/sources/uber_2017_8k.md",
+      "type": "paraphrase"
+    },
+    {
+      "date": "2018-02-09",
+      "id": "s2",
+      "ref": "data/incidents/kalanick_uber_2017/sources/uber_2018_settlement.md",
+      "type": "paraphrase"
+    }
+  ],
+  "status": "curated",
+  "succession": "internal",
+  "summary_embed": "",
+  "tempo": "weeks",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2017-02-13",
+      "event": "Former engineer Susan Fowler publishes blog post detailing sexual harassment at Uber"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2017-03-06",
+      "event": "Viral video surfaces showing Kalanick arguing with an Uber driver over fares"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2017-03-13",
+      "event": "Waymo sues Uber over alleged trade secrets theft involving former Google engineer Anthony Levandowski"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2017-06-13",
+      "event": "Emil Michael and two other executives leave Uber"
+    },
+    {
+      "claim_ids": [
+        "c5"
+      ],
+      "date": "2017-06-20",
+      "event": "Benchmark Capital and other major investors send letter to Kalanick demanding he take a leave of absence and step down as CEO"
+    },
+    {
+      "claim_ids": [
+        "c6"
+      ],
+      "date": "2017-06-21",
+      "event": "Kalanick resigns as CEO of Uber, remains on board"
+    }
+  ],
+  "title": "Travis Kalanick resigns as Uber CEO",
+  "trigger": "A viral video of Kalanick arguing with an Uber driver, combined with sexual harassment allegations from a former employee and a Waymo trade secrets lawsuit, led major investors led by Benchmark Capital to demand his resignation.",
+  "trigger_type": "personal_conduct",
+  "unverified": true
 }

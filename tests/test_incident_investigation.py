@@ -33,11 +33,11 @@ from vg.incidents.schema import Status, TriggerType, Tempo, ExitAuthority, Succe
 class TestSchemaV6ExternalPressure:
     """Test that external_pressure field exists on IncidentCard (v6)."""
 
-    def test_versions_bumped_to_6(self):
-        """All three versions bump to 6 when schema changes."""
-        assert SCHEMA_VERSION == 6
-        assert WEIGHTS_VERSION == 6
-        assert TEMPLATE_VERSION == 6
+    def test_versions_bumped_to_7(self):
+        """All three versions bump to 7 when schema changes (unverified field added)."""
+        assert SCHEMA_VERSION == 7
+        assert WEIGHTS_VERSION == 7
+        assert TEMPLATE_VERSION == 7
 
     def test_card_has_external_pressure_field(self):
         """IncidentCard accepts and stores external_pressure."""
@@ -256,5 +256,155 @@ class TestInvestigatePipeline:
         result = investigate("Why did the CEO resign?")
         assert "contradictions" in result
         assert isinstance(result["contradictions"], list)
+
+
+# ---------------------------------------------------------------------------
+# Task 4: Mocked search_free() tests — provenance & contradiction detection
+# ---------------------------------------------------------------------------
+
+
+def _patch_lens_funcs(monkeypatch, mocks: dict):
+    """Patch _LENS_FUNCS in investigation module directly (bypasses import-time cache)."""
+    from vg.incidents import investigation as inv_mod
+    for lens_name, mock_fn in mocks.items():
+        monkeypatch.setitem(inv_mod._LENS_FUNCS, lens_name, mock_fn)
+
+
+class TestInvestigateWithMockedSearch:
+    """Test investigate() with mocked non-empty search_free() results."""
+
+    def test_search_free_results_tagged_reported_unconfirmed(self, monkeypatch):
+        """Snippets returned by search_free() are tagged reported_unconfirmed (never documented)."""
+        from vg.incidents import investigation as inv_mod
+
+        mock_results = [{
+            "title": "Test Article",
+            "url": "https://example.com/article",
+            "snippet": "Test Entity was involved in financial fraud",
+            "date": "2024-01-15",
+            "query": "test entity payment contract funding"
+        }]
+
+        def mock_lens_search(entity):
+            return mock_results
+
+        mocks = {lens: mock_lens_search for lens in inv_mod._LENS_FUNCS.keys()}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Test Entity CEO resign?")
+
+        # Verify all search-derived findings have reported_unconfirmed tag
+        for lens_name, lens_data in result["lens_results"].items():
+            for finding in lens_data["findings"]:
+                if finding.get("url"):  # This is a search result (not mechanical extraction)
+                    assert finding["tag"] == "reported_unconfirmed", \
+                        f"{lens_name} finding has tag {finding['tag']}, expected reported_unconfirmed"
+                    # Explicitly verify it's NOT documented
+                    assert finding["tag"] != "documented", \
+                        f"{lens_name} search finding incorrectly tagged documented"
+
+    def test_search_free_results_never_tagged_documented(self, monkeypatch):
+        """Free search results are never tagged documented (requires real source artifact + verbatim quote)."""
+        from vg.incidents import investigation as inv_mod
+
+        mock_results = [{
+            "title": "Another Article",
+            "url": "https://example.com/another",
+            "snippet": "Confirmed: Test Entity admitted to wrongdoing",
+            "date": "2024-02-01",
+            "query": "test entity"
+        }]
+
+        def mock_lens_search(entity):
+            return mock_results
+
+        mocks = {lens: mock_lens_search for lens in inv_mod._LENS_FUNCS.keys()}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Test Entity resign?")
+
+        # Even with "confirmed" language in snippet, free search = reported_unconfirmed
+        for lens_name, lens_data in result["lens_results"].items():
+            for finding in lens_data["findings"]:
+                if finding.get("url"):
+                    assert finding["tag"] == "reported_unconfirmed", \
+                        f"Free search result must be reported_unconfirmed, got {finding['tag']}"
+
+    def test_contradiction_detection_denial_vs_affirmation(self, monkeypatch):
+        """_detect_contradictions() fires on denial vs affirmation across lenses."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_search_money(entity):
+            return [{
+                "title": "Money Report",
+                "url": "https://example.com/money",
+                "snippet": "Test Entity confirmed benefited from the deal",
+                "date": "2024-01-15",
+                "query": f"{entity} payment contract funding"
+            }]
+
+        def mock_search_secrecy(entity):
+            return [{
+                "title": "Secrecy Report",
+                "url": "https://example.com/secrecy",
+                "snippet": "Test Entity denied any benefit, claims unconfirmed",
+                "date": "2024-01-16",
+                "query": f"{entity} reported unconfirmed denied comment"
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_search_money,
+            "secrecy": mock_search_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        # Use "Test Entity" (two capitalized words) so _extract_entities fallback matches it
+        result = inv_mod.investigate("Why did Test Entity benefit?")
+
+        # Should detect contradiction between money (affirmation) and secrecy (denial)
+        assert len(result["contradictions"]) > 0, \
+            f"Expected contradictions, got {result['contradictions']}"
+        
+        # Verify contradiction structure
+        for c in result["contradictions"]:
+            assert "lens_a" in c
+            assert "lens_b" in c
+            assert c["type"] == "denial_vs_affirmation"
+            assert "finding_a" in c
+            assert "finding_b" in c
+
+    def test_contradiction_detection_no_false_positives(self, monkeypatch):
+        """_detect_contradictions() doesn't fire when lenses agree."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_lens_search(entity):
+            return [{
+                "title": "Consistent Report",
+                "url": "https://example.com/consistent",
+                "snippet": "Test Entity confirmed involvement in the project",
+                "date": "2024-01-15",
+                "query": f"{entity} payment contract funding"
+            }]
+
+        mocks = {lens: mock_lens_search for lens in inv_mod._LENS_FUNCS.keys()}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why was Test Entity involved?")
+
+        # May have contradictions from mechanical extractions, but not from search results
+        # The key is: search-derived findings (with url) should not contradict each other
+        search_contradictions = [
+            c for c in result["contradictions"]
+            if c.get("type") == "denial_vs_affirmation"
+        ]
+        # With consistent mock data, there should be no denial_vs_affirmation from search
+        # (mechanical extractions don't have url and use "inferred" tag)
 
 

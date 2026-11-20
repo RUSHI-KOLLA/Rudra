@@ -1,71 +1,148 @@
 {
-  "incident_id": "yes_bank_2020",
-  "title": "Yes Bank crisis and Rana Kapoor dismissal",
-  "status": "curated",
-  "date": "2020-03-05",
-  "recorded_at": "2020-03-06",
-  "actors": ["Rana Kapoor", "Rana Kapoor", "Reserve Bank of India"],
-  "actor_roles": ["ceo", "ceo", "regulator"],
-  "sector": "finance",
-  "geography": "India",
-  "trigger": "Yes Bank faced a severe liquidity crisis due to bad loans and governance failures, leading the Reserve Bank of India to place it under moratorium and replace its CEO Rana Kapoor.",
-  "trigger_type": "official_misconduct",
-  "constraint_types": ["regulatory"],
-  "legal_outcome": "pending",
-  "escalation_vector": ["inquiry"],
-  "tempo": "weeks",
-  "exit_authority": "regulator",
-  "succession": "external",
-  "timeline": [
-    {"date": "2019-01-31", "event": "Rana Kapoor's term as CEO ends; RBI denies extension and asks bank to find new CEO", "claim_ids": ["c1"]},
-    {"date": "2020-03-05", "event": "RBI places Yes Bank under moratorium and supersedes its board", "claim_ids": ["c2"]},
-    {"date": "2020-03-08", "event": "Rana Kapoor arrested by Enforcement Directorate", "claim_ids": ["c3"]},
-    {"date": "2020-03-13", "event": "SBI-led consortium announces rescue plan for Yes Bank", "claim_ids": ["c4"]}
+  "actor_roles": [
+    "ceo",
+    "regulator"
   ],
-  "resolution": ["dismissal"],
-  "outcome": {
-    "summary": "Yes Bank faced a severe liquidity crisis in 2020 due to bad loans and governance failures under CEO Rana Kapoor. The RBI placed the bank under moratorium on March 5, 2020, superseded its board, and an SBI-led consortium rescued it. Kapoor was arrested by the ED on money laundering charges. The bank continues to operate under new management.",
-    "actors": ["Rana Kapoor", "Rana Kapoor", "Reserve Bank of India"],
-    "constraint_types": ["regulatory"],
-    "recorded_at": "2020-03-13",
-    "sources": [
-      {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/yes_bank_2020/sources/rbi_2020_moratorium.md", "date": "2020-03-05"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/yes_bank_2020/sources/ed_2020_kapoor_arrest.md", "date": "2020-03-08"}
-    ]
-  },
+  "actors": [
+    "Rana Kapoor",
+    "Rana Kapoor",
+    "Reserve Bank of India"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "RBI denied Rana Kapoor an extension as CEO on January 31, 2019, asking the bank to find a new CEO",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": []
+      "text": "RBI denied Rana Kapoor an extension as CEO on January 31, 2019, asking the bank to find a new CEO"
     },
     {
       "id": "c2",
-      "text": "RBI placed Yes Bank under moratorium and superseded its board on March 5, 2020",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "RBI placed Yes Bank under moratorium and superseded its board on March 5, 2020"
     },
     {
       "id": "c3",
-      "text": "Rana Kapoor was arrested by the Enforcement Directorate on March 8, 2020",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c2"]
+      "text": "Rana Kapoor was arrested by the Enforcement Directorate on March 8, 2020"
     },
     {
       "id": "c4",
-      "text": "An SBI-led consortium announced a rescue plan for Yes Bank on March 13, 2020",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c2"]
+      "text": "An SBI-led consortium announced a rescue plan for Yes Bank on March 13, 2020"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "regulatory_report", "ref": "data/incidents/yes_bank_2020/sources/rbi_2020_moratorium.md", "date": "2020-03-05"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/yes_bank_2020/sources/ed_2020_kapoor_arrest.md", "date": "2020-03-08"}
+  "constraint_types": [
+    "regulatory"
   ],
-  "summary_embed": ""
+  "date": "2020-03-05",
+  "escalation_vector": [
+    "inquiry"
+  ],
+  "exit_authority": "regulator",
+  "geography": "India",
+  "incident_id": "yes_bank_2020",
+  "legal_outcome": "pending",
+  "outcome": {
+    "actors": [
+      "Rana Kapoor",
+      "Rana Kapoor",
+      "Reserve Bank of India"
+    ],
+    "constraint_types": [
+      "regulatory"
+    ],
+    "recorded_at": "2020-03-13",
+    "sources": [
+      {
+        "date": "2020-03-05",
+        "id": "s1",
+        "ref": "data/incidents/yes_bank_2020/sources/rbi_2020_moratorium.md",
+        "type": "regulatory_report"
+      },
+      {
+        "date": "2020-03-08",
+        "id": "s2",
+        "ref": "data/incidents/yes_bank_2020/sources/ed_2020_kapoor_arrest.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "Yes Bank faced a severe liquidity crisis in 2020 due to bad loans and governance failures under CEO Rana Kapoor. The RBI placed the bank under moratorium on March 5, 2020, superseded its board, and an SBI-led consortium rescued it. Kapoor was arrested by the ED on money laundering charges. The bank continues to operate under new management."
+  },
+  "recorded_at": "2020-03-06",
+  "resolution": [
+    "dismissal"
+  ],
+  "sector": "finance",
+  "sources": [
+    {
+      "date": "2020-03-05",
+      "id": "s1",
+      "ref": "data/incidents/yes_bank_2020/sources/rbi_2020_moratorium.md",
+      "type": "regulatory_report"
+    },
+    {
+      "date": "2020-03-08",
+      "id": "s2",
+      "ref": "data/incidents/yes_bank_2020/sources/ed_2020_kapoor_arrest.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "weeks",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2019-01-31",
+      "event": "Rana Kapoor's term as CEO ends; RBI denies extension and asks bank to find new CEO"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2020-03-05",
+      "event": "RBI places Yes Bank under moratorium and supersedes its board"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2020-03-08",
+      "event": "Rana Kapoor arrested by Enforcement Directorate"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2020-03-13",
+      "event": "SBI-led consortium announces rescue plan for Yes Bank"
+    }
+  ],
+  "title": "Yes Bank crisis and Rana Kapoor dismissal",
+  "trigger": "Yes Bank faced a severe liquidity crisis due to bad loans and governance failures, leading the Reserve Bank of India to place it under moratorium and replace its CEO Rana Kapoor.",
+  "trigger_type": "official_misconduct"
 }

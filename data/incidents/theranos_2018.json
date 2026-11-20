@@ -1,79 +1,163 @@
 {
-  "incident_id": "theranos_2018",
-  "title": "Elizabeth Holmes steps down as Theranos CEO",
-  "status": "curated",
-  "date": "2018-06-15",
-  "recorded_at": "2018-06-16",
-  "actors": ["Elizabeth Holmes"],
-  "actor_roles": ["ceo"],
-  "sector": "healthcare",
-  "geography": "United States",
-  "trigger": "Elizabeth Holmes, founder and CEO of Theranos, stepped down after revelations that the company's blood testing technology was unreliable and that Theranos had misled investors and patients about its capabilities.",
-  "trigger_type": "fraud",
-  "constraint_types": ["legal", "regulatory"],
-  "legal_outcome": "convicted",
-  "escalation_vector": ["leak", "inquiry"],
-  "tempo": "months",
-  "exit_authority": "self",
-  "succession": "external",
-  "timeline": [
-    {"date": "2015-10-15", "event": "The Wall Street Journal publishes first investigative report questioning Theranos blood testing technology", "claim_ids": ["c1"]},
-    {"date": "2016-07-07", "event": "Theranos voids two years of blood test results from its Edison machines", "claim_ids": ["c2"]},
-    {"date": "2018-03-14", "event": "SEC charges Holmes and former COO Balwani with massive fraud", "claim_ids": ["c3"]},
-    {"date": "2018-06-15", "event": "Holmes steps down as CEO of Theranos; company begins dissolution", "claim_ids": ["c4"]},
-    {"date": "2022-11-18", "event": "Holmes convicted on three counts of fraud and conspiracy", "claim_ids": ["c5"]}
+  "actor_roles": [
+    "ceo"
   ],
-  "resolution": ["resignation", "dissolution"],
-  "outcome": {
-    "summary": "Elizabeth Holmes stepped down as CEO of Theranos in June 2018 as the company faced mounting scrutiny over its blood testing technology. Theranos subsequently dissolved. Holmes was convicted on three counts of fraud and conspiracy in November 2022 and sentenced to more than 11 years in prison. The company's collapse led to increased scrutiny of health technology startups and founder-led companies.",
-    "actors": ["Elizabeth Holmes"],
-    "constraint_types": ["legal", "regulatory"],
-    "recorded_at": "2022-11-18",
-    "sources": [
-      {"id": "s1", "type": "court_record", "ref": "data/incidents/theranos_2018/sources/sec_2018_charges.md", "date": "2018-03-14"},
-      {"id": "s2", "type": "court_record", "ref": "data/incidents/theranos_2018/sources/holmes_2022_conviction.md", "date": "2022-11-18"}
-    ]
-  },
+  "actors": [
+    "Elizabeth Holmes"
+  ],
   "claims": [
     {
       "id": "c1",
-      "text": "The Wall Street Journal published its first investigative report on October 15, 2015 questioning Theranos blood testing technology",
-      "tag": "reported_unconfirmed",
       "source_ids": [],
-      "supports": []
+      "supports": [],
+      "tag": "reported_unconfirmed",
+      "text": "The Wall Street Journal published its first investigative report on October 15, 2015 questioning Theranos blood testing technology"
     },
     {
       "id": "c2",
-      "text": "Theranos voided two years of blood test results from its Edison machines on July 7, 2016",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c1"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c1"]
+      "text": "Theranos voided two years of blood test results from its Edison machines on July 7, 2016"
     },
     {
       "id": "c3",
-      "text": "The SEC charged Elizabeth Holmes and former COO Ramesh Balwani with massive fraud on March 14, 2018",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c2"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c2"]
+      "text": "The SEC charged Elizabeth Holmes and former COO Ramesh Balwani with massive fraud on March 14, 2018"
     },
     {
       "id": "c4",
-      "text": "Elizabeth Holmes stepped down as CEO of Theranos on June 15, 2018 as the company began dissolution",
+      "source_ids": [
+        "s1"
+      ],
+      "supports": [
+        "c3"
+      ],
       "tag": "documented",
-      "source_ids": ["s1"],
-      "supports": ["c3"]
+      "text": "Elizabeth Holmes stepped down as CEO of Theranos on June 15, 2018 as the company began dissolution"
     },
     {
       "id": "c5",
-      "text": "Elizabeth Holmes was convicted on three counts of fraud and conspiracy on November 18, 2022",
+      "source_ids": [
+        "s2"
+      ],
+      "supports": [
+        "c4"
+      ],
       "tag": "documented",
-      "source_ids": ["s2"],
-      "supports": ["c4"]
+      "text": "Elizabeth Holmes was convicted on three counts of fraud and conspiracy on November 18, 2022"
     }
   ],
-  "sources": [
-    {"id": "s1", "type": "court_record", "ref": "data/incidents/theranos_2018/sources/sec_2018_charges.md", "date": "2018-03-14"},
-    {"id": "s2", "type": "court_record", "ref": "data/incidents/theranos_2018/sources/holmes_2022_conviction.md", "date": "2022-11-18"}
+  "constraint_types": [
+    "legal",
+    "regulatory"
   ],
-  "summary_embed": ""
+  "date": "2018-06-15",
+  "escalation_vector": [
+    "leak",
+    "inquiry"
+  ],
+  "exit_authority": "self",
+  "geography": "United States",
+  "incident_id": "theranos_2018",
+  "legal_outcome": "convicted",
+  "outcome": {
+    "actors": [
+      "Elizabeth Holmes"
+    ],
+    "constraint_types": [
+      "legal",
+      "regulatory"
+    ],
+    "recorded_at": "2022-11-18",
+    "sources": [
+      {
+        "date": "2018-03-14",
+        "id": "s1",
+        "ref": "data/incidents/theranos_2018/sources/sec_2018_charges.md",
+        "type": "court_record"
+      },
+      {
+        "date": "2022-11-18",
+        "id": "s2",
+        "ref": "data/incidents/theranos_2018/sources/holmes_2022_conviction.md",
+        "type": "court_record"
+      }
+    ],
+    "summary": "Elizabeth Holmes stepped down as CEO of Theranos in June 2018 as the company faced mounting scrutiny over its blood testing technology. Theranos subsequently dissolved. Holmes was convicted on three counts of fraud and conspiracy in November 2022 and sentenced to more than 11 years in prison. The company's collapse led to increased scrutiny of health technology startups and founder-led companies."
+  },
+  "recorded_at": "2018-06-16",
+  "resolution": [
+    "resignation",
+    "dissolution"
+  ],
+  "sector": "healthcare",
+  "sources": [
+    {
+      "date": "2018-03-14",
+      "id": "s1",
+      "ref": "data/incidents/theranos_2018/sources/sec_2018_charges.md",
+      "type": "court_record"
+    },
+    {
+      "date": "2022-11-18",
+      "id": "s2",
+      "ref": "data/incidents/theranos_2018/sources/holmes_2022_conviction.md",
+      "type": "court_record"
+    }
+  ],
+  "status": "curated",
+  "succession": "external",
+  "summary_embed": "",
+  "tempo": "months",
+  "timeline": [
+    {
+      "claim_ids": [
+        "c1"
+      ],
+      "date": "2015-10-15",
+      "event": "The Wall Street Journal publishes first investigative report questioning Theranos blood testing technology"
+    },
+    {
+      "claim_ids": [
+        "c2"
+      ],
+      "date": "2016-07-07",
+      "event": "Theranos voids two years of blood test results from its Edison machines"
+    },
+    {
+      "claim_ids": [
+        "c3"
+      ],
+      "date": "2018-03-14",
+      "event": "SEC charges Holmes and former COO Balwani with massive fraud"
+    },
+    {
+      "claim_ids": [
+        "c4"
+      ],
+      "date": "2018-06-15",
+      "event": "Holmes steps down as CEO of Theranos; company begins dissolution"
+    },
+    {
+      "claim_ids": [
+        "c5"
+      ],
+      "date": "2022-11-18",
+      "event": "Holmes convicted on three counts of fraud and conspiracy"
+    }
+  ],
+  "title": "Elizabeth Holmes steps down as Theranos CEO",
+  "trigger": "Elizabeth Holmes, founder and CEO of Theranos, stepped down after revelations that the company's blood testing technology was unreliable and that Theranos had misled investors and patients about its capabilities.",
+  "trigger_type": "fraud"
 }

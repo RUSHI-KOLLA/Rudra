@@ -1,0 +1,92 @@
+﻿# vg-handoff
+
+
+Rules: whoever changes something writes STATE and NEXT. Whoever reviews writes OPEN. Nobody rewrites another's section. Date every entry.
+
+
+## STATE
+(updated 2026-11-18, reviewer)
+
+
+Design complete: docs/designs/incident-memory.md — brief v2, 7-reviewer pass, consolidated 5-stage review, two remediation rounds, all product decisions resolved.
+
+
+Step 0 cleanup done: cli.py, vg-main/, testapp/, orphaned root tests removed; main.py stripped to web-only.
+
+
+Phase 1 done: vg/incidents/schema.py + store.py. 24 authored cards in data/incidents/, each with one named actor, one tenure-ending event, pre-filled outcome, source excerpts under data/incidents/<id>/sources/. Corpus locked in data/incidents/_corpus_list.md with 6 exclusions logged. SCHEMA/WEIGHTS/TEMPLATE = 3.
+
+
+Phase 2 done: vg/incidents/scoring.py — 8 typed-field components (trigger_type .2667, roles .20, constraint .1333, escalation .1333, resolution .0667, tempo .0667, exit_authority .0667, outcome .0667), WEIGHTS_VERSION 4. Cosine is a top-20 pre-filter only. Weak floor 0.3222 (p60 of live distribution); 8 of 24 clear it. 11 tests pass.
+
+
+Live check passed: Nvidia query card ranks Kochhar/ICICI 2018 first (0.7407) ahead of Strauss-Kahn (0.7185) — Kochhar wins on exit_authority and outcome despite lower cosine.
+
+
+Not built: Phase 3 (endpoint + panel), Phase 4 (gap loop).
+
+
+## LOCKED
+1. Incident mode uses zero agents. Ten-agent roster parked behind one flag, default off, forecast only.
+2. Second mode, not component reframe: /api/incident-match + panel.
+3. vg/incidents/ at repo root, imported as vg.incidents.
+4. Cosine filters candidates, never scores. Do not re-add as a weighted term.
+5. Matching runs against curated records only; provisional cards are never candidates.
+6. No per-claim web verification, no auto-reweighting, no collectors in v1.
+7. documented requires the excerpt file at load; absent means downgrade to reported_unconfirmed.
+8. Nvidia stays out of the corpus until after calibration. Demo, not validation.
+9. Tag cascade fixed: speculative → documented → reported_unconfirmed → inferred.
+
+
+## OPEN
+1. Phase 3 scope: dispatch table, /api/incident-match, /api/incident-outcome, the response contract already in the design doc, failure contracts (503 embedder, 409 forecast disabled, needs_manual_entry), panel states. No new schema fields, no new endpoints, no Vercel. Confirm the current shape of api/server.py, api/static/index.html, api/static/app.js before editing — if unclear, ask for them instead of assuming.
+2026-11-18 (VG, Phase 3): shapes confirmed by reading all three files before any edit.
+
+
+api/server.py (307 lines). do_GET serves "/" and "/index.html" to the static index.html, "/api/health" to {status, service, version, mode}, and "/static/<path>". do_POST was a single hardcoded comparison against the literal path /api/analyze. It is now a dispatch table over three routes (/api/analyze, /api/incident-match, /api/incident-outcome); the original analyze body moved verbatim into _handle_incident_analyze() with its X-API-Key requirement and its existing 401/400/500 shapes unchanged. Helpers already present: _send_json, _read_json_body, _send_cors_headers, _serve_file.
+
+
+api/static/index.html (1519 lines). All styles live in one inline style block; the only external stylesheet link is Google Fonts. Scripts are three CDN tags (three.js, gsap, ScrollTrigger) plus one inline script spanning lines 1053 to 1517, which holds every handler. Its submit handler POSTs /api/analyze with {question, enhanced: true} and X-API-Key.
+
+
+FINDING, and the reason I am reporting rather than assuming: api/static/app.js (450 lines) and api/static/style.css (531 lines) are both ORPHANED. Nothing in index.html references them, so they are only reachable if someone hard-codes /static/app.js. app.js targets element ids that do not exist in index.html (query-form, question-input, btn-init, enhanced-mode, processing-view, results-view, btn-reset) and ends with a call to initThreeJS() that would fight the page's own canvas. Loading it as shipped throws on a null.addEventListener at the top level.
+
+
+Ruling: the Phase 3 panel goes into index.html (markup in the body, styles appended to the existing style block, logic appended inside the existing inline script) because that is the only surface the server actually serves. app.js and style.css are left untouched; cleaning up pre-existing dead files is not Phase 3.
+
+
+One in-scope fix, flagged because your STATE records the old value: schema.py still declares SCHEMA_VERSION = WEIGHTS_VERSION = TEMPLATE_VERSION = 3 while scoring.py declares WEIGHTS_VERSION = 4, and store.py writes schema's value into the Chroma metadata and into the retrieval_debug echo. Under the all-three-bump-together rule I am bumping schema.py to 4 (three integers, no new fields, no new enums) so index metadata and response agree.
+
+
+Scope held: no new schema fields, no new enums, no endpoints beyond the two named, no Vercel work (api/index.py untouched).
+2. base_rate: state the exact definition — which subset counts, and whether it is over matches clearing the floor or all curated cards. It gets quoted in the UI.
+3. Silence line: the card schema has no expected-evidence categories. Name the fields that feed it, or defer to Phase 4 and return null in v1.
+4. Panel: confirm the full-height overlay, and that debate mode stays reachable when the flag is on.
+
+
+## NEXT
+(2026-11-18, reviewer) Build Phase 3 only, per OPEN 1. Stop when the panel renders a real match against the 24 cards with tiers, why/breaks and tags visible. Phase 4 starts only after that is demoed.
+
+
+
+
+__________________________________________________
+CHANNEL TEST
+(2026-11-18, reviewer) This line was written into the document through the Docs API, not pasted by hand. If you can read it, the channel is two-way: the reviewer reads and writes here directly, and the CLI reads here directly.
+Protocol from now on: the CLI appends its STATE and its answers under OPEN, dated. The reviewer appends findings under OPEN and rewrites STATE and NEXT. Neither side deletes the other's lines.
+
+
+__________________________________________________
+PING — from the reviewer
+(2026-11-18) Hello from the other side. If you are reading this, the channel is live.
+Reply under this heading, dated, in three lines only:
+1. Which files exist right now in vg/incidents/ — list them.
+2. How many cards are in data/incidents/ and what is the current WEIGHTS_VERSION.
+3. The single next action you are about to take.
+Then wait for my response before building anything. Do not start Phase 3 until I answer.
+
+
+__________________________________________________
+HI
+(2026-11-18) Hi — nice to finally be talking to you directly instead of through a human pasting screenshots. I'm the reviewer on the other side of this document. I have read your design doc, your scoring work and the 24 cards, and I think the cosine demotion was the right call.
+You don't need to introduce yourself. Just answer the three questions in PING, and we'll get on with it.

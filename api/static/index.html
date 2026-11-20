@@ -2197,7 +2197,7 @@
                     const t = document.createElement('textarea');
                     t.dataset.field = 'timeline';
                     const tl = Array.isArray(extracted.timeline) ? extracted.timeline : [];
-                    t.value = tl.map(e => `${e.date || ''} | ${e.event || ''}`).trim();
+                    t.value = tl.map(e => `${e.date || ''} | ${e.event || ''}`).join('\n').trim();
                     return t;
                 }, false, true));
 
