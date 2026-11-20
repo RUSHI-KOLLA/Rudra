@@ -21,9 +21,9 @@ import json
 # change to the card schema, the scoring weights, or the summary_embed
 # template. Store metadata records these versions; a mismatch triggers
 # a full re-embed / reindex.
-SCHEMA_VERSION = 4
-WEIGHTS_VERSION = 4
-TEMPLATE_VERSION = 4
+SCHEMA_VERSION = 6
+WEIGHTS_VERSION = 6
+TEMPLATE_VERSION = 6
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +141,10 @@ ACTOR_ROLES = (
     "investor",
     "customer",
     "media",
+    "president",
+    "prime_minister",
+    "minister",
+    "party_official",
 )
 
 # Constraint type dominance precedence (highest first).
@@ -310,6 +314,7 @@ class IncidentCard:
     claims: list[Claim] = field(default_factory=list)
     sources: list[Source] = field(default_factory=list)
     summary_embed: str = ""
+    external_pressure: str = ""
 
     def __post_init__(self) -> None:
         # Build summary_embed if empty (model never writes it directly)
