@@ -350,74 +350,6 @@
             font-style: italic;
         }
 
-        /* ─── Expandable agent rows (green-on-black terminal) ─── */
-        .agent-row {
-            border-bottom: 1px solid rgba(0, 255, 65, 0.12);
-            padding: 3px 0;
-        }
-
-        .agent-row:last-child {
-            border-bottom: none;
-        }
-
-        .agent-header {
-            display: flex;
-            align-items: baseline;
-            gap: 6px;
-            cursor: pointer;
-            user-select: none;
-            line-height: 1.5;
-        }
-
-        .agent-header:hover .agent-name {
-            text-shadow: 0 0 8px rgba(0, 255, 65, 0.8);
-        }
-
-        .toggle-arrow {
-            flex-shrink: 0;
-            width: 14px;
-            color: var(--matrix-green);
-            font-size: 10px;
-            opacity: 0.9;
-        }
-
-        .agent-header:hover .toggle-arrow {
-            opacity: 1;
-            text-shadow: 0 0 8px var(--matrix-green);
-        }
-
-        .agent-name {
-            color: var(--matrix-green);
-            font-weight: bold;
-        }
-
-        .agent-short {
-            color: rgba(0, 255, 65, 0.85);
-            overflow-wrap: break-word;
-            word-break: break-word;
-        }
-
-        .agent-full {
-            display: none;
-            margin: 4px 0 6px 20px;
-            padding: 6px 8px;
-            border-left: 2px solid rgba(0, 255, 65, 0.35);
-            background: rgba(0, 255, 65, 0.05);
-            color: var(--matrix-green);
-            white-space: pre-wrap;
-            overflow-wrap: break-word;
-            word-break: break-word;
-            line-height: 1.6;
-        }
-
-        .agent-row.expanded .agent-full {
-            display: block;
-        }
-
-        .agent-full .agent-meta {
-            color: rgba(0, 255, 65, 0.6);
-        }
-
         /* ─── Investigate results styles ─── */
         .io-tag-documented { background: var(--matrix-green); color: #000; }
         .io-tag-reported_unconfirmed { background: var(--bright-gold); color: #000; }
@@ -1851,67 +1783,6 @@
             questionBlock.style.display = 'block';
         }
 
-        // Expandable agent row: collapsed = name + short stance, click ▶/▼ for full answer
-        function addAgentInterceptRow(agent) {
-            interceptPanel.classList.add('show');
-            const name = agent.agent_name || 'Unknown';
-            const stance = agent.stance || 'No stance.';
-            const short = stance.length > 80 ? stance.slice(0, 80) + '…' : stance;
-
-            const row = document.createElement('div');
-            row.className = 'intercept-line agent-row';
-
-            const header = document.createElement('div');
-            header.className = 'agent-header';
-            header.setAttribute('role', 'button');
-            header.setAttribute('tabindex', '0');
-            header.title = 'Click to expand full answer';
-
-            const arrow = document.createElement('span');
-            arrow.className = 'toggle-arrow';
-            arrow.textContent = '▶';
-
-            const nameEl = document.createElement('span');
-            nameEl.className = 'agent-name';
-            nameEl.textContent = `[${name}] `;
-
-            const shortEl = document.createElement('span');
-            shortEl.className = 'agent-short';
-            shortEl.textContent = short;
-
-            header.appendChild(arrow);
-            header.appendChild(nameEl);
-            header.appendChild(shortEl);
-
-            const full = document.createElement('div');
-            full.className = 'agent-full';
-            const detailLines = [
-                `STANCE: ${stance}`,
-                `CONFIDENCE: ${agent.confidence ?? 'N/A'}%`,
-                `PATTERN: ${agent.key_pattern || 'N/A'}`,
-                `PRECEDENT: ${agent.historical_precedent || 'N/A'}`,
-                `PREDICTION: ${agent.prediction || 'N/A'}`,
-                `PRINCIPLE: ${agent.principle_applied || 'N/A'}`
-            ];
-            full.textContent = detailLines.join('\n');
-
-            const toggle = () => {
-                const expanded = row.classList.toggle('expanded');
-                arrow.textContent = expanded ? '▼' : '▶';
-                interceptContent.scrollTop = interceptContent.scrollHeight;
-            };
-            header.addEventListener('click', toggle);
-            header.addEventListener('keydown', (ev) => {
-                if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); toggle(); }
-            });
-
-            row.appendChild(header);
-            row.appendChild(full);
-            interceptContent.appendChild(row);
-            playTypingSound();
-            interceptContent.scrollTop = interceptContent.scrollHeight;
-        }
-
         // The console hands its question to the Mini CID investigator.
         cmdForm.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -2102,8 +1973,9 @@
                 const prov = data.provenance || {};
                 const tags = prov.tag_counts || {};
                 if (Object.keys(tags).length) {
-                    const tagLine = Object.entries(tags).map(([t, c]) => `${t}: ${c}`).join(' · ');
-                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Total: ${prov.total_findings || 0} · Unique sources: ${prov.unique_sources || 0}</div>`);
+                    const tagLine = Object.entries(tags)
+                        .map(([t, c]) => `${esc(t)}: ${Number(c) || 0}`).join(' · ');
+                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Total: ${Number(prov.total_findings) || 0} · Unique sources: ${Number(prov.unique_sources) || 0}</div>`);
                 }
 
                 // Lenses
@@ -2116,7 +1988,7 @@
                     const queries = lr.queries || [];
                     if (!findings.length && !queries.length) return;
 
-                    parts.push(`<div class="io-section-h">${lens.toUpperCase()} LENS</div>`);
+                    parts.push(`<div class="io-section-h">${esc(lens.toUpperCase())} LENS</div>`);
 
                     if (queries.length) {
                         const qItems = queries.map(q => `<li>${esc(q)}</li>`).join('');
@@ -2125,15 +1997,15 @@
 
                     findings.forEach(f => {
                         const tag = f.tag || 'speculative';
-                        const tagClass = `io-tag-${tag}`;
+                        const tagClass = `io-tag-${esc(tag)}`;
                         const title = esc(f.title || '');
                         const snippet = esc(f.snippet || '');
-                        const corroborated = f.corroboration || 1;
+                        const corroborated = Number(f.corroboration) || 1;
                         const corrob = corroborated > 1 ? ` · ${corroborated} lenses` : '';
                         const url = f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener" class="io-src-link">source</a>` : '';
                         parts.push(`
                             <div class="io-claim">
-                                <span class="io-tag ${tagClass}">${tag.toUpperCase()}</span>
+                                <span class="io-tag ${tagClass}">${esc(tag.toUpperCase())}</span>
                                 <strong>${title}</strong>
                                 <span class="io-snippet">${snippet}</span>
                                 <span class="io-snippet">${corrob}</span>

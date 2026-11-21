@@ -518,6 +518,30 @@ class TestInvestigateWithMockedSearch:
         assert result["contradictions"], "Expected a contradiction"
         assert result["contradictions"][0]["subject"] == "Kochhar"
 
+    def test_queries_are_listed_once_per_distinct_query(self, monkeypatch):
+        """The 'queries' list holds the distinct queries run, not one per finding."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_lens(entity):
+            return [
+                {
+                    "title": f"Finding {index}",
+                    "url": f"https://example.com/{index}",
+                    "snippet": "text",
+                    "date": "2024-01-15",
+                    "query": f'"{entity}" payment',
+                }
+                for index in range(3)
+            ]
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        queries = result["lens_results"]["money"]["queries"]
+        assert queries == ['"Chanda Kochhar" payment'], queries
+        assert len(result["lens_results"]["money"]["findings"]) == 3
+
     def test_wikidata_labels_are_fetched_in_one_batch(self, monkeypatch):
         """Entity labels are fetched in a single batched request, not one per claim.
 

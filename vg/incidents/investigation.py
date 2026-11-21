@@ -114,6 +114,7 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
     """
     queries: list[str] = []
     findings: list[dict[str, Any]] = []
+    seen_queries: set[str] = set()
 
     search_fn = _LENS_FUNCS[lens_name]
     for entity in entities:
@@ -126,7 +127,10 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
                 "error": f"{type(exc).__name__}: {exc}",
             }
         for r in results:
-            queries.append(r.get("query", ""))
+            query = r.get("query", "")
+            if query and query not in seen_queries:
+                seen_queries.add(query)
+                queries.append(query)
             # Use tag from source if present (e.g., "inferred" for structured data),
             # otherwise default to "reported_unconfirmed" for free web search
             tag = r.get("tag", "reported_unconfirmed")
