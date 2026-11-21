@@ -1,19 +1,43 @@
 """Minimal web server for the VG browser interface.
 
-Production-ready for public SaaS hosting:
-- API keys are provided per-request via X-API-Key header (never stored on server)
-- CORS enabled for cross-origin access
-- No server-side key storage for multi-user safety
-
-Routes:
+One endpoint, one job:
 
     POST /api/incident-investigate -> the Mini CID investigation pipeline
     GET  /api/health                -> liveness + available modes
 
+Access model
+------------
+
+The endpoint is **open by default**: every source it uses is keyless, so an
+anonymous caller gets a full investigation with the deterministic mechanical
+synthesis. Two keys exist and they are deliberately separate:
+
+``X-API-Key``
+    The *caller's own* Groq key (BYOK). It is used for the single synthesis
+    call and is never stored. It is not authentication.
+
+``X-VG-Access-Key``
+    An optional *deployment* secret (``VG_ACCESS_KEY``). When configured,
+    every request must present it or gets 401, and only then may the
+    server's own ``GROQ_API_KEY`` be spent on synthesis. Without it, the
+    server's Groq quota is never used on a caller's behalf.
+
+Request budgets
+---------------
+
+- body <= ``VG_MAX_BODY_BYTES`` (64 KiB default), else 413
+- question <= ``VG_MAX_QUESTION_CHARS`` (500 default), else 400
+- ``VG_RATE_LIMIT_PER_MINUTE`` investigations per client address (10
+  default), else 429
+- cross-origin calls are refused unless the origin is in
+  ``VG_ALLOWED_ORIGINS``
+
 Failure contract:
 
-- 401  missing/invalid X-API-Key
-- 400  missing question
+- 401  missing/invalid deployment access key (only when one is configured)
+- 400  missing question, malformed body, or over-long question
+- 413  request body over the limit
+- 429  rate limit exceeded
 - 500  investigation failure (detail included)
 - 404  unknown route
 
@@ -23,9 +47,12 @@ the parsed dict.
 
 from __future__ import annotations
 
+import hmac
 import json
 import mimetypes
 import os
+import threading
+import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -43,17 +70,81 @@ def _json_bytes(payload: dict[str, Any]) -> bytes:
     return json.dumps(payload, indent=2, default=str).encode("utf-8")
 
 
+class _PayloadTooLarge(ValueError):
+    """Raised when a request body exceeds the configured limit."""
+
+
+class _RateLimiter:
+    """Fixed one-minute window limiter keyed by client address.
+
+    One entry per client keeps a burst of calls from a single host, which is
+    what protects the free upstream sources from being hammered by one
+    abusive caller.
+    """
+
+    def __init__(self) -> None:
+        self._hits: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+
+    def allow(self, key: str, limit: int) -> bool:
+        """True when the call is within the budget. ``limit <= 0`` disables it."""
+        if limit <= 0:
+            return True
+        now = time.monotonic()
+        cutoff = now - 60.0
+        with self._lock:
+            hits = [stamp for stamp in self._hits.get(key, []) if stamp > cutoff]
+            if len(hits) >= limit:
+                self._hits[key] = hits
+                return False
+            hits.append(now)
+            self._hits[key] = hits
+            # Drop clients that have gone quiet so the map cannot grow forever.
+            if len(self._hits) > 512:
+                self._hits = {
+                    client: stamps
+                    for client, stamps in self._hits.items()
+                    if stamps and stamps[-1] > cutoff
+                }
+            return True
+
+    def reset(self) -> None:
+        """Forget every recorded call (used by the test suite)."""
+        with self._lock:
+            self._hits.clear()
+
+
+#: One limiter for the process; the limit itself comes from the config.
+_rate_limiter = _RateLimiter()
+
+
 class VGWebHandler(BaseHTTPRequestHandler):
     """Serve the browser UI and analysis API."""
 
     server_version = "VGWeb/2.0"
 
+    #: Socket timeout, so a stalled client cannot hold a worker forever.
+    timeout = 30
+
     # ─── CORS ───────────────────────────────────────────────────────
     def _send_cors_headers(self) -> None:
-        """Add CORS headers to every response."""
-        self.send_header("Access-Control-Allow-Origin", "*")
+        """Allow cross-origin calls only from explicitly allowed origins.
+
+        The bundled UI is same-origin, so the default is to send no CORS
+        headers at all — a wildcard would let any site drive the endpoint
+        and burn the operator's quota.
+        """
+        origin = self.headers.get("Origin")
+        allowed = config.allowed_origins or ()
+        if not origin or (origin not in allowed and "*" not in allowed):
+            return
+        self.send_header("Access-Control-Allow-Origin", origin)
+        self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-API-Key")
+        self.send_header(
+            "Access-Control-Allow-Headers",
+            "Content-Type, X-API-Key, X-VG-Access-Key",
+        )
 
     def do_OPTIONS(self) -> None:  # noqa: N802
         """Handle CORS preflight requests."""
@@ -79,6 +170,7 @@ class VGWebHandler(BaseHTTPRequestHandler):
                     "version": "2.0",
                     "mode": "saas",
                     "modes": ["investigate"],
+                    "auth": "access_key" if config.access_key else "open",
                 },
             )
             return
@@ -112,7 +204,12 @@ class VGWebHandler(BaseHTTPRequestHandler):
         # Body is read exactly once, here, and handed to the handler.
         try:
             body = self._read_json_body()
+        except _PayloadTooLarge as exc:
+            self.close_connection = True
+            self._send_json(HTTPStatus.REQUEST_ENTITY_TOO_LARGE, {"error": str(exc)})
+            return
         except ValueError as exc:
+            self.close_connection = True
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": str(exc)})
             return
 
@@ -140,7 +237,20 @@ class VGWebHandler(BaseHTTPRequestHandler):
         except ValueError as exc:
             raise ValueError("Invalid Content-Length.") from exc
 
-        raw_body = self.rfile.read(body_size)
+        if body_size < 0:
+            # read(-1) would block until EOF — never trust a negative length.
+            raise ValueError("Invalid Content-Length.")
+
+        if body_size > config.max_body_bytes:
+            raise _PayloadTooLarge(
+                f"Request body too large (max {config.max_body_bytes} bytes)."
+            )
+
+        try:
+            raw_body = self.rfile.read(body_size)
+        except (TimeoutError, OSError) as exc:
+            raise ValueError("Request timed out while reading the body.") from exc
+
         if not raw_body:
             raise ValueError("Empty request body.")
 
@@ -162,33 +272,88 @@ class VGWebHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(file_path.read_bytes())
 
-    def _send_json(self, status: HTTPStatus, payload: dict[str, Any]) -> None:
+    def _send_json(
+        self,
+        status: HTTPStatus,
+        payload: dict[str, Any],
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
         body = _json_bytes(payload)
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-cache")
+        for name, value in (extra_headers or {}).items():
+            self.send_header(name, value)
         self._send_cors_headers()
         self.end_headers()
         self.wfile.write(body)
 
-    def _groq_key(self) -> str:
-        """Per-request key; falls back to a server-side key when configured."""
-        submitted = self.headers.get("X-API-Key", "").strip()
-        return submitted or (config.groq_api_key or os.getenv("GROQ_API_KEY") or "")
+    # ─── Access control ─────────────────────────────────────────────
+    def _client_id(self) -> str:
+        """Identify the caller for rate limiting.
 
-    def _require_key(self) -> bool:
-        """401 with the existing shape when no key is available."""
-        if self._groq_key():
-            return True
-        self._send_json(
-            HTTPStatus.UNAUTHORIZED,
-            {
-                "error": "Groq API key required.",
-                "hint": "Provide X-API-Key or configure GROQ_API_KEY on the server.",
-            },
-        )
-        return False
+        The socket address is used rather than ``X-Forwarded-For`` because a
+        forwarded header is trivially spoofed.
+        """
+        return self.client_address[0] if self.client_address else "unknown"
+
+    def _access_key_configured(self) -> bool:
+        return bool((config.access_key or "").strip())
+
+    def _access_key_valid(self) -> bool:
+        """Constant-time check of the deployment access key."""
+        expected = (config.access_key or "").strip()
+        submitted = self.headers.get("X-VG-Access-Key", "").strip()
+        if not expected or not submitted:
+            return False
+        return hmac.compare_digest(submitted, expected)
+
+    def _submitted_groq_key(self) -> str:
+        """The caller's own Groq key (BYOK) — never the server's."""
+        return self.headers.get("X-API-Key", "").strip()
+
+    def _synthesis_key(self) -> str:
+        """The key used for the single synthesis call.
+
+        The caller's own key is always preferred. The server's key is only
+        reachable by a request that passed the deployment access key, so an
+        anonymous caller can never spend the operator's Groq quota.
+        """
+        caller_key = self._submitted_groq_key()
+        if caller_key:
+            return caller_key
+        if self._access_key_configured() and self._access_key_valid():
+            return config.groq_api_key or os.getenv("GROQ_API_KEY") or ""
+        return ""
+
+    def _check_access(self) -> bool:
+        """Rate-limit the request, then enforce the deployment access key.
+
+        Returns False — after sending the error response — when the request
+        must not proceed.
+        """
+        if not _rate_limiter.allow(
+            self._client_id(), limit=config.rate_limit_per_minute
+        ):
+            self._send_json(
+                HTTPStatus.TOO_MANY_REQUESTS,
+                {"error": "Too many requests. Try again in a minute."},
+                extra_headers={"Retry-After": "60"},
+            )
+            return False
+
+        if self._access_key_configured() and not self._access_key_valid():
+            self._send_json(
+                HTTPStatus.UNAUTHORIZED,
+                {
+                    "error": "Access key required.",
+                    "hint": "Send the deployment key in X-VG-Access-Key.",
+                },
+            )
+            return False
+
+        return True
 
     def _handle_incident_investigate(self, body: dict[str, Any]) -> None:
         """POST /api/incident-investigate — question-driven mini CID investigation.
@@ -196,7 +361,7 @@ class VGWebHandler(BaseHTTPRequestHandler):
         Returns structured findings with provenance tags (documented,
         reported_unconfirmed, inferred, speculative), contradictions, and synthesis.
         """
-        if not self._require_key():
+        if not self._check_access():
             return
 
         question = str(body.get("question", "") or "").strip()
@@ -205,10 +370,22 @@ class VGWebHandler(BaseHTTPRequestHandler):
             self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Question is required."})
             return
 
+        if len(question) > config.max_question_chars:
+            self._send_json(
+                HTTPStatus.BAD_REQUEST,
+                {
+                    "error": (
+                        f"Question is too long "
+                        f"(max {config.max_question_chars} characters)."
+                    )
+                },
+            )
+            return
+
         try:
             # The caller's key drives the synthesis (BYOK); the server's own
-            # GROQ_API_KEY is only the fallback.
-            result = investigate(question, api_key=self._groq_key())
+            # GROQ_API_KEY is only reachable behind the deployment access key.
+            result = investigate(question, api_key=self._synthesis_key())
         except Exception as exc:
             self._send_json(
                 HTTPStatus.INTERNAL_SERVER_ERROR,
@@ -226,10 +403,19 @@ def run_server(host: str = "0.0.0.0", port: int = 8080) -> None:
     print("  Endpoint: POST /api/incident-investigate")
 
     server_key = os.getenv("GROQ_API_KEY")
-    if server_key:
-        print("  Server fallback key: ✓ configured (synthesis)")
+    if config.access_key:
+        print("  Access: deployment key required (X-VG-Access-Key)")
+        print(
+            "  Server fallback key: ✓ configured (synthesis for authorized callers)"
+            if server_key
+            else "  Server fallback key: ✗ not set (mechanical synthesis only)"
+        )
     else:
-        print("  Server fallback key: ✗ not set (mechanical synthesis only)")
+        print("  Access: open (rate-limited)")
+        print("  Server fallback key: ✗ not used — set VG_ACCESS_KEY to enable it")
+    print(
+        f"  Rate limit: {config.rate_limit_per_minute} investigations/minute per client"
+    )
 
     server = ThreadingHTTPServer((host, port), VGWebHandler)
     print(f"\nVG web interface running at http://{host}:{port}")

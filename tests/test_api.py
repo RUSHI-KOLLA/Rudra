@@ -19,6 +19,8 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
+import pytest
+
 
 class MockConnection:
     """Mock socket connection with makefile support."""
@@ -75,20 +77,21 @@ def create_mock_handler(headers=None, body=None):
 class TestIncidentInvestigateEndpoint:
     """Tests for POST /api/incident-investigate endpoint."""
 
-    def test_401_without_x_api_key(self):
-        """POST /api/incident-investigate returns 401 without X-API-Key."""
+    def test_open_mode_serves_a_request_without_any_key(self):
+        """Open mode (no deployment access key): the endpoint needs no key.
+
+        Every source is keyless, so an investigation must work for an
+        anonymous caller — with the deterministic mechanical synthesis.
+        """
         handler = create_mock_handler(
             headers={"Content-Type": "application/json"},
             body=json.dumps({"question": "Why did the CEO resign?"}).encode()
         )
-        # No X-API-Key header
         handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
 
-        # Check 401 was sent
-        assert handler.send_response.call_args[0][0] == HTTPStatus.UNAUTHORIZED
-        response_body = handler.wfile.write.call_args[0][0]
-        data = json.loads(response_body.decode())
-        assert data["error"] == "Groq API key required."
+        assert handler.send_response.call_args[0][0] == HTTPStatus.OK
+        data = json.loads(handler.wfile.write.call_args[0][0].decode())
+        assert data["synthesis"]
 
     def test_400_on_missing_question(self):
         """POST /api/incident-investigate returns 400 on missing/empty question."""
@@ -237,6 +240,213 @@ class TestInvestigateOnlyUI:
     def test_static_ui_has_no_incident_mode_button(self):
         """The paste-a-case mode button is gone."""
         assert 'data-mode="incident"' not in self._html()
+
+
+class TestAccessControlAndBudgets:
+    """The endpoint must never let anonymous callers spend the server's quota.
+
+    Contract:
+      - open mode (no VG_ACCESS_KEY): no key needed; the server's Groq key
+        is never used for synthesis.
+      - access-key mode (VG_ACCESS_KEY set): X-VG-Access-Key required (401),
+        and only then may the server's Groq key be used.
+      - budgets: body size, question length, and a per-client rate limit.
+    """
+
+    @pytest.fixture(autouse=True)
+    def _isolated(self, monkeypatch):
+        from vg.api.server import _rate_limiter
+
+        monkeypatch.setattr(config, "access_key", None)
+        monkeypatch.setattr(config, "groq_api_key", None)
+        monkeypatch.setattr(config, "rate_limit_per_minute", 10)
+        monkeypatch.setattr(config, "max_question_chars", 500)
+        monkeypatch.setattr(config, "max_body_bytes", 65536)
+        _rate_limiter.reset()
+        yield
+        _rate_limiter.reset()
+
+    @staticmethod
+    def _capture_investigate(monkeypatch) -> dict:
+        """Replace the pipeline with a recorder and return the captured calls."""
+        from vg.api import server as server_mod
+
+        seen: dict = {}
+
+        def fake_investigate(question, api_key=None):
+            seen["question"] = question
+            seen["api_key"] = api_key
+            return {
+                "question": question,
+                "lens_results": {},
+                "question_profile": {},
+                "synthesis": "mechanical summary",
+                "provenance": {
+                    "total_findings": 0,
+                    "unique_sources": 0,
+                    "tag_counts": {},
+                    "lenses_run": [],
+                },
+                "contradictions": [],
+            }
+
+        monkeypatch.setattr(server_mod, "investigate", fake_investigate)
+        return seen
+
+    def test_open_mode_never_spends_the_server_groq_key(self, monkeypatch):
+        """A server-side Groq key must not pay for anonymous callers."""
+        monkeypatch.setattr(config, "groq_api_key", "server-side-secret")
+        seen = self._capture_investigate(monkeypatch)
+
+        handler = create_mock_handler(headers={}, body=b"{}")
+        handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.OK
+        assert seen["api_key"] in (None, ""), seen["api_key"]
+
+    def test_caller_key_is_used_for_synthesis(self, monkeypatch):
+        """The caller's own key (BYOK) drives the synthesis call."""
+        seen = self._capture_investigate(monkeypatch)
+
+        handler = create_mock_handler(
+            headers={"X-API-Key": "caller-key"}, body=b"{}"
+        )
+        handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+
+        assert seen["api_key"] == "caller-key"
+
+    def test_access_key_mode_rejects_a_missing_access_key(self, monkeypatch):
+        """With VG_ACCESS_KEY set, a request without it is 401."""
+        monkeypatch.setattr(config, "access_key", "deployment-secret")
+        self._capture_investigate(monkeypatch)
+
+        handler = create_mock_handler(
+            headers={"X-API-Key": "caller-key"}, body=b"{}"
+        )
+        handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.UNAUTHORIZED
+        data = json.loads(handler.wfile.write.call_args[0][0].decode())
+        assert "Access key" in data["error"]
+
+    def test_access_key_mode_rejects_a_wrong_access_key(self, monkeypatch):
+        """A wrong access key is 401, even with a valid caller key."""
+        monkeypatch.setattr(config, "access_key", "deployment-secret")
+        self._capture_investigate(monkeypatch)
+
+        handler = create_mock_handler(
+            headers={"X-VG-Access-Key": "wrong", "X-API-Key": "caller-key"},
+            body=b"{}",
+        )
+        handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.UNAUTHORIZED
+
+    def test_access_key_mode_allows_the_server_key_for_authorized_callers(self, monkeypatch):
+        """An authorized caller may spend the server's quota."""
+        monkeypatch.setattr(config, "access_key", "deployment-secret")
+        monkeypatch.setattr(config, "groq_api_key", "server-side-secret")
+        seen = self._capture_investigate(monkeypatch)
+
+        handler = create_mock_handler(
+            headers={"X-VG-Access-Key": "deployment-secret"}, body=b"{}"
+        )
+        handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.OK
+        assert seen["api_key"] == "server-side-secret"
+
+    def test_caller_key_wins_over_the_server_key(self, monkeypatch):
+        """A caller-supplied key is preferred over the server's key."""
+        monkeypatch.setattr(config, "access_key", "deployment-secret")
+        monkeypatch.setattr(config, "groq_api_key", "server-side-secret")
+        seen = self._capture_investigate(monkeypatch)
+
+        handler = create_mock_handler(
+            headers={"X-VG-Access-Key": "deployment-secret", "X-API-Key": "caller-key"},
+            body=b"{}",
+        )
+        handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+
+        assert seen["api_key"] == "caller-key"
+
+    def test_oversized_body_is_rejected_with_413(self):
+        """A body larger than the limit is refused before it is read."""
+        handler = create_mock_handler(
+            headers={"Content-Type": "application/json", "Content-Length": "999999"},
+            body=b"",
+        )
+        handler.path = "/api/incident-investigate"
+        handler.do_POST()
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.REQUEST_ENTITY_TOO_LARGE
+
+    def test_negative_content_length_is_rejected_with_400(self):
+        """A negative Content-Length must not turn into an unbounded read."""
+        handler = create_mock_handler(
+            headers={"Content-Type": "application/json", "Content-Length": "-1"},
+            body=b"",
+        )
+        handler.path = "/api/incident-investigate"
+        handler.do_POST()
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.BAD_REQUEST
+        data = json.loads(handler.wfile.write.call_args[0][0].decode())
+        assert data["error"] == "Invalid Content-Length."
+
+    def test_oversized_question_is_rejected_with_400(self):
+        """A question beyond the character limit is refused."""
+        handler = create_mock_handler(headers={}, body=b"{}")
+        handler._handle_incident_investigate({"question": "x" * 1000})
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.BAD_REQUEST
+        data = json.loads(handler.wfile.write.call_args[0][0].decode())
+        assert "too long" in data["error"].lower()
+
+    def test_rate_limited_requests_get_429(self, monkeypatch):
+        """A client that exceeds the per-minute budget is refused with 429."""
+        monkeypatch.setattr(config, "rate_limit_per_minute", 2)
+        self._capture_investigate(monkeypatch)
+
+        statuses = []
+        for _ in range(3):
+            handler = create_mock_handler(headers={}, body=b"{}")
+            handler._handle_incident_investigate({"question": "Why did the CEO resign?"})
+            statuses.append(handler.send_response.call_args[0][0])
+
+        assert statuses[:2] == [HTTPStatus.OK, HTTPStatus.OK]
+        assert statuses[2] == HTTPStatus.TOO_MANY_REQUESTS
+
+    def test_cors_is_not_wildcard(self):
+        """A wildcard CORS origin would let any site drive the endpoint."""
+        handler = create_mock_handler(
+            headers={"Origin": "https://evil.example"}, body=b"{}"
+        )
+        handler.path = "/api/health"
+        handler.do_GET()
+
+        sent = {
+            call.args[0]: call.args[1]
+            for call in handler.send_header.call_args_list
+            if len(call.args) == 2
+        }
+        assert "Access-Control-Allow-Origin" not in sent
+
+    def test_cors_allows_a_configured_origin(self, monkeypatch):
+        """An explicitly allowed origin is echoed back."""
+        monkeypatch.setattr(config, "allowed_origins", ("https://app.example",))
+        handler = create_mock_handler(
+            headers={"Origin": "https://app.example"}, body=b"{}"
+        )
+        handler.path = "/api/health"
+        handler.do_GET()
+
+        sent = {
+            call.args[0]: call.args[1]
+            for call in handler.send_header.call_args_list
+            if len(call.args) == 2
+        }
+        assert sent.get("Access-Control-Allow-Origin") == "https://app.example"
 
 
 if __name__ == "__main__":
