@@ -19,6 +19,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
+import time
 
 CHECKS: list[tuple[str, bool, str]] = []
 
@@ -67,19 +68,36 @@ def main() -> int:
 
     print(f"→ checking {base}\n")
 
-    # 1. Health
-    try:
-        status, body, _ = request(f"{base}/api/health", timeout=30)
-        health = json.loads(body)
-    except Exception as exc:
-        record("health endpoint responds", False, str(exc))
-        health = {}
-    else:
-        record(
-            "health endpoint responds",
-            status == 200 and health.get("status") == "ok",
-            f"status={status} auth={health.get('auth')}",
-        )
+    # 1. Health. A free-tier service sleeps when idle and takes up to a
+    #    minute to wake, so the first request can get a loading page or a
+    #    connection error. Retry until the service answers for itself.
+    health: dict = {}
+    healthy = False
+    deadline = time.monotonic() + 180
+    while time.monotonic() < deadline:
+        try:
+            status, body, _ = request(f"{base}/api/health", timeout=30)
+            if status == 200:
+                try:
+                    health = json.loads(body)
+                except ValueError:
+                    health = {}
+                if health.get("status") == "ok":
+                    healthy = True
+                    break
+        except Exception:
+            pass
+        print("  … waiting for the service to start")
+        time.sleep(5)
+    record(
+        "health endpoint responds",
+        healthy,
+        (
+            f"status={health.get('status')} auth={health.get('auth')}"
+            if health
+            else "no answer within 180s"
+        ),
+    )
 
     # 2. The access model matches what health advertises
     auth_mode = health.get("auth")
@@ -89,7 +107,7 @@ def main() -> int:
             bool(args.access_key),
             "the deployment requires X-VG-Access-Key — pass --access-key",
         )
-    else:
+    elif healthy:
         record("deployment is open (as health reports)", True, f"auth={auth_mode}")
 
     # 3. The investigator answers

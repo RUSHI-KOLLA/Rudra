@@ -645,31 +645,38 @@ class TestDeploymentConfigs:
         assert cmd, "expected a CMD instruction"
         assert "--port" not in cmd[0], cmd[0]
 
-    def test_the_koyeb_manifest_points_at_the_real_repository(self):
-        manifest = self._read("koyeb.yaml")
-        assert "<your-username>" not in manifest, manifest
-        assert "github.com/RUSHI-KOLLA/Rudra" in manifest, manifest
-
     def test_the_manifests_trust_the_platform_proxy(self):
         """Behind an ingress every client shares one socket address."""
-        for name in ("render.yaml", "koyeb.yaml"):
-            manifest = self._read(name)
-            assert "VG_TRUST_PROXY" in manifest, name
+        manifest = self._read("render.yaml")
+        assert "VG_TRUST_PROXY" in manifest, manifest
 
     def test_the_manifests_never_bake_in_a_secret(self):
         """A key in the manifest would be a key in git."""
-        for name in ("render.yaml", "koyeb.yaml"):
-            manifest = self._read(name)
-            for marker in ("gsk_", "choose-a-secret"):
-                uncommented = [
-                    line for line in manifest.splitlines()
-                    if marker in line and not line.strip().startswith("#")
-                ]
-                assert not uncommented, (name, uncommented)
+        manifest = self._read("render.yaml")
+        for marker in ("gsk_", "choose-a-secret"):
+            uncommented = [
+                line for line in manifest.splitlines()
+                if marker in line and not line.strip().startswith("#")
+            ]
+            assert not uncommented, uncommented
 
     def test_the_render_manifest_health_checks_the_api(self):
         manifest = self._read("render.yaml")
         assert "healthCheckPath: /api/health" in manifest, manifest
+
+    def test_the_render_manifest_pins_the_free_plan(self):
+        """Render defaults a new web service to the PAID 0.5c-512mb plan."""
+        manifest = self._read("render.yaml")
+        assert "plan: free" in manifest, manifest
+        for paid in ("0.5c-512mb", "1c-2g", "2c-4g"):
+            assert f"plan: {paid}" not in manifest, manifest
+
+    def test_the_readme_documents_the_deploy_path(self):
+        """A deployment nobody can follow is not a deployment."""
+        readme = self._read("README.md")
+        assert "scripts/verify_deploy.py" in readme, "no verification step"
+        assert "New → Blueprint" in readme, "no Render Blueprint steps"
+        assert "plan: free" in readme or "free tier" in readme.lower(), readme
 
 
 class TestBrowserHardening:

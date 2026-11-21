@@ -17,6 +17,9 @@ services:
   - type: web
     name: vg-cid-investigator
     runtime: docker
+    # The free plan (0.1 CPU, 512 MB RAM). Without this line Render
+    # defaults a new web service to the PAID 0.5c-512mb plan.
+    plan: free
     healthCheckPath: /api/health
     envVars:
       # Deployment access key. Set it to lock the endpoint down: requests must

@@ -74,17 +74,36 @@ The suite never touches the network.
 
 ## Deploy
 
-Docker (Koyeb / HF Spaces / Fly / Railway):
+**Render (free, no credit card, one click):** sign in at
+<https://dashboard.render.com> → **New → Blueprint** → connect GitHub → pick
+`RUSHI-KOLLA/Rudra` → **Apply**. The repo's `render.yaml` builds the
+Dockerfile, pins the free plan and wires the health check. You get
+`https://vg-cid-investigator.onrender.com`.
+
+**Koyeb (also free):** one free instance per account — see `README.md` for the
+exact panel and CLI steps.
+
+**Any Docker host:**
 
 ```bash
 docker build -t vg-cid .
-docker run -p 8080:7860 vg-cid
+docker run -p 8080:7860 -e PORT=7860 vg-cid
 ```
 
-Any Python host — `Procfile` and `render.yaml` are included:
+The container follows `$PORT`, so the same image runs everywhere. Any Python
+host can use the included `Procfile`:
 
 ```
 web: PYTHONPATH=. python -m vg.main --web --port $PORT
 ```
+
+Verify a live deployment:
+
+```bash
+python3 scripts/verify_deploy.py https://vg-cid-investigator.onrender.com
+```
+
+It checks the health endpoint, the access model, the request budgets, CORS,
+the rate limit and one real investigation.
 
 See `README.md` for the full API contract, the six lenses and the source list.

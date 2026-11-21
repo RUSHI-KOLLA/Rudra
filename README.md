@@ -312,22 +312,93 @@ flag.
 
 ## Deploy (free tier)
 
-**Docker** (used by Koyeb, Hugging Face Spaces, Fly, Railway):
+### Render — one click, no credit card
+
+`render.yaml` in the repo root is a Render Blueprint. It builds the repo's
+Dockerfile, pins the **free** plan, and wires the health check:
+
+```yaml
+services:
+  - type: web
+    name: vg-cid-investigator
+    runtime: docker
+    plan: free          # without this line Render picks the PAID 0.5c-512mb plan
+    healthCheckPath: /api/health
+```
+
+To go live:
+
+1. Sign in at <https://dashboard.render.com> — the free Hobby workspace is
+   enough, and no payment method is needed for a free web service.
+2. **New → Blueprint** → connect GitHub → pick `RUSHI-KOLLA/Rudra` → **Apply**.
+3. Render asks for the two secrets marked `sync: false`. Both are optional:
+   - `VG_ACCESS_KEY` — leave it empty for an open, rate-limited endpoint; set
+     it to lock the endpoint down (`X-VG-Access-Key` on every request).
+   - `GROQ_API_KEY` — only ever spent on requests that carry the access key.
+4. Wait for the build, then open
+   `https://vg-cid-investigator.onrender.com`.
+
+Check the live deployment the way a client would:
+
+```bash
+python3 scripts/verify_deploy.py https://vg-cid-investigator.onrender.com
+# add --access-key <key> if the deployment is locked down
+```
+
+It verifies the health endpoint, the access model, the request budgets, CORS,
+the rate limit and one real investigation, and exits non-zero if anything is
+wrong. It waits for a cold start, so it is safe to run right after a deploy.
+
+**What the free tier means in practice**
+
+| Behaviour | Consequence |
+|---|---|
+| Spins down after 15 minutes idle | The next visitor waits ~1 minute for the cold start |
+| 750 instance hours per month | About one always-on service |
+| No payment method needed | If you exceed the included bandwidth the service is suspended, not billed |
+| May be suspended on high outbound volume | One investigation makes ~55 outbound calls — do not point a bot at a public instance |
+
+A locked-down deployment (`VG_ACCESS_KEY` set) is the safer default for a
+public URL: anonymous callers then cannot spend the service's free source
+quota, and the browser UI asks for the key.
+
+### Koyeb — also free
+
+Koyeb gives one free instance per organisation (512 MB RAM, 0.1 vCPU, one
+region: Washington DC or Frankfurt).
+
+In the control panel: **Create Web Service** → GitHub → `RUSHI-KOLLA/Rudra` →
+builder **Dockerfile** → instance **Free** → port `8000` → health check
+`8000:/api/health` → environment `PORT=8000` and `VG_TRUST_PROXY=1`.
+
+Or with the CLI:
+
+```bash
+koyeb app init rudra-cid \
+  --git github.com/RUSHI-KOLLA/Rudra \
+  --git-branch main \
+  --git-builder docker \
+  --ports 8000:http \
+  --routes "/:8000" \
+  --checks 8000:http:/api/health \
+  --env PORT=8000 \
+  --env VG_TRUST_PROXY=1
+```
+
+Pick the free instance type in the dashboard afterwards.
+
+### Any Docker host
 
 ```bash
 docker build -t vg-cid .
-docker run -p 8080:7860 vg-cid
+docker run -p 8080:7860 -e PORT=7860 vg-cid
 ```
 
-The image is ~223 MB: `python:3.11-slim` plus `requests`, `python-dotenv` and
+The image is ~224 MB: `python:3.11-slim` plus `requests`, `python-dotenv` and
 the optional `groq` SDK. No embedding model, no vector database, no browser
-downloads at build time.
-
-**Render / any Python host** — `Procfile` and `render.yaml` are included:
-
-```
-web: PYTHONPATH=. python -m vg.main --web --port $PORT
-```
+downloads at build time. The container follows the `PORT` environment
+variable, so the same image runs on every platform; `Procfile` is there for
+Python hosts that want a native build.
 
 ---
 
