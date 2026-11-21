@@ -16,3 +16,9 @@ services:
         sync: false
       - key: VG_RATE_LIMIT_PER_MINUTE
         value: "10"
+      - key: VG_AUTH_ATTEMPT_LIMIT_PER_MINUTE
+        value: "30"
+      # Render's ingress sets X-Forwarded-For, so the rate limiter can tell
+      # clients apart instead of seeing one shared proxy address.
+      - key: VG_TRUST_PROXY
+        value: "1"

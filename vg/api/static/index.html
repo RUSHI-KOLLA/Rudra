@@ -1360,23 +1360,25 @@
     <div id="scroll-container">
         <section class="scroll-section" id="sec-hero">
             <h1 class="hero-title">THE <span>VG</span></h1>
-            <p class="hero-subtitle">PREDICTIVE GRAPH MAPPING INTELLIGENCE</p>
+            <p class="hero-subtitle">MINI CID INVESTIGATOR</p>
             <div class="scroll-indicator">SCROLL TO DESCEND INTO THE MESH</div>
         </section>
 
         <section class="scroll-section" id="sec-feat1">
             <div class="content-block g-slide-up">
-                <h2>DEEP PATTERN RECOGNITION</h2>
-                <p>We do not rely on static databases. The VG constructs a live 3D decision network, ingesting millions
-                    of geopolitical signals to form an actively evolving graph of global power dynamics.</p>
+                <h2>SIX INVESTIGATIVE LENSES</h2>
+                <p>One question in. Money, power, secrecy, timing, network and counter-case run in
+                    parallel against free public sources — news feeds, corporate registries and
+                    sanctions lists — and every finding comes back with its source attached.</p>
             </div>
         </section>
 
         <section class="scroll-section" id="sec-feat2">
             <div class="content-block content-right g-slide-up">
-                <h2>HISTORICAL PRECEDENT</h2>
-                <p>By mapping current events directly to historical shifts, the graph anticipates outcomes with
-                    mathematical precision. No guesswork. Pure connection.</p>
+                <h2>EVIDENCE, NOT ASSERTION</h2>
+                <p>Every claim carries its provenance: documented, reported-unconfirmed or inferred
+                    from structured data. Conflicting accounts between lenses are surfaced as
+                    contradictions instead of being smoothed away.</p>
             </div>
         </section>
 
@@ -1421,12 +1423,12 @@
             <div class="side-verdict" id="res-verdict">Awaiting Data...</div>
 
             <div class="side-data">
-                <strong>PATTERN DETECTED</strong>
+                <strong>FINDINGS</strong>
                 <span id="res-pattern">...</span>
             </div>
 
             <div class="side-data">
-                <strong>HISTORICAL MATCH</strong>
+                <strong>SOURCES</strong>
                 <span id="res-precedent">...</span>
             </div>
 
@@ -2024,6 +2026,17 @@
                         : 'NO CONTRADICTIONS';
                     resVerdict.style.color = "var(--off-white)";
                     resReasoning.textContent = data.synthesis || '';
+                    const prov = data.provenance || {};
+                    if (resPattern) {
+                        resPattern.textContent =
+                            `${Number(prov.total_findings) || 0} unique across ${Number(prov.lens_findings) || 0} lens findings`;
+                    }
+                    if (resPrecedent) {
+                        const tags = Object.entries(prov.tag_counts || {})
+                            .map(([tag, n]) => `${tag} ${Number(n) || 0}`)
+                            .join(' · ');
+                        resPrecedent.textContent = tags || 'no sources';
+                    }
                 }
                 isProcessing = false;
                 if (linesMesh) linesMesh.material.color.setHex(0x4FB8C9);
@@ -2069,13 +2082,25 @@
                     if (!lr) return;
                     const findings = lr.findings || [];
                     const queries = lr.queries || [];
-                    if (!findings.length && !queries.length) return;
+                    const lensErrors = lr.error ? [lr.error] : (lr.errors || []);
+                    // Every lens is shown, including one that found nothing:
+                    // a silent lens is indistinguishable from a broken one.
+                    if (!findings.length && !queries.length && !lensErrors.length) return;
 
                     parts.push(`<div class="io-section-h">${esc(lens.toUpperCase())} LENS</div>`);
 
                     if (queries.length) {
                         const qItems = queries.map(q => `<li>${esc(q)}</li>`).join('');
                         parts.push(`<div class="io-section-h" style="font-size:13px;margin-top:4px;">QUERIES</div><ul class="io-bullets">${qItems}</ul>`);
+                    }
+
+                    if (lensErrors.length) {
+                        const errItems = lensErrors.map(e => `<li>${esc(e)}</li>`).join('');
+                        parts.push(`<div class="io-section-h" style="font-size:13px;margin-top:4px;color:var(--dark-ember);">⚠ SOURCE FAILURES</div><ul class="io-bullets">${errItems}</ul>`);
+                    }
+
+                    if (!findings.length && !lensErrors.length) {
+                        parts.push(`<div class="io-snippet">No findings from this lens.</div>`);
                     }
 
                     findings.forEach(f => {

@@ -1709,3 +1709,82 @@ class TestEdgarFilingUrls:
         results = src._search_edgar("Apple Inc")
         assert not any("File/Film Number" in r["title"] for r in results), results
 
+
+class TestSourceFailuresAreReported:
+    """A source that fails must not look like a source that found nothing."""
+
+    def test_a_failed_web_search_is_reported_on_the_lens(self, monkeypatch):
+        """The lens says the search failed instead of returning silence."""
+        from vg.incidents import sources as src
+
+        def boom(query):
+            raise TimeoutError("provider timed out")
+
+        monkeypatch.setattr(src, "search_free", boom)
+        results, errors = src._lens_search_with_errors("timing", "Chanda Kochhar")
+
+        assert results == []
+        assert errors, "expected the failure to be reported"
+
+    def test_a_working_search_reports_no_errors(self, monkeypatch):
+        from vg.incidents import sources as src
+
+        monkeypatch.setattr(
+            src, "search_free",
+            lambda q: [{
+                "title": "Chanda Kochhar resigns",
+                "url": "https://example.com/a",
+                "snippet": "Chanda Kochhar resigns",
+                "date": "2018-06-18",
+            }],
+        )
+        results, errors = src._lens_search_with_errors("timing", "Chanda Kochhar")
+
+        assert results
+        assert errors == []
+
+    def test_a_failing_structured_source_is_reported(self, monkeypatch):
+        """Wikidata failing must show up as an error, not as no data."""
+        from vg.incidents import sources as src
+
+        def boom(entity):
+            raise RuntimeError("wikidata down")
+
+        monkeypatch.setattr(src, "_search_wikidata", boom)
+        results, errors = src._structured_search_with_errors("Chanda Kochhar")
+
+        assert results == []
+        assert errors, "expected the failure to be reported"
+
+
+class TestGlobalOutboundBound:
+    """Every outbound request must go through one bounded pool."""
+
+    def test_structured_sources_run_in_the_shared_pool(self, monkeypatch):
+        """A structured source must not open its own connection outside the pool."""
+        from vg.incidents import sources as src
+
+        seen: list[str] = []
+        original = src._SEARCH_POOL
+
+        class Probe:
+            def submit(self, fn, *args, **kwargs):
+                seen.append(fn.__name__)
+                return original.submit(fn, *args, **kwargs)
+
+        def fake_wikidata(entity):
+            return [{
+                "title": "Chanda Kochhar",
+                "url": "https://example.com/a",
+                "snippet": "s",
+                "date": "",
+                "tag": "inferred",
+            }]
+
+        monkeypatch.setattr(src, "_SEARCH_POOL", Probe())
+        monkeypatch.setattr(src, "_search_wikidata", fake_wikidata)
+
+        results, _errors = src._structured_search_with_errors("Chanda Kochhar")
+        assert results
+        assert "fake_wikidata" in seen, seen
+

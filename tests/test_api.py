@@ -695,6 +695,20 @@ class TestBrowserHardening:
         assert f'nonce="{nonce.group(1)}"' in body
         assert "__VG_NONCE__" not in body
 
+    def test_the_ui_does_not_advertise_the_deleted_product(self):
+        """The landing page must describe the investigator, not the old graph."""
+        html = self._html()
+        assert "PREDICTIVE GRAPH MAPPING INTELLIGENCE" not in html
+        assert "HISTORICAL MATCH" not in html
+        assert "millions of geopolitical signals" not in html
+        assert "MINI CID INVESTIGATOR" in html
+
+    def test_a_failed_lens_is_rendered_not_hidden(self):
+        """A lens that failed must be visible — silence reads as "no news"."""
+        html = self._html()
+        assert "SOURCE FAILURES" in html
+        assert "lensErrors" in html
+
     def test_api_key_is_not_kept_in_local_storage(self):
         """A long-lived secret must not sit in localStorage for the whole browser."""
         html = self._html()

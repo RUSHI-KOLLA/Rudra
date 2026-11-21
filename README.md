@@ -112,12 +112,17 @@ Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
     "total_findings": 132,          // distinct sources (a URL counts once)
     "unique_sources": 132,
     "lens_findings": 185,           // the same sources seen across lenses
+    "unlinked_findings": 0,         // findings a source returned without a link
     "tag_counts": { "reported_unconfirmed": 107, "inferred": 25 },
     "lenses_run": ["money", "power", "secrecy", "timing", "network", "counter_case"]
   },
   "synthesis": "Investigation of: ..."   // LLM briefing or mechanical summary
 }
 ```
+
+A lens that could not reach its sources says so: its `lens_results[lens]`
+carries an `error`, so a failed provider is never mistaken for "there is
+nothing to find". At most 50 contradictions are reported.
 
 **Status codes**
 
@@ -142,10 +147,12 @@ The endpoint is **open by default** and rate-limited per client address
 spent on a caller's behalf — an anonymous request gets the mechanical summary.
 Set `VG_ACCESS_KEY` to lock the endpoint down: requests without the key get
 `401`, and authorized requests may use the server's `GROQ_API_KEY` for the
-synthesis call.
+synthesis call. The synthesis layer only ever uses the key it is handed, so
+there is no path from an anonymous request to the operator's quota.
 
 Cross-origin browser calls are refused unless the origin is listed in
-`VG_ALLOWED_ORIGINS`; the bundled UI is same-origin and needs nothing.
+`VG_ALLOWED_ORIGINS`; the bundled UI is same-origin and needs nothing. There
+is no wildcard: list the origins one by one.
 
 ### `GET /api/health`
 
@@ -260,12 +267,19 @@ VG_ACCESS_KEY=
 
 # Request budgets
 VG_RATE_LIMIT_PER_MINUTE=10
+VG_AUTH_ATTEMPT_LIMIT_PER_MINUTE=30
 VG_MAX_QUESTION_CHARS=500
 VG_MAX_BODY_BYTES=65536
 VG_MAX_INVESTIGATION_SECONDS=60
 
-# Cross-origin access (the bundled UI is same-origin and needs nothing)
+# Cross-origin access (the bundled UI is same-origin and needs nothing).
+# List the origins explicitly — there is no wildcard.
 VG_ALLOWED_ORIGINS=
+
+# Set to 1 only when the service sits behind a proxy that overwrites
+# X-Forwarded-For (Render, Koyeb). It is how the rate limiter tells
+# clients apart instead of seeing one shared proxy address.
+VG_TRUST_PROXY=0
 
 # Server binding
 PORT=8080
@@ -276,6 +290,9 @@ BRAVE_API_KEY=
 OPENSANCTIONS_API_KEY=
 ENABLE_GDELT=1
 ENABLE_DDGS=0
+
+# SEC requires a real contact in the User-Agent. Give it one.
+SEC_USER_AGENT=VG-Investigator/1.0 (you@example.com)
 ```
 
 See `.env.example`.

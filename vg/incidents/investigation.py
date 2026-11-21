@@ -305,10 +305,16 @@ def _run_lens(lens_name: str, subjects: list[str]) -> dict[str, Any]:
 
     def search_subject(subject: str) -> list[dict[str, Any]]:
         try:
-            return search_fn(subject)
+            results = search_fn(subject)
         except Exception as exc:
             errors.append(f"{type(exc).__name__}: {exc}")
             return []
+        # A lens reports the sources that failed, so an empty result is
+        # never mistaken for "there is nothing to find".
+        source_errors = getattr(results, "errors", None)
+        if source_errors:
+            errors.extend(str(message) for message in source_errors)
+        return list(results)
 
     if subjects:
         with ThreadPoolExecutor(max_workers=min(len(subjects), 3)) as pool:
@@ -655,8 +661,10 @@ def investigate(
 
     Args:
         question: A plain-language question (e.g., "Why did the CEO resign?")
-        api_key: Optional caller-supplied key for the synthesis call (BYOK).
-            Falls back to the server's ``GROQ_API_KEY`` when omitted.
+        api_key: Optional key for the single synthesis call (BYOK). It is
+            the only key this function uses — the server's ``GROQ_API_KEY``
+            is never read from the environment here, so the caller decides
+            who may spend that quota.
         deadline_seconds: Wall-clock budget for the whole investigation.
             When it passes, the lenses that are still running are abandoned
             and their partial results are returned.

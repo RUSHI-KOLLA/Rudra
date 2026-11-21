@@ -39,6 +39,12 @@ definition:
         #   value: "gsk_..."
         - name: VG_RATE_LIMIT_PER_MINUTE
           value: "10"
+        - name: VG_AUTH_ATTEMPT_LIMIT_PER_MINUTE
+          value: "30"
+        # Koyeb's ingress sets X-Forwarded-For, so the rate limiter can tell
+        # clients apart instead of seeing one shared proxy address.
+        - name: VG_TRUST_PROXY
+          value: "1"
 
   # Optional: custom domain (configure in Koyeb dashboard after first deploy)
   # domains:

@@ -56,6 +56,14 @@ print(result["contradictions"])  # opposing claims across lenses
 print(result["synthesis"])       # briefing
 ```
 
+`investigate()` uses only the key you pass it — it never reads `GROQ_API_KEY`
+from the environment, so a server can decide who is allowed to spend its
+quota:
+
+```python
+result = investigate(question, api_key=os.getenv("GROQ_API_KEY"))
+```
+
 ## Tests
 
 ```bash

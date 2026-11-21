@@ -782,49 +782,52 @@ LENS_QUERY_TEMPLATES = {
 }
 
 
-def search_money(entity: str) -> list[dict[str, Any]]:
+def search_money(entity: str) -> LensFindings:
     """Money lens: who paid, who benefited, who lost?"""
-    results = _lens_search("money", entity)
+    results, errors = _lens_search_with_errors("money", entity)
     # Add structured sources for Money
-    results.extend(_search_edgar(entity))
-    return results
+    structured, structured_errors = _structured_search_with_errors(entity)
+    results.extend(structured)
+    return LensFindings(results, errors + structured_errors)
 
 
-def search_power(entity: str) -> list[dict[str, Any]]:
+def search_power(entity: str) -> LensFindings:
     """Power lens: who appointed, who could remove, who protected?"""
-    results = _lens_search("power", entity)
+    results, errors = _lens_search_with_errors("power", entity)
     # Add structured sources for Power
-    results.extend(_search_wikidata(entity))
-    results.extend(_search_edgar(entity))
-    return results
+    structured, structured_errors = _structured_search_with_errors(entity)
+    results.extend(structured)
+    return LensFindings(results, errors + structured_errors)
 
 
-def search_secrecy(entity: str) -> list[dict[str, Any]]:
+def search_secrecy(entity: str) -> LensFindings:
     """Secrecy lens: what is reported but unconfirmed? who won't comment?"""
-    return _lens_search("secrecy", entity)
+    results, errors = _lens_search_with_errors("secrecy", entity)
+    return LensFindings(results, errors)
 
 
-def search_timing(entity: str) -> list[dict[str, Any]]:
+def search_timing(entity: str) -> LensFindings:
     """Timing lens: what changed in the weeks before?"""
-    return _lens_search("timing", entity)
+    results, errors = _lens_search_with_errors("timing", entity)
+    return LensFindings(results, errors)
 
 
-def search_network(entity: str) -> list[dict[str, Any]]:
+def search_network(entity: str) -> LensFindings:
     """Network lens: who else is connected to these people or firms?"""
-    results = _lens_search("network", entity)
+    results, errors = _lens_search_with_errors("network", entity)
     # Add structured sources for Network
-    results.extend(_search_wikidata(entity))
-    results.extend(_search_opensanctions(entity))
-    results.extend(_search_gleif(entity))
-    return results
+    structured, structured_errors = _structured_search_with_errors(entity)
+    results.extend(structured)
+    return LensFindings(results, errors + structured_errors)
 
 
-def search_counter_case(entity: str) -> list[dict[str, Any]]:
+def search_counter_case(entity: str) -> LensFindings:
     """Counter-case lens: what would have to be true for the official story?"""
-    results = _lens_search("counter_case", entity)
+    results, errors = _lens_search_with_errors("counter_case", entity)
     # Add structured sources for Counter-case
-    results.extend(_search_wikidata(entity))
-    return results
+    structured, structured_errors = _structured_search_with_errors(entity)
+    results.extend(structured)
+    return LensFindings(results, errors + structured_errors)
 
 
 def _mentions_entity(result: dict[str, Any], entity: str) -> bool:
@@ -875,10 +878,33 @@ def _is_proper_name(subject: str) -> bool:
     return True
 
 
-def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
-    """Run a lens-specific search for an entity using free web search."""
+class LensFindings(list):
+    """The findings of one lens, plus the source failures that occurred.
+
+    A list subclass, so the lens functions keep their simple contract, but
+    the extra attribute is what lets a failed source be reported instead of
+    looking like a search that simply found nothing.
+    """
+
+    __slots__ = ("errors",)
+
+    def __init__(self, findings: Any = (), errors: Any = ()) -> None:
+        super().__init__(findings)
+        self.errors = list(errors)
+
+
+def _lens_search_with_errors(
+    lens: str, entity: str
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Run a lens-specific web search and report what failed.
+
+    Every template query is an independent call. A provider that times out
+    is recorded as an error instead of silently yielding no hits, so the
+    lens can say "the search failed" rather than "nothing was found".
+    """
     templates = LENS_QUERY_TEMPLATES.get(lens, [])
     results: list[dict[str, Any]] = []
+    errors: list[str] = []
     seen: set[str] = set()
     # Quote the entity so news search matches the name exactly instead of
     # fuzzy-matching every word in the lens template.
@@ -892,8 +918,9 @@ def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
     for query, future in zip(queries, futures):
         try:
             hits = future.result()
-        except Exception:
-            hits = []
+        except Exception as exc:
+            errors.append(f"{lens}: {type(exc).__name__}: {exc}")
+            continue
         for r in hits:
             # Google News ignores some query terms; drop hits that never
             # mention the entity (e.g. unrelated cricket coverage).
@@ -906,7 +933,46 @@ def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
             seen.add(key)
             r["query"] = query  # Attach query for provenance
             results.append(r)
+    return results, errors
+
+
+def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
+    """Run a lens-specific search for an entity using free web search."""
+    results, _errors = _lens_search_with_errors(lens, entity)
     return results
+
+
+def _structured_search_with_errors(
+    entity: str,
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Run the structured sources for one subject and report what failed.
+
+    The structured sources (Wikidata, EDGAR, GLEIF, OpenSanctions) are
+    independent of each other and of the web search, so they run together
+    on the shared outbound pool — one slow registry must not hold up the
+    others, and the pool keeps the number of open connections bounded no
+    matter how many investigations are in flight.
+    """
+    adapters = (
+        ("wikidata", _search_wikidata),
+        ("edgar", _search_edgar),
+        ("gleif", _search_gleif),
+        ("opensanctions", _search_opensanctions),
+    )
+    futures = [
+        (_SEARCH_POOL.submit(adapter, entity), name) for name, adapter in adapters
+    ]
+
+    results: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for future, name in futures:
+        try:
+            hits = future.result()
+        except Exception as exc:
+            errors.append(f"{name}: {type(exc).__name__}: {exc}")
+            continue
+        results.extend(hits)
+    return results, errors
 
 
 # ---------------------------------------------------------------------------
