@@ -310,22 +310,34 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
 # ---------------------------------------------------------------------------
 
 def _apply_corroboration(lens_results: dict[str, dict[str, Any]]) -> None:
-    """Tag every finding with how many lenses surfaced the same source.
+    """Tag every finding with how many distinct lenses surfaced the same source.
 
     The same article often matches several lens queries. Counting the lenses
     that found it is a free strength signal: three lenses on one URL means
     the story is cross-cutting, not incidental.
+
+    Duplicates inside a single lens are dropped first — one article listed
+    twice by the same lens is one source, not two independent hits.
     """
-    counts: dict[str, int] = {}
-    for data in lens_results.values():
+    lenses_by_url: dict[str, set[str]] = {}
+
+    for lens_name, data in lens_results.items():
+        seen: set[str] = set()
+        kept: list[dict[str, Any]] = []
         for finding in data.get("findings", []):
             url = finding.get("url")
             if url:
-                counts[url] = counts.get(url, 0) + 1
+                if url in seen:
+                    continue
+                seen.add(url)
+                lenses_by_url.setdefault(url, set()).add(lens_name)
+            kept.append(finding)
+        data["findings"] = kept
 
     for data in lens_results.values():
         for finding in data.get("findings", []):
-            finding["corroboration"] = counts.get(finding.get("url", ""), 1)
+            lenses = lenses_by_url.get(finding.get("url", ""), set())
+            finding["corroboration"] = len(lenses) if lenses else 1
 
 
 def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
@@ -368,17 +380,25 @@ def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
     # Detect contradictions across lenses
     contradictions = _detect_contradictions(lens_results)
 
-    # Build provenance summary
+    # Provenance totals count each source once. The per-lens view keeps the
+    # breakdown, and each finding says how many lenses surfaced it.
     all_findings = [
         f for data in lens_results.values() for f in data.get("findings", [])
     ]
-    tag_counts: dict[str, int] = {}
-    unique_urls: set[str] = set()
+    canonical: dict[str, dict[str, Any]] = {}
+    unlinked: list[dict[str, Any]] = []
     for f in all_findings:
+        url = f.get("url")
+        if url:
+            canonical.setdefault(url, f)
+        else:
+            unlinked.append(f)
+    unique_findings = list(canonical.values()) + unlinked
+
+    tag_counts: dict[str, int] = {}
+    for f in unique_findings:
         tag = f.get("tag", "speculative")
         tag_counts[tag] = tag_counts.get(tag, 0) + 1
-        if f.get("url"):
-            unique_urls.add(f["url"])
 
     # Bounded LLM synthesis call (one Groq call when a key is available)
     synthesis = _synthesize(question, lens_results, contradictions, api_key=api_key)
@@ -393,10 +413,11 @@ def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
         },
         "synthesis": synthesis,
         "provenance": {
-            "total_findings": len(all_findings),
-            "unique_sources": len(unique_urls),
+            "total_findings": len(unique_findings),
+            "unique_sources": len(canonical),
             "tag_counts": tag_counts,
             "lenses_run": list(_LENS_FUNCS.keys()),
+            "lens_findings": len(all_findings),
         },
         "contradictions": contradictions,
     }

@@ -266,6 +266,79 @@ class TestInvestigatePipeline:
         assert corroborated[0]["corroboration"] == len(inv_mod._LENS_FUNCS)
 
 
+    def test_corroboration_counts_distinct_lenses_not_occurrences(self, monkeypatch):
+        """One URL seen twice by one lens and once by another is corroboration 2.
+
+        Corroboration answers "how many lenses independently surfaced this
+        source" — occurrences of the same URL inside one lens are not
+        independent evidence.
+        """
+        from vg.incidents import investigation as inv_mod
+
+        shared = {
+            "title": "Chanda Kochhar case timeline report",
+            "url": "https://example.com/shared",
+            "snippet": "timeline of events",
+            "date": "2018-06-18",
+        }
+
+        def mock_lens(entity):
+            return [dict(shared), dict(shared)]
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        money = result["lens_results"]["money"]["findings"]
+        corroborated = [f for f in money if f.get("url") == "https://example.com/shared"]
+        assert corroborated[0]["corroboration"] == len(inv_mod._LENS_FUNCS)
+
+    def test_duplicate_findings_within_one_lens_are_deduped(self, monkeypatch):
+        """The same article twice in one lens is one finding."""
+        from vg.incidents import investigation as inv_mod
+
+        shared = {
+            "title": "Chanda Kochhar case timeline report",
+            "url": "https://example.com/shared",
+            "snippet": "timeline of events",
+            "date": "2018-06-18",
+        }
+
+        def mock_lens(entity):
+            return [dict(shared), dict(shared)]
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        money = result["lens_results"]["money"]["findings"]
+        assert len(money) == 1, money
+
+    def test_totals_count_a_repeated_url_once(self, monkeypatch):
+        """The same source must count once in the totals, not once per lens."""
+        from vg.incidents import investigation as inv_mod
+
+        shared = {
+            "title": "Chanda Kochhar case timeline report",
+            "url": "https://example.com/shared",
+            "snippet": "timeline of events",
+            "date": "2018-06-18",
+        }
+
+        def mock_lens(entity):
+            return [dict(shared)]
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        prov = result["provenance"]
+        assert prov["total_findings"] == 1, prov
+        assert prov["unique_sources"] == 1, prov
+        assert prov["tag_counts"] == {"reported_unconfirmed": 1}, prov
+        assert prov["lens_findings"] == len(inv_mod._LENS_FUNCS), prov
+
+
 # ---------------------------------------------------------------------------
 # Task 4: Mocked search_free() tests — provenance & contradiction detection
 # ---------------------------------------------------------------------------
