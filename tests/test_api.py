@@ -2,11 +2,10 @@
 """Integration tests for API endpoints."""
 
 import sys
-import os
 import json
 import io
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) in sys.path:
@@ -17,7 +16,6 @@ from vg.config import config
 from vg.api.server import VGWebHandler
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse
 
 import pytest
 
@@ -217,6 +215,42 @@ class TestOnlyInvestigateIsServed:
         data = json.loads(handler.wfile.write.call_args[0][0].decode())
         assert data["modes"] == ["investigate"]
         assert "debate_enabled" not in data
+
+    def test_health_reports_open_mode_for_a_blank_access_key(self, monkeypatch):
+        """A whitespace-only key is not a key — health must not claim otherwise.
+
+        The UI decides whether to show the access-key field from this
+        field, so it has to agree with what the request path enforces.
+        """
+        monkeypatch.setattr(config, "access_key", "   ")
+        handler = create_mock_handler(headers={})
+        handler.path = "/api/health"
+        handler.do_GET()
+
+        data = json.loads(handler.wfile.write.call_args[0][0].decode())
+        assert data["auth"] == "open"
+
+
+class TestConfigIsForgiving:
+    """A typo in an environment variable must not take the service down."""
+
+    def test_a_non_numeric_limit_falls_back_to_the_default(self, monkeypatch):
+        from vg.config import _env_int
+
+        monkeypatch.setenv("VG_RATE_LIMIT_PER_MINUTE", "ten")
+        assert _env_int("VG_RATE_LIMIT_PER_MINUTE", 10) == 10
+
+    def test_a_numeric_limit_is_used(self, monkeypatch):
+        from vg.config import _env_int
+
+        monkeypatch.setenv("VG_RATE_LIMIT_PER_MINUTE", "3")
+        assert _env_int("VG_RATE_LIMIT_PER_MINUTE", 10) == 3
+
+    def test_an_unset_limit_falls_back_to_the_default(self, monkeypatch):
+        from vg.config import _env_int
+
+        monkeypatch.delenv("VG_RATE_LIMIT_PER_MINUTE", raising=False)
+        assert _env_int("VG_RATE_LIMIT_PER_MINUTE", 10) == 10
 
 
 class TestInvestigateOnlyUI:

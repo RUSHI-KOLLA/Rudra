@@ -171,7 +171,11 @@ class VGWebHandler(BaseHTTPRequestHandler):
                     "version": "2.0",
                     "mode": "saas",
                     "modes": ["investigate"],
-                    "auth": "access_key" if config.access_key else "open",
+                    "auth": (
+                        "access_key"
+                        if (config.access_key or "").strip()
+                        else "open"
+                    ),
                 },
             )
             return

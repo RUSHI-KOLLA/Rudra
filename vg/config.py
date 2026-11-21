@@ -45,6 +45,23 @@ class Config:
     max_tokens: int = 1500
 
 
+def _env_int(name: str, default: int) -> int:
+    """Read an integer setting, falling back to the default.
+
+    A typo in an environment variable must not take the whole service
+    down at import time, so a bad value is ignored (and reported) rather
+    than raised.
+    """
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        return int(raw.strip())
+    except ValueError:
+        print(f"[vg-config] {name}={raw!r} is not an integer — using {default}.")
+        return default
+
+
 def get_config() -> Config:
     """Build config from environment."""
     origins = tuple(
@@ -56,13 +73,13 @@ def get_config() -> Config:
         groq_api_key=os.getenv("GROQ_API_KEY"),
         access_key=os.getenv("VG_ACCESS_KEY"),
         allowed_origins=origins,
-        rate_limit_per_minute=int(os.getenv("VG_RATE_LIMIT_PER_MINUTE", "10")),
-        max_question_chars=int(os.getenv("VG_MAX_QUESTION_CHARS", "500")),
-        max_body_bytes=int(os.getenv("VG_MAX_BODY_BYTES", "65536")),
-        max_investigation_seconds=int(os.getenv("VG_MAX_INVESTIGATION_SECONDS", "60")),
+        rate_limit_per_minute=_env_int("VG_RATE_LIMIT_PER_MINUTE", 10),
+        max_question_chars=_env_int("VG_MAX_QUESTION_CHARS", 500),
+        max_body_bytes=_env_int("VG_MAX_BODY_BYTES", 65536),
+        max_investigation_seconds=_env_int("VG_MAX_INVESTIGATION_SECONDS", 60),
         model_large=os.getenv("GROQ_MODEL_LARGE", "openai/gpt-oss-120b"),
         temperature=float(os.getenv("VG_TEMPERATURE", "0.2")),
-        max_tokens=int(os.getenv("VG_MAX_TOKENS", "1500")),
+        max_tokens=_env_int("VG_MAX_TOKENS", 1500),
     )
 
 
