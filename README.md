@@ -41,7 +41,17 @@ PYTHONPATH=. python -m vg.main --web --port 8080
 
 ```bash
 curl -X POST http://127.0.0.1:8080/api/incident-investigate \
-  -H "X-API-Key: your-key" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Why did Chanda Kochhar resign from ICICI Bank in 2018?"}'
+```
+
+No key is needed: every source is keyless and the synthesis falls back to a
+deterministic mechanical summary. Add your own Groq key to get the LLM
+briefing instead:
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/incident-investigate \
+  -H "X-API-Key: gsk_your_key" \
   -H "Content-Type: application/json" \
   -d '{"question":"Why did Chanda Kochhar resign from ICICI Bank in 2018?"}'
 ```
@@ -66,7 +76,7 @@ Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
 {
   "question": "...",
   "question_profile": {            // mechanical extraction, computed once
-    "entities": ["Chanda Kochhar"],
+    "entities": ["Chanda Kochhar", "ICICI Bank"],
     "dates": ["2018"],
     "amounts": []
   },
@@ -82,7 +92,7 @@ Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
           "tag": "reported_unconfirmed",
           "lens": "money",
           "question": "...",         // the query that surfaced it
-          "corroboration": 3         // how many lenses surfaced this URL
+          "corroboration": 3         // how many distinct lenses surfaced this URL
         }
       ]
     }
@@ -99,9 +109,10 @@ Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
     }
   ],
   "provenance": {
-    "total_findings": 148,
-    "unique_sources": 109,
-    "tag_counts": { "reported_unconfirmed": 115, "inferred": 33 },
+    "total_findings": 132,          // distinct sources (a URL counts once)
+    "unique_sources": 132,
+    "lens_findings": 185,           // the same sources seen across lenses
+    "tag_counts": { "reported_unconfirmed": 107, "inferred": 25 },
     "lenses_run": ["money", "power", "secrecy", "timing", "network", "counter_case"]
   },
   "synthesis": "Investigation of: ..."   // LLM briefing or mechanical summary
@@ -113,23 +124,38 @@ Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
 | Code | Meaning |
 |---|---|
 | `200` | Investigation completed |
-| `400` | `question` missing or empty |
-| `401` | No `X-API-Key` header (and no server-side key) |
+| `400` | `question` missing, empty, over-long, or a malformed body |
+| `401` | Deployment access key missing or wrong (only when one is configured) |
+| `413` | Request body over the size limit |
+| `429` | Rate limit exceeded |
 | `500` | Investigation failed (detail in the body) |
 
-**About the key** — the key sent in `X-API-Key` is the caller's own Groq key
-(BYOK). It is used for the single synthesis call and never stored. If it is
-missing or invalid, the investigation still completes and falls back to the
-deterministic mechanical summary. A server-side `GROQ_API_KEY` is only used
-when the caller sends none — set it only for a private instance, otherwise
-anyone who can reach the endpoint spends your quota.
+### Access and keys — two different things
+
+| Header | What it is | Effect |
+|---|---|---|
+| `X-API-Key` | The **caller's own** Groq key (BYOK) | Enables the one LLM synthesis call. Never stored. Not authentication. |
+| `X-VG-Access-Key` | The **deployment** secret (`VG_ACCESS_KEY`) | Required on every request when configured. Only then may the server spend its own `GROQ_API_KEY`. |
+
+The endpoint is **open by default** and rate-limited per client address
+(10 investigations/minute). In open mode the server's Groq quota is *never*
+spent on a caller's behalf — an anonymous request gets the mechanical summary.
+Set `VG_ACCESS_KEY` to lock the endpoint down: requests without the key get
+`401`, and authorized requests may use the server's `GROQ_API_KEY` for the
+synthesis call.
+
+Cross-origin browser calls are refused unless the origin is listed in
+`VG_ALLOWED_ORIGINS`; the bundled UI is same-origin and needs nothing.
 
 ### `GET /api/health`
 
 ```json
 { "status": "ok", "service": "vg-web", "version": "2.0", "mode": "saas",
-  "modes": ["investigate"] }
+  "modes": ["investigate"], "auth": "open" }
 ```
+
+`auth` is `open` or `access_key`, so a client can tell whether it needs the
+deployment key.
 
 ---
 
@@ -138,16 +164,23 @@ anyone who can reach the endpoint spends your quota.
 ```
 question
    │
-   ├─ extract entities / dates / amounts  →  question_profile
+   ├─ extract subjects / dates / amounts  →  question_profile
    │
-   ├─ six lenses × entity
+   ├─ six lenses × subject  (all concurrent)
    │     └─ free search + structured sources  →  findings (title, url, snippet, date)
    │
-   ├─ corroboration: count how many lenses surfaced each URL
+   ├─ corroboration: how many distinct lenses surfaced each URL
    ├─ contradictions: opposing claims about a shared subject, across lenses
    ├─ provenance: tag counts + unique source count
    └─ synthesis: one bounded Groq call (optional) → mechanical fallback
 ```
+
+**Subjects** — the investigator reads the question the way a person would:
+full names (`Chanda Kochhar`), a surname alone (`Kochhar`), an acronym
+(`RBI`), a one-word company (`Boeing`), a name carrying an organisation
+suffix (`State Bank`, `ICICI Bank`) and `of` style names (`Bank of Baroda`).
+A question that names nobody (`Why did the CEO resign?`) falls back to its
+content words so the lenses still have something to search.
 
 **Provenance tags** — every finding carries one:
 
@@ -159,27 +192,35 @@ question
 | `speculative` | Low-confidence / weakest tier |
 
 **Corroboration** — the same URL surfacing in several lenses is a strength
-signal, not a duplicate. `corroboration: 4` means four lenses independently
-pointed at that source.
+signal, not a duplicate. `corroboration: 4` means four *distinct* lenses
+independently pointed at that source; the same article twice in one lens
+counts once.
 
 **Contradictions** — opposite-polarity claims (`denied` vs `confirmed`) about
 the *same* subject, found in *different* lenses. Two lenses agreeing is never
-a contradiction, and two parallel legal developments (a sanction quashed vs an
-asset attachment upheld) are not flagged as opposing either.
+a contradiction, two parallel legal developments (a sanction quashed vs an
+asset attachment upheld) are not flagged as opposing either, and mutually
+exclusive outcomes (acquittal vs conviction) are. Uncertainty is not
+negation: "unconfirmed" does not contradict "confirmed".
 
 ---
 
 ## Performance
 
-The six lenses run concurrently, so a slow source delays only its own lens:
+The six lenses, their subjects and their queries all run concurrently, so a
+slow source delays only its own work:
 
 | Measurement | Value |
 |---|---|
-| Wall time, one investigation (~146 findings, 6 lenses) | ~15 s |
+| Wall time, one investigation (~180 findings across 6 lenses) | ~12 s |
+| Response size | ~150 KB |
 | Peak RSS during an investigation | ~35 MB |
 | Requests to Wikidata for one entity | 1 batched (was up to 150) |
 | Container image | 223 MB |
 | Docker build context | 6 MB |
+
+Every request is bounded: body ≤ 64 KiB, question ≤ 500 characters, ≤ 40
+findings per lens, ≤ 60 s of investigation time, and a per-client rate limit.
 
 ---
 
@@ -207,10 +248,24 @@ All variables are optional.
 ```bash
 # LLM synthesis (one bounded call per investigation).
 # Without it the investigator returns its deterministic mechanical summary.
+# The server's key is only used for requests that carry VG_ACCESS_KEY.
 GROQ_API_KEY=
 GROQ_MODEL_LARGE=openai/gpt-oss-120b
 VG_TEMPERATURE=0.2
 VG_MAX_TOKENS=1500
+
+# Deployment access key. Set it to lock the endpoint down: requests must
+# present it in X-VG-Access-Key, and only then is GROQ_API_KEY used.
+VG_ACCESS_KEY=
+
+# Request budgets
+VG_RATE_LIMIT_PER_MINUTE=10
+VG_MAX_QUESTION_CHARS=500
+VG_MAX_BODY_BYTES=65536
+VG_MAX_INVESTIGATION_SECONDS=60
+
+# Cross-origin access (the bundled UI is same-origin and needs nothing)
+VG_ALLOWED_ORIGINS=
 
 # Server binding
 PORT=8080

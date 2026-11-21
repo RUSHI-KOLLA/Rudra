@@ -10,20 +10,38 @@ PYTHONPATH=. python -m vg.main --web --port 8080
 ```
 
 Then open <http://127.0.0.1:8080/> — paste your Groq key in the setup overlay
-(it is stored only in your browser's localStorage and used for one synthesis
-call), or use the API directly.
+if you want the AI briefing (it is kept in your browser tab only and used for
+one synthesis call), or click **SKIP** and use the mechanical summary.
 
 ## Run it without a key
 
 The investigation itself needs no API key at all. Google News RSS, GDELT,
-Wikidata, SEC EDGAR and GLEIF are all keyless. Without a Groq key the
-synthesis falls back to a deterministic mechanical summary.
+Wikidata, SEC EDGAR and GLEIF are all keyless.
 
 ```bash
 curl -X POST http://127.0.0.1:8080/api/incident-investigate \
-  -H "X-API-Key: anything" \
   -H "Content-Type: application/json" \
   -d '{"question":"Why did Chanda Kochhar resign from ICICI Bank in 2018?"}'
+```
+
+Add your own Groq key for the LLM briefing:
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/incident-investigate \
+  -H "X-API-Key: gsk_your_key" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Why did Chanda Kochhar resign from ICICI Bank in 2018?"}'
+```
+
+## Locking it down
+
+Set `VG_ACCESS_KEY` to require a deployment key on every request (sent as
+`X-VG-Access-Key`). Only then may the server spend its own `GROQ_API_KEY`.
+Without it the endpoint is open and rate-limited (10 requests/minute per
+client).
+
+```bash
+VG_ACCESS_KEY=choose-a-secret PYTHONPATH=. python -m vg.main --web --port 8080
 ```
 
 ## Try it from Python

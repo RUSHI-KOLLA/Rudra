@@ -30,9 +30,15 @@ definition:
       env:
         - name: PORT
           value: "7860"
-        # Add your API keys in Koyeb dashboard (Settings → Variables) instead of here
+        # Add your keys in the Koyeb dashboard (Settings → Variables).
+        # VG_ACCESS_KEY locks the endpoint down (X-VG-Access-Key required).
+        # GROQ_API_KEY is only spent for requests that carry that access key.
+        # - name: VG_ACCESS_KEY
+        #   value: "choose-a-secret"
         # - name: GROQ_API_KEY
         #   value: "gsk_..."
+        - name: VG_RATE_LIMIT_PER_MINUTE
+          value: "10"
 
   # Optional: custom domain (configure in Koyeb dashboard after first deploy)
   # domains:

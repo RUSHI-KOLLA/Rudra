@@ -5,6 +5,14 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: PYTHONPATH=. python -m vg.main --web --port $PORT
     envVars:
-      # Optional. Without it the investigator returns its mechanical summary.
+      # Deployment access key. Set it to lock the endpoint down: requests must
+      # present it in X-VG-Access-Key, and only then is GROQ_API_KEY used.
+      # Leave it unset for an open, rate-limited endpoint.
+      - key: VG_ACCESS_KEY
+        sync: false
+      # Optional. Server-funded synthesis — only used for requests that carry
+      # the access key above. Without it the mechanical summary is returned.
       - key: GROQ_API_KEY
         sync: false
+      - key: VG_RATE_LIMIT_PER_MINUTE
+        value: "10"
