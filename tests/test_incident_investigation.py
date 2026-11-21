@@ -392,6 +392,132 @@ class TestInvestigateWithMockedSearch:
         assert result["contradictions"] == [], \
             f"Expected no contradictions, got {result['contradictions']}"
 
+    def test_parallel_legal_rulings_are_not_contradictions(self, monkeypatch):
+        """Two different court rulings on the same case are not a contradiction.
+
+        "Sanction to prosecute quashed" and "ED's attachment upheld" are two
+        decisions about different questions in the same case — neither denies
+        the other.
+        """
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Why tribunal upheld ED's attachment of Chanda Kochhar's "
+                         "Mumbai flat in ICICI Bank loan fraud case",
+                "url": "https://example.com/money",
+                "snippet": "Why tribunal upheld ED's attachment of Chanda Kochhar's "
+                           "Mumbai flat in ICICI Bank loan fraud case (ThePrint)",
+                "date": "2019-01-10",
+                "query": f"{entity} payment",
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Sanction To Prosecute Chanda Kochhar Quashed By Bombay "
+                         "High Court In Videocon Loan Case",
+                "url": "https://example.com/secrecy",
+                "snippet": "Sanction To Prosecute Chanda Kochhar Quashed By Bombay "
+                           "High Court In Videocon Loan Case (LawChakra)",
+                "date": "2019-01-11",
+                "query": f"{entity} denied",
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert result["contradictions"] == [], \
+            f"Expected no contradictions, got {result['contradictions']}"
+
+    def test_same_legal_object_with_opposite_outcomes_is_a_contradiction(self, monkeypatch):
+        """Bail denied vs bail approved IS a contradiction — same object, opposite outcome."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Court denied bail for Kochhar",
+                "url": "https://example.com/money",
+                "snippet": "Court denied bail for Kochhar",
+                "date": "2024-01-15",
+                "query": f"{entity} payment",
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Judge approved bail for Kochhar",
+                "url": "https://example.com/secrecy",
+                "snippet": "Judge approved bail for Kochhar",
+                "date": "2024-01-16",
+                "query": f"{entity} denied",
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert len(result["contradictions"]) == 1, \
+            f"Expected one contradiction, got {result['contradictions']}"
+
+    def test_contradiction_subject_skips_generic_capitalised_words(self, monkeypatch):
+        """The reported subject is the person, not an interrogative or 'Court'."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Why did Kochhar resign — Court denied the payment",
+                "url": "https://example.com/money",
+                "snippet": "Why did Kochhar resign — Court denied the payment",
+                "date": "2024-01-15",
+                "query": f"{entity} payment",
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Kochhar confirmed the payment was approved",
+                "url": "https://example.com/secrecy",
+                "snippet": "Kochhar confirmed the payment was approved",
+                "date": "2024-01-16",
+                "query": f"{entity} denied",
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert result["contradictions"], "Expected a contradiction"
+        assert result["contradictions"][0]["subject"] == "Kochhar"
+
     def test_detects_opposing_claims_about_same_subject(self, monkeypatch):
         """Opposing claims about the same subject across lenses are flagged."""
         from vg.incidents import investigation as inv_mod

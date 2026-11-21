@@ -1,328 +1,258 @@
-# VG Intelligence — World-Class Political Pattern Analysis
+# VG — Mini CID Investigator
 
-[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Built In: 15 Days](https://img.shields.io/badge/Built_In-15_Days-E85D04.svg?style=flat-square)](#)
+**One question in. Six investigative lenses out. Every finding carries its source.**
 
-> **🚀 Built from scratch in just 15 days.** 
-> **VG Intelligence** is a multi-agent political analysis system that combines historical wisdom, real-time evidence, and algorithmic pattern detection to deliver high-confidence insights with minimal token consumption.
+A lean, free-tier-deployable investigation service. You ask a question about a
+person, company or event; the investigator fans it out across six lenses, pulls
+real findings from keyless public sources, tags the provenance of each claim,
+flags contradictions between lenses, and returns a briefing.
 
----
-
-## 🔴 Try it Live
-
-The application is deployed and ready to use! Because VG Intelligence uses advanced multi-agent architecture, you must bring your own API key to power the logic engine.
-
-**[Launch VG Intelligence Live App](https://huggingface.co/spaces/kollarushi/vg)**
-
-**How to use the live app:**
-1. Go to the [Groq Console](https://console.groq.com/keys) and create a free API Key.
-2. Open the [VG Live App](https://vg-production-1df6.up.railway.app/).
-3. A setup screen will appear. Paste your Groq API Key and click **Connect**. *(Your key is stored safely in your browser and is never saved to our servers)*.
-4. Type a political question into the terminal and press Execute!
+There is no debate mode, no persona simulation and no vector database. The
+product is one endpoint and one job: find what is actually knowable about a
+question and show the evidence.
 
 ---
 
-## 🚀 Key Features
+## The six lenses
 
-### World-Class Optimizations
+| Lens | Question it asks | Typical sources |
+|---|---|---|
+| **Money** | Who paid, who benefited, who lost? | Google News, SEC EDGAR filings |
+| **Power** | Who appointed, who could remove, who protected? | Google News, Wikidata |
+| **Secrecy** | What is reported but unconfirmed? Who won't comment? | Google News, GDELT |
+| **Timing** | What changed in the weeks before? | Dated news results |
+| **Network** | Who else is connected to these people or firms? | Wikidata, GLEIF, OpenSanctions |
+| **Counter-case** | What would have to be true for the official story to be whole? | Adversarial queries |
 
-| Feature | Benefit | Token Savings |
-|---------|---------|---------------|
-| **Semantic Caching** | Finds similar questions, avoids redundant analysis | 30-50% reduction |
-| **Pattern Grounding** | Algorithmic pattern detection before LLM calls | Reduces hallucination |
-| **Hybrid RAG** | Dense + Sparse + Recency retrieval | Better retrieval accuracy |
-| **Optimized Prompts** | Compact pipe-delimited format | 40-60% reduction |
-| **Intent Classification** | Skips unnecessary pipeline stages | 20-30% reduction |
-| **Hallucination Detection** | Flags unsupported claims | Improves reliability |
-| **Convergence Detection** | Early exit when agents agree | 50-70% reduction |
-
-### Architecture Highlights
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    USER QUESTION                            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 0: Semantic Cache Check                               │
-│  → Similar question found? Return cached result             │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 1: Intent Classification                              │
-│  → Prediction/Analysis/Comparison/Explanation/Evaluation    │
-│  → Skip RAG? Skip Web? Which agents matter?                 │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 2: Pattern Grounding Engine                           │
-│  → Linguistic patterns (power dynamics, economic signals)   │
-│  → Historical analogies (similar precedents)                │
-│  → Network analysis (key actors, connections)               │
-│  → Claim verification (evidence gaps)                       │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 3: Web Search (Tavily) + RAG Retrieval (Hybrid)       │
-│  → Real-time news                                           │
-│  → Personality wisdom (dense + sparse + recency)            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 4: Shadow Round (8B model, optimized prompts)         │
-│  → 10 agents analyze in parallel                            │
-│  → Pipe-delimited output: stance|confidence|pattern         │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-                    ┌───────────────┐
-                    │  Converged?   │
-                    │  (8/10 agree) │
-                    └───────────────┘
-                         │        │
-                   Yes   │        │   No
-                         │        │
-                         ▼        ▼
-┌─────────────────┐  ┌─────────────────────────────────────────┐
-│ Skip to Judge   │  │ Full Debate (70B, filtered agents)     │
-│ (1 run)         │  │ → Only dissenters + 2 context agents   │
-│                 │  │ → Compressed stance vectors            │
-│                 │  │ → Convergence check after each round   │
-└─────────────────┘  └─────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 5: Hallucination Detection                            │
-│  → Speculation markers                                      │
-│  → Overconfidence flags                                     │
-│  → Logical fallacies                                        │
-│  → Evidence gaps                                            │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  STEP 6: Judge (1-3 runs based on convergence)              │
-│  → Synthesizes all dimensions                               │
-│  → Pattern-grounded verdict                                 │
-│  → Self-consistency voting                                  │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    FINAL VERDICT                            │
-│  → Saved to semantic cache                                  │
-│  → JSON export available                                    │
-└─────────────────────────────────────────────────────────────┘
-```
+Lenses are *perspectives*, not personas. They do not generate opinions — they
+run different questions against different sources.
 
 ---
 
-## 📦 Installation
+## Quick start
 
 ```bash
-cd vg
-
-# Install dependencies
 pip install -r requirements.txt
 
-# Optional: Install Tavily for web search
-pip install tavily-python
-
-# Optional: Install fastembed for semantic caching
-pip install fastembed
+# Start the server
+PYTHONPATH=. python -m vg.main --web --port 8080
+# or: python run.py
 ```
 
-### Requirements
+```bash
+curl -X POST http://127.0.0.1:8080/api/incident-investigate \
+  -H "X-API-Key: your-key" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"Why did Chanda Kochhar resign from ICICI Bank in 2018?"}'
+```
 
-- Python 3.12+
-- Groq API key (free tier available)
-- Tavily API key (optional, for web search)
+Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
 
 ---
 
-## 🎯 Usage
+## API
 
-### Web Interface
+### `POST /api/incident-investigate`
 
-```bash
-# Launch the browser-first command deck
-python -m vg.main
+**Request**
 
-# Custom host/port
-python -m vg.main --web --host 127.0.0.1 --port 8080
+```json
+{ "question": "Why did Chanda Kochhar resign from ICICI Bank in 2018?" }
 ```
 
-Then open `http://127.0.0.1:8080` in your browser.
+**Response**
 
-### Basic Analysis
-
-```bash
-# Legacy terminal mode with enhanced pipeline
-python -m vg.main --cli "Will India's semiconductor policy succeed?"
-
-# Run with basic pipeline (original behavior)
-python -m vg.main --cli "Will India's semiconductor policy succeed?" --basic
-
-# Save full report as JSON
-python -m vg.main --cli "Will India's semiconductor policy succeed?" --json
+```jsonc
+{
+  "question": "...",
+  "question_profile": {            // mechanical extraction, computed once
+    "entities": ["Chanda Kochhar"],
+    "dates": ["2018"],
+    "amounts": []
+  },
+  "lens_results": {
+    "money": {
+      "queries": ["\"Chanda Kochhar\" payment contract funding"],
+      "findings": [
+        {
+          "title": "...",
+          "url": "https://...",
+          "snippet": "...",
+          "date": "2018-06-18",
+          "tag": "reported_unconfirmed",
+          "lens": "money",
+          "question": "...",         // the query that surfaced it
+          "corroboration": 3         // how many lenses surfaced this URL
+        }
+      ]
+    }
+    // power, secrecy, timing, network, counter_case
+  },
+  "contradictions": [
+    {
+      "lens_a": "money",
+      "lens_b": "secrecy",
+      "subject": "Kochhar",
+      "finding_a": "...",
+      "finding_b": "...",
+      "type": "denial_vs_affirmation"
+    }
+  ],
+  "provenance": {
+    "total_findings": 148,
+    "unique_sources": 109,
+    "tag_counts": { "reported_unconfirmed": 115, "inferred": 33 },
+    "lenses_run": ["money", "power", "secrecy", "timing", "network", "counter_case"]
+  },
+  "synthesis": "Investigation of: ..."   // LLM briefing or mechanical summary
+}
 ```
 
-### Programmatic Usage
+**Status codes**
 
-```python
-from vg.main import analyze
+| Code | Meaning |
+|---|---|
+| `200` | Investigation completed |
+| `400` | `question` missing or empty |
+| `401` | No `X-API-Key` header (and no server-side key) |
+| `500` | Investigation failed (detail in the body) |
 
-# Enhanced mode (default)
-result = analyze("Will the Fed raise interest rates?")
+### `GET /api/health`
 
-# Basic mode
-result = analyze("Will the Fed raise interest rates?", use_enhanced=False)
-
-# Access verdict
-print(result["verdict"]["majority_verdict"])
-print(f"Confidence: {result['verdict']['confidence']}%")
-
-# Access optimization stats
-print(f"Cache hits: {result['stats']['cache_hits']}")
-print(f"Time: {result['elapsed_seconds']}s")
+```json
+{ "status": "ok", "service": "vg-web", "version": "2.0", "mode": "saas",
+  "modes": ["investigate"] }
 ```
 
 ---
 
-## 🧠 The 10-Agent Roster
+## How it works
 
-### Historical Personalities (RAG-Enhanced)
+```
+question
+   │
+   ├─ extract entities / dates / amounts  →  question_profile
+   │
+   ├─ six lenses × entity
+   │     └─ free search + structured sources  →  findings (title, url, snippet, date)
+   │
+   ├─ corroboration: count how many lenses surfaced each URL
+   ├─ contradictions: opposing claims about a shared subject, across lenses
+   ├─ provenance: tag counts + unique source count
+   └─ synthesis: one bounded Groq call (optional) → mechanical fallback
+```
 
-| Agent | Dimension | Core Question |
-|-------|-----------|---------------|
-| **Chanakya** | Economic Strategy | Who controls money? Who profits? |
-| **Subhash Chandra Bose** | Revolutionary Lens | What hidden forces drive change? |
-| **Ajit Doval** | Security | What threats? What vulnerabilities? |
-| **Henry Kissinger** | Geopolitical | How does power balance shift? |
-| **R.N. Kao** | Intelligence/Networks | Who connects? Who funds whom? |
+**Provenance tags** — every finding carries one:
 
-### AI Researchers (Logic-Enhanced)
+| Tag | Meaning |
+|---|---|
+| `documented` | Verified against a primary source artifact |
+| `reported_unconfirmed` | Reported by a source, not independently verified |
+| `inferred` | Derived from structured data (Wikidata, EDGAR, GLEIF) |
+| `speculative` | Low-confidence / weakest tier |
 
-| Agent | Dimension | Core Question |
-|-------|-----------|---------------|
-| **The Investigator** | Evidence | What exists? What records? |
-| **The Skeptic** | Evidence Quality | What's verified? What's speculation? |
-| **The Pattern Analyst** | Historical | What happened before? |
-| **The Network Mapper** | Relational | Who connects to whom? |
-| **The Devil's Advocate** | Counter | What's ignored? What's the alternative? |
+**Corroboration** — the same URL surfacing in several lenses is a strength
+signal, not a duplicate. `corroboration: 4` means four lenses independently
+pointed at that source.
+
+**Contradictions** — opposite-polarity claims (`denied` vs `confirmed`) about
+the *same* subject, found in *different* lenses. Two lenses agreeing is never
+a contradiction.
 
 ---
 
-## 🔧 Configuration
+## Sources — all free, no paid APIs
 
-Edit `.env` to customize:
+| Source | Key needed? | Notes |
+|---|---|---|
+| Google News RSS | No | Primary news source; headlines + publisher |
+| GDELT | No | Throttled fallback (1 req / 5 s), `ENABLE_GDELT=0` to disable |
+| SEC EDGAR | No | Structured filings for the money lens |
+| Wikidata | No | Structured entity/relationship data |
+| GLEIF | No | Legal entity registry lookup |
+| OpenSanctions | Optional | Deep sanctions/PEP coverage with a key |
+| Brave Search | Optional | Requires a credit card at signup — not needed |
+| DuckDuckGo | Optional | `ENABLE_DDGS=1`; off by default (rate limits) |
+
+Without a single API key the investigator still works.
+
+---
+
+## Configuration
+
+All variables are optional.
 
 ```bash
-# API Keys
-GROQ_API_KEY=your_groq_key
-TAVILY_API_KEY=your_tavily_key
-
-# Model Selection
+# LLM synthesis (one bounded call per investigation).
+# Without it the investigator returns its deterministic mechanical summary.
+GROQ_API_KEY=
 GROQ_MODEL_LARGE=openai/gpt-oss-120b
-GROQ_MODEL_SMALL=openai/gpt-oss-20b
+VG_TEMPERATURE=0.2
+VG_MAX_TOKENS=1500
 
-# Rate Limiting
-GROQ_RPM_LIMIT=15
-GROQ_MAX_CONCURRENT=5
-GROQ_REQUEST_TIMEOUT_SECONDS=18
+# Server binding
+PORT=8080
+VG_HOST=0.0.0.0
 
-# RAG Settings
-VG_RAG_TOP_K=2
-VG_RAG_CHUNK_WORDS=300
+# Optional sources
+BRAVE_API_KEY=
+OPENSANCTIONS_API_KEY=
+ENABLE_GDELT=1
+ENABLE_DDGS=0
+```
 
-# Debate Settings
-VG_MAX_DEBATE_ROUNDS=2
-VG_CONVERGENCE_THRESHOLD=0.8
+See `.env.example`.
+
+---
+
+## Tests
+
+```bash
+python3 -m pytest -q
+```
+
+The suite never touches the network — every source call is gated behind a test
+flag.
+
+---
+
+## Deploy (free tier)
+
+**Docker** (used by Koyeb, Hugging Face Spaces, Fly, Railway):
+
+```bash
+docker build -t vg-cid .
+docker run -p 8080:7860 vg-cid
+```
+
+The image is ~223 MB: `python:3.11-slim` plus `requests`, `python-dotenv` and
+the optional `groq` SDK. No embedding model, no vector database, no browser
+downloads at build time.
+
+**Render / any Python host** — `Procfile` and `render.yaml` are included:
+
+```
+web: PYTHONPATH=. python -m vg.main --web --port $PORT
 ```
 
 ---
 
-## 📊 Performance Benchmarks
-
-| Metric | Basic Pipeline | Enhanced Pipeline | Improvement |
-|--------|----------------|-------------------|-------------|
-| Avg tokens/query | ~8,000 | ~3,500 | 56% reduction |
-| Avg latency | 45s | 28s | 38% faster |
-| Cache hit rate | 0% | 35% | New feature |
-| Hallucination rate | ~15% | ~5% | 67% reduction |
-| Pattern detection | LLM-only | Algorithmic + LLM | Higher accuracy |
-
----
-
-## 🏗️ Project Structure
+## Repo layout
 
 ```
 vg/
-├── core/
-│   ├── debate.py           # Original debate coordinator
-│   ├── enhanced_debate.py  # Enhanced coordinator (NEW)
-│   ├── llm_client.py       # Groq async client
-│   ├── optimization.py     # Token optimization layer (NEW)
-│   ├── pattern_engine.py   # Pattern detection (NEW)
-│   └── pipeline.py         # Question decomposition
-├── rag/
-│   ├── searcher.py         # Basic RAG searcher
-│   ├── hybrid_retriever.py # Hybrid retrieval (NEW)
-│   └── builder.py          # RAG index builder
-├── agents/
-│   ├── config.py           # Agent configurations
-│   └── implementations.py  # Agent implementations
-├── search/
-│   └── web.py              # Tavily web search
-├── main.py                 # CLI entry point
-├── config.py               # Configuration
-└── cache.py                # Basic caching
+  api/
+    server.py            HTTP server: routes, auth, JSON contracts
+    static/index.html    investigator UI (no build step)
+  incidents/
+    investigation.py     pipeline: lenses → corroboration → contradictions → synthesis
+    sources.py           free search + structured sources
+  config.py              environment configuration
+  main.py                entry point (web server only)
+tests/                   offline test suite
+Dockerfile               two-stage, minimal runtime image
 ```
 
----
+## License
 
-## 🧪 Testing
-
-```bash
-# Run test suite
-python -m pytest tests/
-
-# Test specific component
-python test_cache.py
-python test_agents.py
-```
-
----
-
-## 📝 License
-
-MIT License — see LICENSE file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- **Groq** for fast LLM inference
-- **Tavily** for real-time web search
-- **ChromaDB** for vector storage
-- **FastEmbed** for lightweight embeddings
-
----
-
-## 🚧 Roadmap
-
-- [ ] Multi-language support
-- [ ] Web dashboard (Streamlit)
-- [ ] Plugin system for custom agents
-- [ ] Distributed caching (Redis)
-- [ ] Real-time collaboration mode
-
----
-
-**Built with ❤️ for geopolitical analysts, researchers, and strategic planners. Engineered with the assistance of Antigravity AI and CodeX.**
+See repository metadata.

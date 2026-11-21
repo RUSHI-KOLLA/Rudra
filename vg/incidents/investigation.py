@@ -161,6 +161,26 @@ _AFFIRMATION_TERMS = (
 #: Capitalised words that can stand as the subject of a claim.
 _SUBJECT_RE = re.compile(r"\b[A-Z][a-z]{3,}\b")
 
+#: Capitalised words that are never a useful subject (interrogatives, news filler).
+_SUBJECT_STOPWORDS = frozenset({
+    "what", "when", "where", "which", "their", "there", "these", "those",
+    "after", "before", "during", "report", "reports", "latest", "update",
+    "updates", "breaking", "under", "about", "against", "following",
+    "meanwhile", "since", "until", "while", "could", "would", "should",
+    "because", "however", "although", "despite", "through", "between",
+})
+
+#: Procedural objects of a legal case. Two findings that both talk about the
+#: law but name *different* objects ("sanction to prosecute" vs "attachment of
+#: a flat") are parallel developments, not opposing claims.
+_LEGAL_OBJECTS = frozenset({
+    "sanction", "sanctions", "prosecution", "attachment", "attachments",
+    "charge", "charges", "bail", "arrest", "arrested", "conviction",
+    "convicted", "acquittal", "acquitted", "indictment", "indicted",
+    "appeal", "appeals", "injunction", "warrant", "warrants", "plea",
+    "custody", "summons", "notice", "forfeiture", "quashing",
+})
+
 
 def _has_term(text: str, terms: tuple[str, ...]) -> bool:
     """True when any term appears as a whole word (so 'unconfirmed' != 'confirmed')."""
@@ -172,10 +192,37 @@ def _polarity(text: str) -> tuple[bool, bool]:
     return _has_term(text, _NEGATION_TERMS), _has_term(text, _AFFIRMATION_TERMS)
 
 
-def _subjects(finding: dict[str, Any]) -> set[str]:
-    """Capitalised candidate subjects named by a finding."""
+def _legal_objects(text: str) -> set[str]:
+    """Procedural objects named by a piece of text."""
+    words = set(re.findall(r"[a-z]+", text.lower()))
+    return words & _LEGAL_OBJECTS
+
+
+def _parallel_legal_developments(text_a: str, text_b: str) -> bool:
+    """True when both texts describe legal stages but not the same one.
+
+    "Sanction to prosecute quashed" and "ED's attachment upheld" are two
+    different rulings in the same case. Flagging them as a contradiction
+    would be a false alarm, so they are left out of the contradiction list
+    (both findings still appear under their own lens).
+    """
+    objects_a = _legal_objects(text_a)
+    objects_b = _legal_objects(text_b)
+    if not objects_a or not objects_b:
+        return False
+    return not (objects_a & objects_b)
+
+
+def _subjects(finding: dict[str, Any]) -> dict[str, int]:
+    """Capitalised candidate subjects named by a finding, with their position."""
     text = f"{finding.get('title', '')} {finding.get('snippet', '')}"
-    return set(_SUBJECT_RE.findall(text))
+    subjects: dict[str, int] = {}
+    for match in _SUBJECT_RE.finditer(text):
+        token = match.group(0)
+        if token.lower() in _SUBJECT_STOPWORDS:
+            continue
+        subjects.setdefault(token, match.start())
+    return subjects
 
 
 def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
@@ -201,11 +248,21 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
                     if not ((fa_neg and fb_aff) or (fa_aff and fb_neg)):
                         continue
 
-                    shared = _subjects(fa) & _subjects(fb)
+                    if _parallel_legal_developments(fa_text, fb_text):
+                        continue
+
+                    subjects_a = _subjects(fa)
+                    subjects_b = _subjects(fb)
+                    shared = set(subjects_a) & set(subjects_b)
                     if not shared:
                         continue
 
-                    subject = sorted(shared, key=len, reverse=True)[0]
+                    # Prefer the longest shared token; on a tie prefer the one
+                    # appearing later ("Chanda Kochhar" -> "Kochhar").
+                    subject = max(
+                        shared,
+                        key=lambda token: (len(token), max(subjects_a[token], subjects_b[token])),
+                    )
                     contradictions.append({
                         "lens_a": lens_a,
                         "lens_b": lens_b,
