@@ -1450,7 +1450,7 @@
         <header class="app-top">
             <span>VG ONLINE</span>
             <span>
-                <span class="settings-link" id="btn-incident-open">◈ INCIDENT</span>
+                <span class="settings-link" id="btn-incident-open">◈ INVESTIGATE</span>
                 · <span class="settings-link" id="btn-settings">⚙ SETTINGS</span>
                 · GRAPH LINK: STABLE
             </span>
@@ -1500,52 +1500,21 @@
         </footer>
     </div>
 
-    <!-- ══ Incident Memory overlay (Phase 3) ═══════════════════════════
-         Full-height overlay above #app-interface, below #setup-overlay.
-         States: idle / extracting / reviewing / matching / complete / error -->
-    <div id="incident-overlay" aria-label="Incident memory panel">
+    <!-- ══ Mini CID Investigator overlay ═════════════════════════════════
+         One flow: ask a question → six lenses → findings + synthesis. -->
+    <div id="incident-overlay" aria-label="Investigator panel">
         <div class="io-shell">
             <div class="io-top">
-                <span class="io-title">INCIDENT MEMORY</span>
-                <span class="io-sub">SAME PATTERN, NOT SAME WORDS</span>
+                <span class="io-title">MINI CID</span>
+                <span class="io-sub">ONE QUESTION · SIX LENSES</span>
                 <div class="io-modes" id="io-modes">
-                    <button type="button" class="io-mode active" data-mode="incident">INCIDENT</button>
-                    <button type="button" class="io-mode" data-mode="investigate">INVESTIGATE</button>
-                    <!-- Debate rendered only when health.debate_enabled -->
+                    <button type="button" class="io-mode active" data-mode="investigate">INVESTIGATE</button>
                 </div>
                 <span class="io-state" id="io-state">IDLE</span>
                 <button type="button" class="io-close" id="io-close">✕ CLOSE</button>
             </div>
 
             <div class="io-body" id="io-body">
-                <!-- idle: paste box -->
-                <section class="io-view" id="io-view-paste">
-                    <label class="io-label" for="io-paste">PASTE INCIDENT</label>
-                    <textarea id="io-paste" class="io-paste" spellcheck="false"
-                        placeholder="Paste a news incident: who, what, when, how it escalated..."></textarea>
-                    <div class="io-meta">
-                        <span id="io-charcount">0 / 4,000 chars</span>
-                        <span class="warn" id="io-trunc" hidden>⚠ exceeds 4,000 — will be truncated on submit</span>
-                    </div>
-                    <button type="button" class="io-primary" id="io-run">EXTRACT &amp; MATCH</button>
-                    <div class="io-banner" id="io-paste-banner" hidden></div>
-                </section>
-
-                <!-- reviewing: extracted fields review/edit -->
-                <section class="io-view" id="io-view-review" hidden>
-                    <div class="io-banner warn" id="io-review-banner" hidden></div>
-                    <label class="io-label">REVIEW EXTRACTED FIELDS — edit anything wrong, then confirm</label>
-                    <div class="io-grid" id="io-review-grid"></div>
-                    <button type="button" class="io-primary" id="io-confirm">CONFIRM &amp; MATCH</button>
-                    <button type="button" class="io-primary secondary" id="io-review-back">← RE-PASTE</button>
-                </section>
-
-                <!-- matching/complete/error: rendered output -->
-                <section class="io-view" id="io-view-results" hidden>
-                    <div class="io-banner" id="io-results-banner" hidden></div>
-                    <div id="io-results"></div>
-                </section>
-
                 <!-- investigate: question-driven mini CID -->
                 <section class="io-view" id="io-view-investigate" hidden>
                     <div class="io-banner" id="io-investigate-banner" hidden></div>
@@ -1553,7 +1522,6 @@
                     <textarea id="io-question" class="io-paste" spellcheck="false"
                         placeholder="Why did the CEO resign? What changed in the weeks before? Who benefited financially?"></textarea>
                     <button type="button" class="io-primary" id="io-investigate-run">INVESTIGATE</button>
-                    <div class="io-banner" id="io-investigate-banner" hidden></div>
                 </section>
 
                 <!-- investigate results: six lenses, contradictions, synthesis -->
@@ -1944,71 +1912,21 @@
             interceptContent.scrollTop = interceptContent.scrollHeight;
         }
 
-        cmdForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); const query = cmdInput.value.trim(); if (!query) return;
+        // The console hands its question to the Mini CID investigator.
+        cmdForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const query = cmdInput.value.trim();
+            if (!query) return;
             cmdInput.value = '';
             initAudio();
             setQuestion(query);
             resultsPanel.classList.remove('show');
             interceptPanel.classList.remove('show');
-            interceptContent.innerHTML = '<div class="intercept-line system">INITIALIZING VG ANALYSIS PROTOCOL...</div>';
+            interceptContent.innerHTML = '<div class="intercept-line system">DISPATCHING INVESTIGATION...</div>';
             interceptPanel.classList.add('show');
             isProcessing = true;
             if (linesMesh) linesMesh.material.color.setHex(0xE85D04);
-
-            try {
-                const apiKey = getApiKey();
-                if (!apiKey) {
-                    document.getElementById('setup-overlay').style.display = 'flex';
-                    isProcessing = false;
-                    return;
-                }
-                const response = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json", "X-API-Key": apiKey }, body: JSON.stringify({ question: query, enhanced: true }) });
-                const data = await response.json();
-
-                // Extract entities and update graph
-                if (data.result && data.result.geo_entities) {
-                    geoEntities = data.result.geo_entities;
-                    initNodesWithEntities(geoEntities);
-                    geometry.attributes.position.needsUpdate = true;
-                    geometry.attributes.color.needsUpdate = true;
-
-                    await streamLiveIntercept(`ENTITY MAPPING...\nDetected ${geoEntities.length} geopolitical nodes`, 'system');
-                    for (const ent of geoEntities.slice(0, 5)) {
-                        await streamLiveIntercept(`♪ Node: ${ent}`, 'system');
-                    }
-                }
-
-                // Stream agent thoughts — expandable rows (collapsed by default)
-                if (data.result && data.result.agent_results) {
-                    const agents = data.result.agent_results;
-                    for (const agent of agents) {
-                        addAgentInterceptRow(agent);
-                        await new Promise(r => setTimeout(r, 120));
-                    }
-                    if (agents.length > 0) playConnectSound();
-                }
-
-                setTimeout(() => {
-                    isProcessing = false;
-                    if (linesMesh) linesMesh.material.color.setHex(0x4FB8C9);
-                    if (!response.ok) { resVerdict.textContent = data.error || "UPLINK ERROR"; resVerdict.style.color = "var(--dark-ember)"; resReasoning.textContent = data.detail || data.hint || ""; }
-                    else {
-                        const v = data.result.verdict || {};
-                        resVerdict.textContent = v.majority_verdict || "INCONCLUSIVE"; resVerdict.style.color = "var(--off-white)";
-                        resPattern.textContent = v.key_pattern || "None detected."; resPrecedent.textContent = v.historical_precedent || "No historical match."; resReasoning.textContent = v.reasoning || "Insufficient data.";
-                    }
-                    resultsPanel.classList.add('show');
-                }, 1500);
-            } catch (err) {
-                setTimeout(() => {
-                    isProcessing = false;
-                    if (linesMesh) linesMesh.material.color.setHex(0x4FB8C9);
-                    resVerdict.textContent = "CONNECTION SEVERED";
-                    resVerdict.style.color = "var(--dark-ember)";
-                    resultsPanel.classList.add('show');
-                }, 2000);
-            }
+            document.dispatchEvent(new CustomEvent('vg:investigate', { detail: query }));
         });
 
         // ─── Mobile Intercept Drawer Toggle ───
@@ -2030,73 +1948,30 @@
 
         window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
 
-        // ══ Incident Memory panel (Phase 3) ══════════════════════════════
-        // State machine: idle → extracting → reviewing → matching → complete
-        //                 ↘ error (503 stops; needs_manual_entry → reviewing)
-        (function incidentPanel() {
+        // ══ Mini CID Investigator panel ═══════════════════════════════════
+        // One flow: question → six lenses → findings, contradictions, synthesis.
+        (function investigatorPanel() {
             const overlay = document.getElementById('incident-overlay');
             const stateEl = document.getElementById('io-state');
-            const modesEl = document.getElementById('io-modes');
             const bodyEl = document.getElementById('io-body');
 
-            const viewPaste = document.getElementById('io-view-paste');
-            const viewReview = document.getElementById('io-view-review');
-            const viewResults = document.getElementById('io-view-results');
             const viewInvestigate = document.getElementById('io-view-investigate');
             const viewInvestigateResults = document.getElementById('io-view-investigate-results');
 
-            const pasteBox = document.getElementById('io-paste');
-            const charCount = document.getElementById('io-charcount');
-            const truncWarn = document.getElementById('io-trunc');
-            const pasteBanner = document.getElementById('io-paste-banner');
-            const reviewBanner = document.getElementById('io-review-banner');
-            const reviewGrid = document.getElementById('io-review-grid');
-            const resultsBanner = document.getElementById('io-results-banner');
-            const resultsEl = document.getElementById('io-results');
             const questionBox = document.getElementById('io-question');
             const investigateBanner = document.getElementById('io-investigate-banner');
             const investigateResultsBanner = document.getElementById('io-investigate-results-banner');
             const investigateResultsEl = document.getElementById('io-investigate-results');
 
-            const btnRun = document.getElementById('io-run');
-            const btnConfirm = document.getElementById('io-confirm');
-            const btnBack = document.getElementById('io-review-back');
             const btnClose = document.getElementById('io-close');
             const btnReopen = document.getElementById('btn-incident-open');
             const btnInvestigateRun = document.getElementById('io-investigate-run');
 
-            const MAX_PASTE = 4000;
-
-            // Closed vocabularies (mirrors incidents/schema.py — no new enums)
-            const ENUMS = {
-                trigger_type: ['personal_conduct', 'market_shock', 'regulatory', 'internal_conflict', 'external_attack', 'policy_shift', 'fraud', 'operational_failure', 'official_misconduct'],
-                constraint_types: ['legal', 'regulatory', 'market', 'reputational', 'security'],
-                legal_outcome: ['none', 'pending', 'charges_dropped', 'convicted', 'acquitted', 'settled', 'pardoned', 'fled'],
-                escalation_vector: ['leak', 'filing', 'inquiry', 'ultimatum', 'resign_signal', 'media_cycle'],
-                tempo: ['hours', 'days', 'weeks', 'months', 'years'],
-                exit_authority: ['self', 'board', 'investors', 'court', 'regulator', 'electorate', 'legislature'],
-                succession: ['internal', 'external', 'contested', 'unknown'],
-                resolution: ['resignation', 'dismissal', 'settlement', 'ongoing', 'acquittal', 'conviction', 'bankruptcy', 'dissolution', 'grounding', 'government_appointed_board', 'tech_mahindra_acquisition'],
-                actor_roles: ['ceo', 'founder', 'cfo', 'board', 'employee', 'regulator', 'court', 'intelligence_agency', 'government', 'investor', 'customer', 'media']
-            };
-            const SCALAR_SELECTS = ['trigger_type', 'tempo', 'exit_authority', 'succession', 'legal_outcome'];
-            const CHECKBOX_LISTS = ['actor_roles', 'constraint_types', 'escalation_vector', 'resolution'];
-            const TEXT_FIELDS = ['title', 'date', 'trigger', 'sector', 'geography'];
-
-            let state = 'idle';
-            let lastPaste = '';
-            let lastExtracted = null;   // submitted payload, kept for the "both timelines" render
-            let mode = localStorage.getItem('vg_mode') || 'incident';
-
             function setState(next) {
-                state = next;
                 stateEl.textContent = next.toUpperCase();
             }
 
             function showView(which) {
-                viewPaste.hidden = which !== 'paste';
-                viewReview.hidden = which !== 'review';
-                viewResults.hidden = which !== 'results';
                 viewInvestigate.hidden = which !== 'investigate';
                 viewInvestigateResults.hidden = which !== 'investigate-results';
                 bodyEl.scrollTop = 0;
@@ -2115,71 +1990,17 @@
                 ));
             }
 
-            // ── open / close ──
             function openPanel() {
                 overlay.classList.add('open');
-                if (state === 'idle') showView('paste');
+                showView('investigate');
+                if (questionBox) questionBox.focus();
             }
             function closePanel() { overlay.classList.remove('open'); }
 
             btnClose.addEventListener('click', closePanel);
             btnReopen.addEventListener('click', openPanel);
 
-            // ── mode selector (Debate rendered only when flag on) ──
-            function applyMode(m, persist) {
-                mode = m;
-                if (persist) localStorage.setItem('vg_mode', m);
-                modesEl.querySelectorAll('.io-mode').forEach(b => {
-                    b.classList.toggle('active', b.dataset.mode === m);
-                });
-                if (m === 'debate') {
-                    // Debate posts to /api/analyze exactly as today (cmd-form path)
-                    closePanel();
-                    const ci = document.getElementById('cmd-input');
-                    if (ci) ci.focus();
-                } else if (m === 'investigate') {
-                    openPanel();
-                    showView('investigate');
-                    if (questionBox) questionBox.focus();
-                } else {
-                    openPanel();
-                }
-            }
-
-            function renderModeButtons(debateEnabled) {
-                // Hidden, not disabled, while the flag is off.
-                if (debateEnabled && !modesEl.querySelector('[data-mode="debate"]')) {
-                    const b = document.createElement('button');
-                    b.type = 'button';
-                    b.className = 'io-mode';
-                    b.dataset.mode = 'debate';
-                    b.textContent = 'DEBATE';
-                    b.addEventListener('click', () => applyMode('debate', true));
-                    modesEl.appendChild(b);
-                }
-                modesEl.querySelectorAll('.io-mode[data-mode="incident"]').forEach(b => {
-                    b.onclick = () => applyMode('incident', true);
-                });
-                modesEl.querySelectorAll('.io-mode[data-mode="investigate"]').forEach(b => {
-                    b.onclick = () => applyMode('investigate', true);
-                });
-            }
-
-            // Health: drives the Debate option only (no new endpoint, no new field
-            // anywhere else — debate_enabled rides the existing GET /api/health).
-            fetch('/api/health').then(r => r.json()).then(h => {
-                renderModeButtons(!!h.debate_enabled);
-            }).catch(() => renderModeButtons(false));
-
-            // ── paste box: char count + truncation notice ──
-            function updateCount() {
-                const n = pasteBox.value.length;
-                charCount.textContent = `${n.toLocaleString()} / ${MAX_PASTE.toLocaleString()} chars`;
-                truncWarn.hidden = n <= MAX_PASTE;
-            }
-            pasteBox.addEventListener('input', updateCount);
-
-            // ── API helpers ──
+            // ── API helper ──
             async function postJSON(url, payload) {
                 const apiKey = getApiKey();
                 if (!apiKey) {
@@ -2198,378 +2019,74 @@
                 return { res, data };
             }
 
-            // ── Phase 1: extract ──
-            btnRun.addEventListener('click', async () => {
-                const paste = pasteBox.value.trim();
-                if (!paste) { banner(pasteBanner, 'Paste an incident first.', 'err'); return; }
-                lastPaste = paste;
-                lastExtracted = null;
-                banner(pasteBanner, '');
-                setState('extracting');
-                btnRun.disabled = true;
-                btnRun.textContent = 'EXTRACTING...';
-                try {
-                    const { res, data } = await postJSON('/api/incident-match', { paste, mode: 'incident' });
-                    if (res.ok && data.status === 'reviewing') {
-                        setState('reviewing');
-                        openReview(data.extracted_card || {}, null);
-                    } else if (res.status === 422 && data.status === 'needs_manual_entry') {
-                        // Extraction failed or incomplete → review state with raw paste
-                        setState('reviewing');
-                        openReview({}, data);
-                    } else if (res.status === 503) {
-                        setState('error');
-                        showView('results');
-                        banner(resultsBanner, 'Embedder unavailable — ' + (data.reason || 'index offline') + '. Nothing was scored.', 'err');
-                    } else {
-                        setState('error');
-                        banner(pasteBanner, data.error || data.detail || ('Request failed (' + res.status + ').'), 'err');
-                    }
-                } catch (err) {
-                    if (!err.noKey) {
-                        setState('error');
-                        banner(pasteBanner, 'Connection failed: ' + err.message, 'err');
-                    } else {
-                        setState('idle');
-                    }
-                } finally {
-                    btnRun.disabled = false;
-                    btnRun.textContent = 'EXTRACT & MATCH';
-                }
-            });
-
-            // ── Investigate: question-driven mini CID ──
-            if (btnInvestigateRun) {
-                btnInvestigateRun.addEventListener('click', async () => {
-                    const question = questionBox.value.trim();
-                    if (!question) { banner(investigateBanner, 'Ask a question first.', 'err'); return; }
-                    banner(investigateBanner, '');
-                    setState('investigating');
-                    btnInvestigateRun.disabled = true;
-                    btnInvestigateRun.textContent = 'INVESTIGATING...';
-                    try {
-                        const { res, data } = await postJSON('/api/incident-investigate', { question });
-                        if (res.ok) {
-                            setState('investigate-complete');
-                            renderInvestigateResults(data);
-                            showView('investigate-results');
-                        } else {
-                            setState('error');
-                            banner(investigateBanner, data.error || data.detail || ('Request failed (' + res.status + ').'), 'err');
-                        }
-                    } catch (err) {
-                        setState('error');
-                        banner(investigateBanner, 'Connection failed: ' + err.message, 'err');
-                    } finally {
-                        btnInvestigateRun.disabled = false;
-                        btnInvestigateRun.textContent = 'INVESTIGATE';
-                    }
-                });
-            }
-
-            // ── Phase 2: review / manual entry form ──
-            function openReview(extracted, manualInfo) {
-                reviewGrid.innerHTML = '';
-                banner(reviewBanner, '');
-
-                if (manualInfo) {
-                    const miss = (manualInfo.missing || []).join(', ') || 'unknown';
-                    banner(reviewBanner,
-                        'needs_manual_entry — extraction could not fill: ' + miss + '.\n' +
-                        'Fill the fields below (raw paste kept' +
-                        (manualInfo.spooled_path ? ' at ' + manualInfo.spooled_path : '') + ').',
-                        'warn');
-                }
-
-                const frag = document.createDocumentFragment();
-
-                TEXT_FIELDS.forEach(name => {
-                    frag.appendChild(fieldWrap(name, name.toUpperCase(), () => {
-                        const i = document.createElement('input');
-                        i.type = 'text';
-                        i.dataset.field = name;
-                        i.value = extracted[name] == null ? '' : String(extracted[name]);
-                        return i;
-                    }, (manualInfo && (manualInfo.missing || []).includes(name))));
-                });
-
-                // actors: comma-separated, ≥2 required
-                frag.appendChild(fieldWrap('actors', 'ACTORS (comma-separated, ≥2)', () => {
-                    const i = document.createElement('input');
-                    i.type = 'text';
-                    i.dataset.field = 'actors';
-                    i.value = Array.isArray(extracted.actors) ? extracted.actors.join(', ') : '';
-                    return i;
-                }, (manualInfo && (manualInfo.missing || []).includes('actors')), true));
-
-                SCALAR_SELECTS.forEach(name => {
-                    frag.appendChild(fieldWrap(name, name.toUpperCase(), () => {
-                        const s = document.createElement('select');
-                        s.dataset.field = name;
-                        const blank = document.createElement('option');
-                        blank.value = ''; blank.textContent = '— select —';
-                        s.appendChild(blank);
-                        ENUMS[name].forEach(v => {
-                            const o = document.createElement('option');
-                            o.value = v; o.textContent = v;
-                            s.appendChild(o);
-                        });
-                        s.value = extracted[name] == null ? '' : String(extracted[name]);
-                        return s;
-                    }, (manualInfo && (manualInfo.missing || []).includes(name))));
-                });
-
-                CHECKBOX_LISTS.forEach(name => {
-                    frag.appendChild(fieldWrap(name, name.toUpperCase(), () => {
-                        const box = document.createElement('div');
-                        box.className = 'io-checks';
-                        box.dataset.fieldGroup = name;
-                        const selected = new Set(Array.isArray(extracted[name]) ? extracted[name] : []);
-                        ENUMS[name].forEach(v => {
-                            const lab = document.createElement('label');
-                            const cb = document.createElement('input');
-                            cb.type = 'checkbox';
-                            cb.value = v;
-                            cb.checked = selected.has(v);
-                            lab.appendChild(cb);
-                            lab.appendChild(document.createTextNode(v));
-                            box.appendChild(lab);
-                        });
-                        return box;
-                    }, (manualInfo && (manualInfo.missing || []).includes(name)), true));
-                });
-
-                // timeline: one "YYYY-MM-DD | event" per line
-                frag.appendChild(fieldWrap('timeline', 'TIMELINE (one "YYYY-MM-DD | event" per line)', () => {
-                    const t = document.createElement('textarea');
-                    t.dataset.field = 'timeline';
-                    const tl = Array.isArray(extracted.timeline) ? extracted.timeline : [];
-                    t.value = tl.map(e => `${e.date || ''} | ${e.event || ''}`).join('\n').trim();
-                    return t;
-                }, false, true));
-
-                reviewGrid.appendChild(frag);
-                showView('review');
-                setState('reviewing');
-            }
-
-            function fieldWrap(name, label, makeInput, missing, wide) {
-                const wrap = document.createElement('div');
-                wrap.className = 'io-field' + (wide ? ' wide' : '') + (missing ? ' missing' : '');
-                const lab = document.createElement('label');
-                lab.textContent = label;
-                wrap.appendChild(lab);
-                wrap.appendChild(makeInput());
-                return wrap;
-            }
-
-            function collectReview() {
-                const out = {};
-                reviewGrid.querySelectorAll('[data-field]').forEach(el => {
-                    const name = el.dataset.field;
-                    if (name === 'actors') {
-                        out.actors = el.value.split(',').map(s => s.trim()).filter(Boolean);
-                    } else if (name === 'timeline') {
-                        out.timeline = el.value.split('\n').map(line => {
-                            const idx = line.indexOf('|');
-                            if (idx === -1) return null;
-                            const date = line.slice(0, idx).trim();
-                            const event = line.slice(idx + 1).trim();
-                            if (!event) return null;
-                            return { date, event };
-                        }).filter(Boolean);
-                    } else {
-                        out[name] = el.value.trim();
-                    }
-                });
-                reviewGrid.querySelectorAll('[data-field-group]').forEach(el => {
-                    out[el.dataset.fieldGroup] = Array.from(
-                        el.querySelectorAll('input[type=checkbox]:checked')
-                    ).map(cb => cb.value);
-                });
-                return out;
-            }
-
-            btnBack.addEventListener('click', () => {
-                setState('idle');
-                banner(pasteBanner, '');
-                showView('paste');
-            });
-
-            btnConfirm.addEventListener('click', async () => {
-                const extracted = collectReview();
-                lastExtracted = extracted;
-                setState('matching');
-                btnConfirm.disabled = true;
-                btnConfirm.textContent = 'MATCHING...';
-                try {
-                    const { res, data } = await postJSON('/api/incident-match', {
-                        paste: lastPaste, mode: 'incident', extracted
-                    });
-                    if (res.ok && data.status === 'complete') {
-                        setState('complete');
-                        renderResults(data);
-                    } else if (res.status === 422 && data.status === 'needs_manual_entry') {
-                        setState('reviewing');
-                        openReview(extracted, data);
-                    } else if (res.status === 503) {
-                        setState('error');
-                        showView('results');
-                        banner(resultsBanner, 'Embedder unavailable — ' + (data.reason || 'index offline') + '. Nothing was scored.', 'err');
-                    } else {
-                        setState('error');
-                        showView('results');
-                        banner(resultsBanner, data.error || data.detail || ('Match failed (' + res.status + ').'), 'err');
-                    }
-                } catch (err) {
-                    if (!err.noKey) {
-                        setState('error');
-                        showView('results');
-                        banner(resultsBanner, 'Connection failed: ' + err.message, 'err');
-                    } else {
-                        setState('reviewing');
-                    }
-                } finally {
-                    btnConfirm.disabled = false;
-                    btnConfirm.textContent = 'CONFIRM & MATCH';
-                }
-            });
-
-            // ── complete: render the output contract ──
-            function fieldLine(label, value) {
-                const v = Array.isArray(value) ? value.join(', ') : value;
-                if (v == null || v === '' || (Array.isArray(value) && value.length === 0)) return '';
-                return `<div class="io-kv"><b>${esc(label)}</b> ${esc(v)}</div>`;
-            }
-
-            function renderCardFields(card) {
-                return [
-                    fieldLine('TRIGGER TYPE', card.trigger_type),
-                    fieldLine('CONSTRAINTS', card.constraint_types),
-                    fieldLine('ESCALATION', card.escalation_vector),
-                    fieldLine('TEMPO', card.tempo),
-                    fieldLine('EXIT AUTHORITY', card.exit_authority),
-                    fieldLine('SUCCESSION', card.succession),
-                    fieldLine('SECTOR', card.sector),
-                    fieldLine('RESOLUTION', card.resolution),
-                    fieldLine('LEGAL OUTCOME', card.legal_outcome),
-                    card.outcome && card.outcome.summary ? fieldLine('OUTCOME', card.outcome.summary) : ''
-                ].join('');
-            }
-
-            function renderClaims(card) {
-                const claims = card.claims || [];
-                if (!claims.length) return '';
-                const srcById = {};
-                (card.sources || []).forEach(s => { srcById[s.id] = s; });
-                const rows = claims.map(c => {
-                    const low = c.tag !== 'documented';
-                    const srcs = (c.source_ids || []).map(id => srcById[id]).filter(Boolean);
-                    const srcHTML = srcs.length
-                        ? srcs.map(s => `<span class="io-src">${esc(s.ref || s.id)}</span>`).join(', ')
-                        : '<span class="io-src none">no source available</span>';
-                    return `<div class="io-claim"><span class="io-tag${low ? ' low' : ''}">${esc(c.tag)}</span>${esc(c.text)} <span class="io-src">·</span> ${srcHTML}</div>`;
-                }).join('');
-                return `<div class="io-section-h">CLAIMS · TAG · SOURCE</div>${rows}`;
-            }
-
-            function renderTimeline(entries, heading) {
-                if (!entries || !entries.length) return '';
-                const items = entries.map(e =>
-                    `<li><span class="t-date">${esc(e.date)}</span>${esc(e.event)}</li>`).join('');
-                return `<div class="io-section-h">${esc(heading)}</div><ul class="io-timeline">${items}</ul>`;
-            }
-
-            function renderResults(data) {
-                showView('results');
-                banner(resultsBanner, '');
-
-                if (data.corpus_size === 0) {
-                    resultsEl.innerHTML = '<div class="io-empty">No records yet — the corpus is empty (not the same as no match).</div>';
+            // ── run one investigation ──
+            async function runInvestigation(question) {
+                if (!question) {
+                    banner(investigateBanner, 'Ask a question first.', 'err');
                     return;
                 }
-
-                const parts = [];
-
-                // Base rate: text already carries explicit counts + trigger-type fallback
-                if (data.base_rate && data.base_rate.text) {
-                    parts.push(`<div class="io-line">${esc(data.base_rate.text)}</div>`);
+                banner(investigateBanner, '');
+                setState('investigating');
+                btnInvestigateRun.disabled = true;
+                btnInvestigateRun.textContent = 'INVESTIGATING...';
+                try {
+                    const { res, data } = await postJSON('/api/incident-investigate', { question });
+                    if (res.ok) {
+                        setState('investigate-complete');
+                        renderInvestigateResults(data);
+                        showView('investigate-results');
+                        await reportToConsole(data);
+                    } else {
+                        setState('error');
+                        banner(investigateBanner, data.error || data.detail || ('Request failed (' + res.status + ').'), 'err');
+                    }
+                } catch (err) {
+                    setState('error');
+                    banner(investigateBanner, 'Connection failed: ' + err.message, 'err');
+                } finally {
+                    btnInvestigateRun.disabled = false;
+                    btnInvestigateRun.textContent = 'INVESTIGATE';
                 }
-                // Silence line + as-of stamp
-                if (data.silence_line) {
-                    parts.push(`<div class="io-line asof">${esc(data.silence_line)}</div>`);
-                } else if (data.as_of) {
-                    parts.push(`<div class="io-line asof">As of ${esc(data.as_of)}.</div>`);
-                }
-
-                const matches = data.matches || [];
-                const strong = matches.filter(m => m.tier === 'strong');
-
-                if (!matches.length || !strong.length) {
-                    parts.push('<div class="io-banner warn">No card in memory matches this shape — new to the record. Weak candidates below are context only.</div>');
-                }
-
-                matches.forEach((m, i) => {
-                    const card = m.card || {};
-                    const tier = m.tier === 'strong' ? 'strong' : 'weak';
-                    const why = (m.why || []).map(w => `<li>${esc(w.component)} · ${Math.round((w.value || 0) * 100)}% shared · w ${w.weight}</li>`).join('');
-                    const breaks = (m.breaks || []).map(b => `<li>${esc(b.component)} · ${b.weight} lost</li>`).join('');
-
-                    parts.push(`
-                        <div class="io-match ${tier}">
-                            <div class="io-match-head">
-                                <span class="io-tier ${tier}">#${i + 1} ${tier === 'strong' ? 'STRONG' : 'WEAK'}</span>
-                                <span class="io-match-title">${esc(card.title || m.id)}</span>
-                                <span class="io-match-id">${esc(m.id)}</span>
-                                <span class="io-score">S ${Number(m.score).toFixed(4)} · cosine ${Number(m.cosine).toFixed(4)}</span>
-                            </div>
-                            <div class="io-cols">
-                                <div>
-                                    <div class="io-section-h" style="margin-top:4px;font-size:15px;">WHY IT MATCHES</div>
-                                    <ul class="io-bullets why">${why || '<li>—</li>'}</ul>
-                                </div>
-                                <div>
-                                    <div class="io-section-h" style="margin-top:4px;font-size:15px;">WHERE IT BREAKS</div>
-                                    <ul class="io-bullets breaks">${breaks || '<li>—</li>'}</ul>
-                                </div>
-                            </div>
-                            <div class="io-section-h" style="font-size:15px;">STRUCTURED FIELDS</div>
-                            ${renderCardFields(card)}
-                            ${renderClaims(card)}
-                            ${renderTimeline(card.timeline, 'MATCHED TIMELINE')}
-                        </div>`);
-                });
-
-                // Both timelines: the pasted record's, then each match's (above)
-                if (lastExtracted && Array.isArray(lastExtracted.timeline) && lastExtracted.timeline.length) {
-                    parts.push(renderTimeline(lastExtracted.timeline, 'PASTED RECORD TIMELINE'));
-                }
-
-                // Research Q&A (empty in Phase 4-less Phase 3; renders when present)
-                const audit = data.loop_audit || [];
-                if (audit.length) {
-                    const rows = audit.map(a => {
-                        const src = a.source
-                            ? `<span class="io-src">${esc(a.source)}</span>`
-                            : '<span class="io-src none">no source available</span>';
-                        return `<div class="io-claim"><span class="io-tag${a.closed ? '' : ' low'}">${esc(a.gap_type || 'gap')}</span>${esc(a.question)} — ${a.closed ? 'closed' : 'open'} · ${src}</div>`;
-                    }).join('');
-                    parts.push(`<div class="io-section-h">RESEARCH QUESTIONS</div>${rows}`);
-                }
-
-                // Retrieval debug + as-of
-                parts.push(`<div class="io-line asof">as of ${esc(data.as_of || '')}</div>`);
-                if (data.retrieval_debug) {
-                    parts.push(`
-                        <details class="io-debug">
-                            <summary>RETRIEVAL DEBUG</summary>
-                            <pre>${esc(JSON.stringify(data.retrieval_debug, null, 2))}</pre>
-                        </details>`);
-                }
-
-                resultsEl.innerHTML = parts.join('');
-                if (typeof playConnectSound === 'function') playConnectSound();
             }
+
+            // Mirror the investigation into the main console feed.
+            async function reportToConsole(data) {
+                const prov = data.provenance || {};
+                const lines = [
+                    `INVESTIGATION COMPLETE · ${prov.total_findings || 0} findings · ${prov.unique_sources || 0} unique sources`,
+                    ...Object.entries(prov.tag_counts || {}).map(([tag, n]) => `${tag}: ${n}`),
+                ];
+                const contradictions = data.contradictions || [];
+                lines.push(contradictions.length
+                    ? `CONTRADICTIONS: ${contradictions.length}`
+                    : 'CONTRADICTIONS: none detected');
+                if (data.synthesis) lines.push(String(data.synthesis).split('\n')[0]);
+                if (typeof streamLiveIntercept === 'function') {
+                    await streamLiveIntercept(lines.join('\n'), 'system');
+                }
+                if (typeof resVerdict !== 'undefined' && resVerdict) {
+                    resVerdict.textContent = contradictions.length
+                        ? `${contradictions.length} CONTRADICTION${contradictions.length > 1 ? 'S' : ''}`
+                        : 'NO CONTRADICTIONS';
+                    resVerdict.style.color = "var(--off-white)";
+                    resReasoning.textContent = data.synthesis || '';
+                }
+                isProcessing = false;
+                if (linesMesh) linesMesh.material.color.setHex(0x4FB8C9);
+            }
+
+            btnInvestigateRun.addEventListener('click', () => {
+                runInvestigation(questionBox.value.trim());
+            });
+
+            // The console (EXECUTE) hands its question to the investigator.
+            document.addEventListener('vg:investigate', (ev) => {
+                const q = String((ev && ev.detail) || '').trim();
+                if (!q) return;
+                openPanel();
+                questionBox.value = q;
+                runInvestigation(q);
+            });
 
             // ── Render investigate results: six lenses, contradictions, synthesis ──
             function renderInvestigateResults(data) {
@@ -2586,7 +2103,7 @@
                 const tags = prov.tag_counts || {};
                 if (Object.keys(tags).length) {
                     const tagLine = Object.entries(tags).map(([t, c]) => `${t}: ${c}`).join(' · ');
-                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Total: ${prov.total_findings || 0}</div>`);
+                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Total: ${prov.total_findings || 0} · Unique sources: ${prov.unique_sources || 0}</div>`);
                 }
 
                 // Lenses
@@ -2611,12 +2128,15 @@
                         const tagClass = `io-tag-${tag}`;
                         const title = esc(f.title || '');
                         const snippet = esc(f.snippet || '');
+                        const corroborated = f.corroboration || 1;
+                        const corrob = corroborated > 1 ? ` · ${corroborated} lenses` : '';
                         const url = f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener" class="io-src-link">source</a>` : '';
                         parts.push(`
                             <div class="io-claim">
                                 <span class="io-tag ${tagClass}">${tag.toUpperCase()}</span>
                                 <strong>${title}</strong>
                                 <span class="io-snippet">${snippet}</span>
+                                <span class="io-snippet">${corrob}</span>
                                 ${url}
                             </div>`);
                     });
@@ -2629,9 +2149,9 @@
                     contradictions.forEach(c => {
                         parts.push(`
                             <div class="io-claim" style="border-left-color:var(--dark-ember);">
-                                <span class="io-tag" style="background:var(--dark-ember);">${c.type}</span>
-                                <strong>${esc(c.lens_a)}</strong> vs <strong>${esc(c.lens_b)}</strong>
-                                <span class="io-snippet">${esc(c.finding_a)} ↔ ${esc(c.finding_b)}</span>
+                                <span class="io-tag" style="background:var(--dark-ember);">${esc(c.type)}</span>
+                                <strong>${esc(c.subject || 'subject')}</strong>
+                                <span class="io-snippet">${esc(c.lens_a)} vs ${esc(c.lens_b)} — ${esc(c.finding_a)} ↔ ${esc(c.finding_b)}</span>
                             </div>`);
                     });
                 } else {
@@ -2644,30 +2164,19 @@
                         <div class="io-synthesis">${esc(data.synthesis)}</div>`);
                 }
 
-                // Unverified cards note
-                if (data.unverified_cards && data.unverified_cards.length) {
-                    parts.push(`<div class="io-banner warn" style="margin-top:16px;">
-                        <strong>Unverified cards in corpus:</strong> ${data.unverified_cards.join(', ')} — these cards have paraphrase-only sources and are flagged as unverified.
-                    </div>`);
-                }
-
                 investigateResultsEl.innerHTML = parts.join('');
                 if (typeof playConnectSound === 'function') playConnectSound();
             }
 
-            // Enter the app with incident mode (the default) on top.
+            // Enter the app with the investigator panel on top.
             const origEnter = document.getElementById('btn-enter-app');
             if (origEnter) {
                 origEnter.addEventListener('click', () => {
-                    setTimeout(() => {
-                        if (mode !== 'debate') openPanel();
-                    }, 300);
+                    setTimeout(openPanel, 300);
                 });
             }
 
             // Initial paint
-            applyMode(mode, false);
-            if (mode !== 'debate') showView('paste');
             setState('idle');
         })();
     </script>

@@ -216,5 +216,28 @@ class TestOnlyInvestigateIsServed:
         assert "debate_enabled" not in data
 
 
+class TestInvestigateOnlyUI:
+    """The browser UI exposes exactly one flow: the investigator."""
+
+    @staticmethod
+    def _html() -> str:
+        path = Path(__file__).resolve().parents[1] / "vg" / "api" / "static" / "index.html"
+        return path.read_text()
+
+    def test_static_ui_has_no_debate_or_match_calls(self):
+        """The removed endpoints are not called from the browser UI."""
+        html = self._html()
+        assert "/api/analyze" not in html
+        assert "/api/incident-match" not in html
+
+    def test_static_ui_calls_the_investigator(self):
+        """The investigator endpoint is wired into the UI."""
+        assert "/api/incident-investigate" in self._html()
+
+    def test_static_ui_has_no_incident_mode_button(self):
+        """The paste-a-case mode button is gone."""
+        assert 'data-mode="incident"' not in self._html()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
