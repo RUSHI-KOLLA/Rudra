@@ -101,6 +101,18 @@ _LENS_FUNCS = {
 }
 
 
+#: Only web URLs are passed through to clients — a source must not be able to
+#: smuggle a javascript:/data: URL into a rendered link.
+_SAFE_URL_PREFIXES = ("http://", "https://")
+
+
+def _is_safe_url(url: str) -> bool:
+    """True when a URL is empty (no link) or an http(s) URL."""
+    if not url:
+        return True
+    return url.lower().startswith(_SAFE_URL_PREFIXES)
+
+
 def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list[str]], question: str) -> dict[str, Any]:
     """Run one investigative lens against extracted entities.
 
@@ -127,6 +139,9 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
                 "error": f"{type(exc).__name__}: {exc}",
             }
         for r in results:
+            url = str(r.get("url", "") or "")
+            if not _is_safe_url(url):
+                continue
             query = r.get("query", "")
             if query and query not in seen_queries:
                 seen_queries.add(query)
@@ -136,7 +151,7 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
             tag = r.get("tag", "reported_unconfirmed")
             findings.append({
                 "title": r.get("title", ""),
-                "url": r.get("url", ""),
+                "url": url,
                 "snippet": r.get("snippet", ""),
                 "date": r.get("date", ""),
                 "tag": tag,

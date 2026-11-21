@@ -534,6 +534,39 @@ class TestInvestigateWithMockedSearch:
         assert result["contradictions"], "Expected a contradiction"
         assert result["contradictions"][0]["subject"] == "Kochhar"
 
+    def test_non_http_source_urls_are_dropped(self, monkeypatch):
+        """A source returning a javascript:/data: URL must not reach the client.
+
+        The UI renders finding URLs as links, so the API boundary is where
+        the scheme has to be checked.
+        """
+        from vg.incidents import investigation as inv_mod
+
+        def mock_lens(entity):
+            return [
+                {
+                    "title": "Hostile link",
+                    "url": "javascript:alert(document.cookie)",
+                    "snippet": "click me",
+                    "date": "2024-01-15",
+                    "query": f"{entity} query",
+                },
+                {
+                    "title": "Legitimate link",
+                    "url": "https://example.com/story",
+                    "snippet": "safe",
+                    "date": "2024-01-15",
+                    "query": f"{entity} query",
+                },
+            ]
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        urls = [f["url"] for f in result["lens_results"]["money"]["findings"]]
+        assert urls == ["https://example.com/story"], urls
+
     def test_queries_are_listed_once_per_distinct_query(self, monkeypatch):
         """The 'queries' list holds the distinct queries run, not one per finding."""
         from vg.incidents import investigation as inv_mod
