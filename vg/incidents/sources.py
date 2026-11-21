@@ -24,6 +24,7 @@ import os
 import re
 import requests
 import sys
+import threading
 import time
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
@@ -49,6 +50,8 @@ _GOOGLE_NEWS_ENDPOINT = "https://news.google.com/rss/search"
 _GDELT_ENDPOINT = "https://api.gdeltproject.org/api/v2/doc/doc"
 _GDELT_MIN_INTERVAL = 5.0  # GDELT asks for at most one request every 5 seconds
 _GDELT_LAST_CALL = 0.0
+#: Guards the GDELT throttle so concurrent lenses cannot burst past the limit.
+_GDELT_LOCK = threading.Lock()
 
 _USER_AGENT = "VG-Investigator/1.0 (contact: rushi@example.com)"
 
@@ -141,10 +144,14 @@ def _search_gdelt(query: str, limit: int = 10) -> list[dict[str, Any]]:
     global _GDELT_LAST_CALL
     if _IN_TEST or os.getenv("ENABLE_GDELT", "1") == "0":
         return []
-    now = time.monotonic()
-    if now - _GDELT_LAST_CALL < _GDELT_MIN_INTERVAL:
-        return []
-    _GDELT_LAST_CALL = now
+    # The lock makes the throttle safe when several lenses run concurrently:
+    # exactly one caller gets the window, the rest fall through to the next
+    # source instead of bursting GDELT.
+    with _GDELT_LOCK:
+        now = time.monotonic()
+        if now - _GDELT_LAST_CALL < _GDELT_MIN_INTERVAL:
+            return []
+        _GDELT_LAST_CALL = now
     try:
         r = requests.get(
             _GDELT_ENDPOINT,
@@ -412,25 +419,48 @@ def _get_wikidata_claims(entity_id: str) -> dict[str, Any]:
 # Cache for target entity labels
 _WIKIDATA_LABEL_CACHE: dict[str, str] = {}
 
+#: Wikidata allows up to 50 entity IDs per wbgetentities request.
+_WIKIDATA_LABEL_BATCH = 50
 
-def _get_wikidata_label(entity_id: str) -> str:
-    """Get English label for a Wikidata entity (with caching)."""
-    if entity_id in _WIKIDATA_LABEL_CACHE:
-        return _WIKIDATA_LABEL_CACHE[entity_id]
-    try:
-        r = requests.get(
-            f"{_WIKIDATA_ENTITY_API}/{entity_id}.json",
-            headers={"User-Agent": "VG-Investigator/1.0"},
-            timeout=5,
-        )
-        r.raise_for_status()
-        entity_data = r.json().get("entities", {}).get(entity_id, {})
-        label = entity_data.get("labels", {}).get("en", {}).get("value", entity_id)
-        _WIKIDATA_LABEL_CACHE[entity_id] = label
-        return label
-    except Exception:
-        _WIKIDATA_LABEL_CACHE[entity_id] = entity_id
-        return entity_id
+
+def _get_wikidata_labels(entity_ids: list[str]) -> dict[str, str]:
+    """Fetch English labels for many Wikidata IDs in one batched request.
+
+    Fetching a label per claim means up to ~150 sequential HTTP requests for
+    a single entity — tens of seconds of wall time and needless load on
+    Wikidata's API. Batching collapses that into one request per 50 IDs.
+    """
+    unique_ids = list(dict.fromkeys(i for i in entity_ids if i))
+    missing = [i for i in unique_ids if i not in _WIKIDATA_LABEL_CACHE]
+
+    for start in range(0, len(missing), _WIKIDATA_LABEL_BATCH):
+        chunk = missing[start:start + _WIKIDATA_LABEL_BATCH]
+        try:
+            r = requests.get(
+                _WIKIDATA_SEARCH_API,
+                params={
+                    "action": "wbgetentities",
+                    "ids": "|".join(chunk),
+                    "props": "labels",
+                    "languages": "en",
+                    "format": "json",
+                },
+                headers={"User-Agent": "VG-Investigator/1.0"},
+                timeout=5,
+            )
+            r.raise_for_status()
+            entities = r.json().get("entities", {})
+            for entity_id, data in entities.items():
+                label = data.get("labels", {}).get("en", {}).get("value", entity_id)
+                _WIKIDATA_LABEL_CACHE[entity_id] = label
+        except Exception:
+            for entity_id in chunk:
+                _WIKIDATA_LABEL_CACHE.setdefault(entity_id, entity_id)
+
+    return {
+        entity_id: _WIKIDATA_LABEL_CACHE.get(entity_id, entity_id)
+        for entity_id in unique_ids
+    }
 
 
 def _search_wikidata(entity: str) -> list[dict[str, Any]]:
@@ -445,8 +475,19 @@ def _search_wikidata(entity: str) -> list[dict[str, Any]]:
     if not claims:
         return []
 
-    # Get entity label from cache (fetch once)
-    entity_label = _get_wikidata_label(entity_id)
+    # Collect every referenced entity ID first so all labels can be fetched
+    # in one batch instead of one request per claim.
+    target_ids: list[str] = []
+    for prop_id, claim_list in claims.items():
+        if prop_id in _WIKIDATA_SKIP_PROPS:
+            continue
+        for claim in claim_list[:5]:  # Limit per property
+            val = claim.get("mainsnak", {}).get("datavalue", {}).get("value", {})
+            if isinstance(val, dict) and "id" in val:
+                target_ids.append(val["id"])
+
+    labels = _get_wikidata_labels([entity_id] + target_ids)
+    entity_label = labels.get(entity_id, entity_id)
     results = []
 
     for prop_id, claim_list in claims.items():
@@ -467,7 +508,7 @@ def _search_wikidata(entity: str) -> list[dict[str, Any]]:
             if isinstance(val, dict):
                 if "id" in val:  # Entity reference
                     target_id = val["id"]
-                    value_label = _get_wikidata_label(target_id)
+                    value_label = labels.get(target_id, target_id)
                     value_url = f"https://www.wikidata.org/wiki/{target_id}"
                 elif "time" in val:  # Date
                     value_label = val["time"].replace("+", "")

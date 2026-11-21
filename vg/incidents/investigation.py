@@ -28,6 +28,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from .sources import (
@@ -107,13 +108,23 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
     {title, url, snippet, date, tag, lens, question}. Mechanical question
     extractions (entities/dates/amounts) live once in ``question_profile``
     instead of being repeated into every lens.
+
+    A lens that raises is isolated: its error is recorded and the other
+    lenses still report. One broken source must not void the investigation.
     """
     queries: list[str] = []
     findings: list[dict[str, Any]] = []
 
     search_fn = _LENS_FUNCS[lens_name]
     for entity in entities:
-        results = search_fn(entity)
+        try:
+            results = search_fn(entity)
+        except Exception as exc:
+            return {
+                "queries": queries,
+                "findings": findings,
+                "error": f"{type(exc).__name__}: {exc}",
+            }
         for r in results:
             queries.append(r.get("query", ""))
             # Use tag from source if present (e.g., "inferred" for structured data),
@@ -317,10 +328,18 @@ def investigate(question: str) -> dict[str, Any]:
     entities = _extract_entities(question)
     dates_amounts = _extract_dates_amounts(question)
 
-    # Run all six lenses
+    # Run all six lenses concurrently — each lens is network-bound, so
+    # serial execution would multiply the slowest source by six.
     lens_results: dict[str, dict[str, Any]] = {}
-    for lens_name in _LENS_FUNCS:
-        lens_results[lens_name] = _run_lens(lens_name, entities, dates_amounts, question)
+    with ThreadPoolExecutor(max_workers=len(_LENS_FUNCS)) as pool:
+        futures = {
+            lens_name: pool.submit(
+                _run_lens, lens_name, entities, dates_amounts, question
+            )
+            for lens_name in _LENS_FUNCS
+        }
+        for lens_name, future in futures.items():
+            lens_results[lens_name] = future.result()
 
     # Mark how many lenses surfaced each source
     _apply_corroboration(lens_results)

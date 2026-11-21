@@ -518,6 +518,101 @@ class TestInvestigateWithMockedSearch:
         assert result["contradictions"], "Expected a contradiction"
         assert result["contradictions"][0]["subject"] == "Kochhar"
 
+    def test_wikidata_labels_are_fetched_in_one_batch(self, monkeypatch):
+        """Entity labels are fetched in a single batched request, not one per claim.
+
+        Fetching a label per claim means up to ~150 sequential HTTP requests
+        for one entity — the request takes tens of seconds and hammers
+        Wikidata's API.
+        """
+        import vg.incidents.sources as src
+
+        claims = {
+            f"P{index}": [{"mainsnak": {"datavalue": {"value": {"id": f"Q{index}"}}}}]
+            for index in range(12)
+        }
+        entities = {
+            f"Q{index}": {"labels": {"en": {"value": f"Label {index}"}}}
+            for index in range(12)
+        }
+        entities["Q42"] = {"labels": {"en": {"value": "Subject"}}}
+
+        class FakeResponse:
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"entities": entities}
+
+        calls: list[str] = []
+
+        def fake_get(url, **kwargs):
+            calls.append(url)
+            return FakeResponse()
+
+        monkeypatch.setattr(src, "_IN_TEST", False)
+        monkeypatch.setattr(src, "_wikidata_search_id", lambda entity: "Q42")
+        monkeypatch.setattr(src, "_get_wikidata_claims", lambda entity_id: claims)
+        monkeypatch.setattr(src.requests, "get", fake_get)
+
+        results = src._search_wikidata("Subject")
+
+        assert len(results) == 12
+        assert len(calls) == 1, (
+            f"expected 1 batched label request, got {len(calls)}: {calls}"
+        )
+
+    def test_lenses_run_concurrently(self, monkeypatch):
+        """The six lenses run in parallel — a slow lens must not block the others."""
+        import threading
+        import time
+        from vg.incidents import investigation as inv_mod
+
+        lock = threading.Lock()
+        state = {"active": 0, "max_active": 0}
+
+        def mock_lens(entity):
+            with lock:
+                state["active"] += 1
+                state["max_active"] = max(state["max_active"], state["active"])
+            time.sleep(0.3)
+            with lock:
+                state["active"] -= 1
+            return []
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert state["max_active"] >= 2, (
+            f"lenses ran sequentially (max concurrent = {state['max_active']})"
+        )
+
+    def test_one_failing_lens_does_not_break_the_investigation(self, monkeypatch):
+        """A lens that raises is isolated; the other five still report findings."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_boom(entity):
+            raise RuntimeError("source exploded")
+
+        def mock_ok(entity):
+            return [{
+                "title": "Surviving lens finding",
+                "url": "https://example.com/ok",
+                "snippet": "still here",
+                "date": "2024-01-15",
+                "query": f"{entity} query",
+            }]
+
+        mocks = {lens: mock_ok for lens in inv_mod._LENS_FUNCS}
+        mocks["money"] = mock_boom
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert result["lens_results"]["money"]["findings"] == []
+        assert "error" in result["lens_results"]["money"]
+        assert result["lens_results"]["power"]["findings"], "other lenses must survive"
+
     def test_detects_opposing_claims_about_same_subject(self, monkeypatch):
         """Opposing claims about the same subject across lenses are flagged."""
         from vg.incidents import investigation as inv_mod
