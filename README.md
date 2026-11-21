@@ -157,7 +157,22 @@ pointed at that source.
 
 **Contradictions** — opposite-polarity claims (`denied` vs `confirmed`) about
 the *same* subject, found in *different* lenses. Two lenses agreeing is never
-a contradiction.
+a contradiction, and two parallel legal developments (a sanction quashed vs an
+asset attachment upheld) are not flagged as opposing either.
+
+---
+
+## Performance
+
+The six lenses run concurrently, so a slow source delays only its own lens:
+
+| Measurement | Value |
+|---|---|
+| Wall time, one investigation (~146 findings, 6 lenses) | ~15 s |
+| Peak RSS during an investigation | ~35 MB |
+| Requests to Wikidata for one entity | 1 batched (was up to 150) |
+| Container image | 223 MB |
+| Docker build context | 6 MB |
 
 ---
 
