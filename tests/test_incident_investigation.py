@@ -266,6 +266,47 @@ class TestInvestigatePipeline:
         assert "contradictions" in result
         assert isinstance(result["contradictions"], list)
 
+    def test_question_profile_holds_mechanical_extractions(self):
+        """Entities/dates/amounts extracted from the question live in one profile."""
+        from vg.incidents.investigation import investigate
+        result = investigate("Why did Chanda Kochhar resign in 2018?")
+        profile = result["question_profile"]
+        assert "2018" in profile["dates"]
+        assert profile["entities"]
+
+    def test_mechanical_findings_are_not_repeated_per_lens(self):
+        """Entity/date/amount findings are not duplicated into every lens."""
+        from vg.incidents.investigation import investigate
+        result = investigate("Why did Chanda Kochhar resign in 2018?")
+        for lens, data in result["lens_results"].items():
+            titles = [f["title"] for f in data["findings"]]
+            assert not any(
+                t.startswith(("Entity:", "Date:", "Amount:")) for t in titles
+            ), f"{lens} still repeats mechanical findings"
+
+    def test_finding_corroboration_counts_lenses(self, monkeypatch):
+        """A finding surfaced by two lenses reports corroboration == 2."""
+        from vg.incidents import investigation as inv_mod
+
+        shared = {
+            "title": "Chanda Kochhar case timeline report",
+            "url": "https://example.com/shared",
+            "snippet": "timeline of events",
+            "date": "2018-06-18",
+        }
+
+        def mock_lens_search(entity):
+            return [dict(shared)]
+
+        mocks = {lens: mock_lens_search for lens in inv_mod._LENS_FUNCS.keys()}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        money = result["lens_results"]["money"]["findings"]
+        corroborated = [f for f in money if f.get("url") == "https://example.com/shared"]
+        assert corroborated, "shared finding missing from money lens"
+        assert corroborated[0]["corroboration"] == len(inv_mod._LENS_FUNCS)
+
 
 # ---------------------------------------------------------------------------
 # Task 4: Mocked search_free() tests — provenance & contradiction detection

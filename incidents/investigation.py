@@ -113,7 +113,9 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
     """Run one investigative lens against extracted entities.
 
     Returns {'queries': [...], 'findings': [...]} where each finding has
-    {title, url, snippet, date, tag, lens, question}.
+    {title, url, snippet, date, tag, lens, question}. Mechanical question
+    extractions (entities/dates/amounts) live once in ``question_profile``
+    instead of being repeated into every lens.
     """
     queries: list[str] = []
     findings: list[dict[str, Any]] = []
@@ -123,49 +125,18 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
         results = search_fn(entity)
         for r in results:
             queries.append(r.get("query", ""))
+            # Use tag from source if present (e.g., "inferred" for structured data),
+            # otherwise default to "reported_unconfirmed" for free web search
+            tag = r.get("tag", "reported_unconfirmed")
             findings.append({
                 "title": r.get("title", ""),
                 "url": r.get("url", ""),
                 "snippet": r.get("snippet", ""),
                 "date": r.get("date", ""),
-                "tag": "reported_unconfirmed",  # Free search = secondhand, never documented
+                "tag": tag,
                 "lens": lens_name,
                 "question": r.get("query", ""),
             })
-
-    # Also extract entities/dates/amounts from the question as mechanical findings
-    for entity in entities:
-        findings.append({
-            "title": f"Entity: {entity}",
-            "url": "",
-            "snippet": f"Entity '{entity}' identified in question via gazetteer extraction",
-            "date": "",
-            "tag": "inferred",
-            "lens": lens_name,
-            "question": question_snippet(question, entity),
-        })
-
-    for date in dates_amounts["dates"]:
-        findings.append({
-            "title": f"Date: {date}",
-            "url": "",
-            "snippet": f"Date '{date}' identified in question via regex extraction",
-            "date": date,
-            "tag": "inferred",
-            "lens": lens_name,
-            "question": question_snippet(question, date),
-        })
-
-    for amount in dates_amounts["amounts"]:
-        findings.append({
-            "title": f"Amount: {amount}",
-            "url": "",
-            "snippet": f"Amount '{amount}' identified in question via regex extraction",
-            "date": "",
-            "tag": "inferred",
-            "lens": lens_name,
-            "question": question_snippet(question, amount),
-        })
 
     return {"queries": queries, "findings": findings}
 
@@ -232,6 +203,25 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
 # Main entry point
 # ---------------------------------------------------------------------------
 
+def _apply_corroboration(lens_results: dict[str, dict[str, Any]]) -> None:
+    """Tag every finding with how many lenses surfaced the same source.
+
+    The same article often matches several lens queries. Counting the lenses
+    that found it is a free strength signal: three lenses on one URL means
+    the story is cross-cutting, not incidental.
+    """
+    counts: dict[str, int] = {}
+    for data in lens_results.values():
+        for finding in data.get("findings", []):
+            url = finding.get("url")
+            if url:
+                counts[url] = counts.get(url, 0) + 1
+
+    for data in lens_results.values():
+        for finding in data.get("findings", []):
+            finding["corroboration"] = counts.get(finding.get("url", ""), 1)
+
+
 def investigate(question: str) -> dict[str, Any]:
     """Investigate a question using six lenses and return findings.
 
@@ -242,6 +232,7 @@ def investigate(question: str) -> dict[str, Any]:
         Dict with keys:
             question: the input question
             lens_results: {lens_name: {"queries": [...], "findings": [...]}} for six lenses
+            question_profile: {"entities": [...], "dates": [...], "amounts": [...]}
             synthesis: bounded LLM synthesis string (~1-2k tokens)
             provenance: tag summary across all findings
             contradictions: list of cross-lens contradictions
@@ -255,6 +246,9 @@ def investigate(question: str) -> dict[str, Any]:
     for lens_name in _LENS_FUNCS:
         lens_results[lens_name] = _run_lens(lens_name, entities, dates_amounts, question)
 
+    # Mark how many lenses surfaced each source
+    _apply_corroboration(lens_results)
+
     # Detect contradictions across lenses
     contradictions = _detect_contradictions(lens_results)
 
@@ -263,9 +257,12 @@ def investigate(question: str) -> dict[str, Any]:
         f for data in lens_results.values() for f in data.get("findings", [])
     ]
     tag_counts: dict[str, int] = {}
+    unique_urls: set[str] = set()
     for f in all_findings:
         tag = f.get("tag", "speculative")
         tag_counts[tag] = tag_counts.get(tag, 0) + 1
+        if f.get("url"):
+            unique_urls.add(f["url"])
 
     # Bounded LLM synthesis call (placeholder — actual LLM call would go here)
     synthesis = _synthesize(question, lens_results, contradictions)
@@ -273,9 +270,15 @@ def investigate(question: str) -> dict[str, Any]:
     return {
         "question": question,
         "lens_results": lens_results,
+        "question_profile": {
+            "entities": entities,
+            "dates": dates_amounts["dates"],
+            "amounts": dates_amounts["amounts"],
+        },
         "synthesis": synthesis,
         "provenance": {
             "total_findings": len(all_findings),
+            "unique_sources": len(unique_urls),
             "tag_counts": tag_counts,
             "lenses_run": list(_LENS_FUNCS.keys()),
         },
