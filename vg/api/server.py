@@ -118,6 +118,10 @@ class _RateLimiter:
 #: One limiter for the process; the limit itself comes from the config.
 _rate_limiter = _RateLimiter()
 
+#: A separate budget for rejected access keys, so a flood of wrong keys
+#: cannot lock out the clients that hold the right one.
+_auth_limiter = _RateLimiter()
+
 
 class VGWebHandler(BaseHTTPRequestHandler):
     """Serve the browser UI and analysis API."""
@@ -133,11 +137,12 @@ class VGWebHandler(BaseHTTPRequestHandler):
 
         The bundled UI is same-origin, so the default is to send no CORS
         headers at all — a wildcard would let any site drive the endpoint
-        and burn the operator's quota.
+        and burn the operator's quota. There is no wildcard escape hatch:
+        an origin has to be listed, one by one.
         """
         origin = self.headers.get("Origin")
         allowed = config.allowed_origins or ()
-        if not origin or (origin not in allowed and "*" not in allowed):
+        if not origin or origin not in allowed:
             return
         self.send_header("Access-Control-Allow-Origin", origin)
         self.send_header("Vary", "Origin")
@@ -334,8 +339,16 @@ class VGWebHandler(BaseHTTPRequestHandler):
         """Identify the caller for rate limiting.
 
         The socket address is used rather than ``X-Forwarded-For`` because a
-        forwarded header is trivially spoofed.
+        forwarded header is trivially spoofed. Behind a known ingress (the
+        Render/Koyeb proxy) every client shares one socket address, so the
+        deployment can opt in with ``VG_TRUST_PROXY=1`` — the platform
+        overwrites the header, which makes it trustworthy there.
         """
+        if config.trust_proxy:
+            forwarded = self.headers.get("X-Forwarded-For", "")
+            first = forwarded.split(",")[0].strip()
+            if first:
+                return first
         return self.client_address[0] if self.client_address else "unknown"
 
     def _access_key_configured(self) -> bool:
@@ -368,11 +381,34 @@ class VGWebHandler(BaseHTTPRequestHandler):
         return ""
 
     def _check_access(self) -> bool:
-        """Rate-limit the request, then enforce the deployment access key.
+        """Enforce the deployment access key, then the rate limit.
+
+        Authentication is checked first and charged to its own budget: a
+        flood of wrong keys must not eat the investigation quota of the
+        clients that hold the right key.
 
         Returns False — after sending the error response — when the request
         must not proceed.
         """
+        if self._access_key_configured() and not self._access_key_valid():
+            if not _auth_limiter.allow(
+                self._client_id(), limit=config.auth_attempt_limit_per_minute
+            ):
+                self._send_json(
+                    HTTPStatus.TOO_MANY_REQUESTS,
+                    {"error": "Too many requests. Try again in a minute."},
+                    extra_headers={"Retry-After": "60"},
+                )
+                return False
+            self._send_json(
+                HTTPStatus.UNAUTHORIZED,
+                {
+                    "error": "Access key required.",
+                    "hint": "Send the deployment key in X-VG-Access-Key.",
+                },
+            )
+            return False
+
         if not _rate_limiter.allow(
             self._client_id(), limit=config.rate_limit_per_minute
         ):
@@ -380,16 +416,6 @@ class VGWebHandler(BaseHTTPRequestHandler):
                 HTTPStatus.TOO_MANY_REQUESTS,
                 {"error": "Too many requests. Try again in a minute."},
                 extra_headers={"Retry-After": "60"},
-            )
-            return False
-
-        if self._access_key_configured() and not self._access_key_valid():
-            self._send_json(
-                HTTPStatus.UNAUTHORIZED,
-                {
-                    "error": "Access key required.",
-                    "hint": "Send the deployment key in X-VG-Access-Key.",
-                },
             )
             return False
 
@@ -440,26 +466,39 @@ class VGWebHandler(BaseHTTPRequestHandler):
         self._send_json(HTTPStatus.OK, result)
 
     # ─── Server ──────────────────────────────────────────────────────
-def run_server(host: str = "0.0.0.0", port: int = 8080) -> None:
-    """Start the threaded VG web server."""
-    print("  Mode: Mini CID Investigator")
-    print("  Server: VGWeb/2.0")
-    print("  Endpoint: POST /api/incident-investigate")
+def _startup_banner() -> list[str]:
+    """Describe the mode the server actually enforces.
+
+    A whitespace-only key is not a key, so it is reported as open mode —
+    the same rule the request path and ``/api/health`` apply.
+    """
+    lines = [
+        "  Mode: Mini CID Investigator",
+        "  Server: VGWeb/2.0",
+        "  Endpoint: POST /api/incident-investigate",
+    ]
 
     server_key = os.getenv("GROQ_API_KEY")
-    if config.access_key:
-        print("  Access: deployment key required (X-VG-Access-Key)")
-        print(
+    if (config.access_key or "").strip():
+        lines.append("  Access: deployment key required (X-VG-Access-Key)")
+        lines.append(
             "  Server fallback key: ✓ configured (synthesis for authorized callers)"
             if server_key
             else "  Server fallback key: ✗ not set (mechanical synthesis only)"
         )
     else:
-        print("  Access: open (rate-limited)")
-        print("  Server fallback key: ✗ not used — set VG_ACCESS_KEY to enable it")
-    print(
+        lines.append("  Access: open (rate-limited)")
+        lines.append("  Server fallback key: ✗ not used — set VG_ACCESS_KEY to enable it")
+    lines.append(
         f"  Rate limit: {config.rate_limit_per_minute} investigations/minute per client"
     )
+    return lines
+
+
+def run_server(host: str = "0.0.0.0", port: int = 8080) -> None:
+    """Start the threaded VG web server."""
+    for line in _startup_banner():
+        print(line)
 
     server = ThreadingHTTPServer((host, port), VGWebHandler)
     print(f"\nVG web interface running at http://{host}:{port}")

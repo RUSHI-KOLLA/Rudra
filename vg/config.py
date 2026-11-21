@@ -24,12 +24,21 @@ class Config:
     access_key: Optional[str] = None
 
     #: Origins allowed to call the API cross-origin. Empty means same-origin
-    #: only, which is all the bundled browser UI needs.
+    #: only, which is all the bundled browser UI needs. A wildcard is not
+    #: supported: list the origins explicitly.
     allowed_origins: tuple[str, ...] = ()
+
+    #: Trust the platform's ``X-Forwarded-For`` header when identifying the
+    #: client. Off by default: the header is trivially spoofable unless the
+    #: service is known to sit behind a proxy that overwrites it.
+    trust_proxy: bool = False
 
     # --- Request budgets ---
     #: Investigations allowed per minute per client address (0 = unlimited).
     rate_limit_per_minute: int = 10
+    #: Rejected access keys allowed per minute per client address. Kept
+    #: separate so a flood of wrong keys cannot lock out the real users.
+    auth_attempt_limit_per_minute: int = 30
     #: Longest accepted question, in characters.
     max_question_chars: int = 500
     #: Largest accepted request body, in bytes.
@@ -62,6 +71,26 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _env_bool(name: str, default: bool = False) -> bool:
+    """Read a boolean setting ("1", "true", "yes", "on" are true)."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_float(name: str, default: float) -> float:
+    """Read a float setting, falling back to the default on a bad value."""
+    raw = os.getenv(name)
+    if raw is None or not raw.strip():
+        return default
+    try:
+        return float(raw.strip())
+    except ValueError:
+        print(f"[vg-config] {name}={raw!r} is not a number — using {default}.")
+        return default
+
+
 def get_config() -> Config:
     """Build config from environment."""
     origins = tuple(
@@ -73,12 +102,16 @@ def get_config() -> Config:
         groq_api_key=os.getenv("GROQ_API_KEY"),
         access_key=os.getenv("VG_ACCESS_KEY"),
         allowed_origins=origins,
+        trust_proxy=_env_bool("VG_TRUST_PROXY"),
         rate_limit_per_minute=_env_int("VG_RATE_LIMIT_PER_MINUTE", 10),
+        auth_attempt_limit_per_minute=_env_int(
+            "VG_AUTH_ATTEMPT_LIMIT_PER_MINUTE", 30
+        ),
         max_question_chars=_env_int("VG_MAX_QUESTION_CHARS", 500),
         max_body_bytes=_env_int("VG_MAX_BODY_BYTES", 65536),
         max_investigation_seconds=_env_int("VG_MAX_INVESTIGATION_SECONDS", 60),
         model_large=os.getenv("GROQ_MODEL_LARGE", "openai/gpt-oss-120b"),
-        temperature=float(os.getenv("VG_TEMPERATURE", "0.2")),
+        temperature=_env_float("VG_TEMPERATURE", 0.2),
         max_tokens=_env_int("VG_MAX_TOKENS", 1500),
     )
 

@@ -32,6 +32,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Any, Iterable
 
+from vg.config import config
+
 from .sources import (
     search_money,
     search_power,
@@ -53,6 +55,10 @@ MAX_FINDINGS_PER_LENS = 40
 
 # Wall-clock ceiling for one investigation when the caller sets none.
 DEFAULT_DEADLINE_SECONDS = 60
+
+# Hard ceiling for the single synthesis call, even when the investigation
+# deadline still has room left.
+GROQ_MAX_TIMEOUT = 20.0
 
 # Test mode detection - the LLM synthesis path must stay off during tests
 _IN_TEST = "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
@@ -685,8 +691,16 @@ def investigate(
         tag = f.get("tag", "speculative")
         tag_counts[tag] = tag_counts.get(tag, 0) + 1
 
-    # Bounded LLM synthesis call (one Groq call when a key is available)
-    synthesis = _synthesize(question, lens_results, contradictions, api_key=api_key)
+    # Bounded LLM synthesis call (one Groq call when a key is available).
+    # The deadline covers the synthesis too: whatever budget the lenses left
+    # is what the model call gets, and a spent budget skips it entirely.
+    synthesis = _synthesize(
+        question,
+        lens_results,
+        contradictions,
+        api_key=api_key,
+        budget_seconds=deadline - time.monotonic(),
+    )
 
     return {
         "question": question,
@@ -717,7 +731,9 @@ def _synthesis_prompt(
 
     The evidence comes from search results, so it is untrusted text: it is
     fenced off and labelled so a hostile title cannot pass itself off as an
-    instruction to the model.
+    instruction to the model. The fence markers are literal, so any marker
+    characters inside the evidence are neutralised — otherwise a title
+    containing ``</evidence>`` could close the region early.
     """
     lines = [
         f"QUESTION: {question}",
@@ -734,16 +750,18 @@ def _synthesis_prompt(
             continue
         lines.append(f"\n[{lens_name}]")
         for finding in findings[:6]:
-            date = finding.get("date") or "no date"
+            date = _neutralize(finding.get("date") or "no date")
             lines.append(
-                f"- ({date}) [{finding.get('tag', 'reported_unconfirmed')}] "
-                f"{finding.get('title', '').strip()}"
+                f"- ({date}) [{_neutralize(finding.get('tag', 'reported_unconfirmed'))}] "
+                f"{_neutralize(finding.get('title', '').strip())}"
             )
     if contradictions:
         lines.append("\nCONTRADICTIONS:")
         for c in contradictions[:8]:
             lines.append(
-                f"- {c.get('subject', '?')}: {c.get('finding_a', '')} VS {c.get('finding_b', '')}"
+                f"- {_neutralize(c.get('subject', '?'))}: "
+                f"{_neutralize(c.get('finding_a', ''))} VS "
+                f"{_neutralize(c.get('finding_b', ''))}"
             )
     lines.append("</evidence>")
     lines.append(
@@ -754,30 +772,50 @@ def _synthesis_prompt(
     return "\n".join(lines)
 
 
+def _neutralize(text: str) -> str:
+    """Make untrusted text unable to imitate a prompt delimiter.
+
+    Angle brackets are replaced with their typographic equivalents, so a
+    source title can neither open nor close the evidence fence nor fake a
+    new instruction block.
+    """
+    return str(text).replace("<", "‹").replace(">", "›")
+
+
 def _groq_synthesis(
     question: str,
     lens_results: dict[str, dict[str, Any]],
     contradictions: list[dict[str, Any]],
     api_key: str | None = None,
+    budget_seconds: float | None = None,
 ) -> str | None:
     """One bounded Groq call. Returns None when no key/client is available.
 
-    ``api_key`` is the key submitted by the caller (BYOK). It falls back to
-    the server's ``GROQ_API_KEY`` so a self-hosted instance works with only
-    an environment variable set.
+    ``api_key`` is the key the caller was allowed to use — the caller's own
+    key (BYOK) or, behind the deployment access key, the server's. It is
+    the *only* key this function may use: reading ``GROQ_API_KEY`` here
+    would let an anonymous caller spend the operator's quota, because the
+    server passes an empty string in open mode.
     """
-    key = api_key or os.getenv("GROQ_API_KEY")
+    key = (api_key or "").strip()
     if not key:
+        return None
+    if budget_seconds is not None and budget_seconds <= 0:
         return None
     try:
         from groq import Groq
     except ImportError:
         return None
 
+    # The call must not outlive the investigation's own deadline.
+    timeout = GROQ_MAX_TIMEOUT
+    if budget_seconds is not None:
+        timeout = max(min(float(budget_seconds), GROQ_MAX_TIMEOUT), 0.1)
+
     try:
-        client = Groq(api_key=key)
+        client = Groq(api_key=key, timeout=timeout, max_retries=0)
         response = client.chat.completions.create(
-            model=os.getenv("GROQ_MODEL_LARGE", "openai/gpt-oss-120b"),
+            model=config.model_large,
             messages=[
                 {
                     "role": "system",
@@ -793,8 +831,8 @@ def _groq_synthesis(
                     question, lens_results, contradictions
                 )},
             ],
-            max_tokens=SYNTHESIS_MAX_TOKENS,
-            temperature=0.2,
+            max_tokens=config.max_tokens,
+            temperature=config.temperature,
         )
         text = (response.choices[0].message.content or "").strip()
         return text or None
@@ -807,18 +845,23 @@ def _synthesize(
     lens_results: dict[str, dict[str, Any]],
     contradictions: list[dict[str, Any]],
     api_key: str | None = None,
+    budget_seconds: float | None = None,
 ) -> str:
     """Bounded LLM synthesis call (~1-2k tokens total).
 
     Uses one Groq call when a key is available (the caller's key, else the
-    server's ``GROQ_API_KEY``). Falls back to the mechanical summary when no
-    key is configured or the call fails, so the endpoint always returns a
-    non-empty synthesis.
+    server's ``GROQ_API_KEY`` behind the deployment access key). Falls back
+    to the mechanical summary when no key is configured or the call fails,
+    so the endpoint always returns a non-empty synthesis.
     """
     if not _IN_TEST:
         try:
             llm_summary = _groq_synthesis(
-                question, lens_results, contradictions, api_key=api_key
+                question,
+                lens_results,
+                contradictions,
+                api_key=api_key,
+                budget_seconds=budget_seconds,
             )
             if llm_summary:
                 return llm_summary

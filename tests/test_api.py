@@ -483,6 +483,150 @@ class TestAccessControlAndBudgets:
         }
         assert sent.get("Access-Control-Allow-Origin") == "https://app.example"
 
+    def test_cors_does_not_treat_a_star_as_a_wildcard(self, monkeypatch):
+        """`*` is not an allowed origin — a wildcard would reopen the hole."""
+        monkeypatch.setattr(config, "allowed_origins", ("*",))
+        handler = create_mock_handler(
+            headers={"Origin": "https://evil.example"}, body=b"{}"
+        )
+        handler.path = "/api/health"
+        handler.do_GET()
+
+        sent = {
+            call.args[0]: call.args[1]
+            for call in handler.send_header.call_args_list
+            if len(call.args) == 2
+        }
+        assert "Access-Control-Allow-Origin" not in sent
+
+
+class TestRateLimitingBehindAProxy:
+    """A shared ingress must not put every client in one bucket."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated(self, monkeypatch):
+        from vg.api.server import _rate_limiter
+
+        monkeypatch.setattr(config, "access_key", None)
+        monkeypatch.setattr(config, "rate_limit_per_minute", 2)
+        monkeypatch.setattr(config, "trust_proxy", False)
+        _rate_limiter.reset()
+        yield
+        _rate_limiter.reset()
+
+    @staticmethod
+    def _client_id(handler) -> str:
+        from vg.api.server import VGWebHandler
+
+        return VGWebHandler._client_id(handler)
+
+    def test_the_peer_address_is_used_by_default(self):
+        """Without a trusted proxy the socket address is the client."""
+        handler = create_mock_handler(
+            headers={"X-Forwarded-For": "203.0.113.9"}, body=b"{}"
+        )
+        assert self._client_id(handler) != "203.0.113.9"
+
+    def test_a_trusted_proxy_header_identifies_the_client(self, monkeypatch):
+        """Behind a known ingress the forwarded address is the real client."""
+        monkeypatch.setattr(config, "trust_proxy", True)
+        handler = create_mock_handler(
+            headers={"X-Forwarded-For": "203.0.113.9, 10.0.0.1"}, body=b"{}"
+        )
+        assert self._client_id(handler) == "203.0.113.9"
+
+    def test_two_forwarded_clients_get_separate_budgets(self, monkeypatch):
+        """A shared proxy must not let one client exhaust another's quota."""
+        from vg.api.server import VGWebHandler, _rate_limiter
+
+        monkeypatch.setattr(config, "trust_proxy", True)
+        monkeypatch.setattr(config, "rate_limit_per_minute", 1)
+
+        first = create_mock_handler(
+            headers={"X-Forwarded-For": "203.0.113.9"}, body=b"{}"
+        )
+        second = create_mock_handler(
+            headers={"X-Forwarded-For": "203.0.113.10"}, body=b"{}"
+        )
+
+        id_a = VGWebHandler._client_id(first)
+        id_b = VGWebHandler._client_id(second)
+        assert id_a != id_b, (id_a, id_b)
+        assert _rate_limiter.allow(id_a, 1) is True
+        assert _rate_limiter.allow(id_b, 1) is True
+        assert _rate_limiter.allow(id_a, 1) is False
+
+
+class TestAuthFailuresDoNotSpendTheInvestigationBudget:
+    """A wrong access key must not lock out the legitimate users."""
+
+    @pytest.fixture(autouse=True)
+    def _isolated(self, monkeypatch):
+        from vg.api.server import _auth_limiter, _rate_limiter
+
+        monkeypatch.setattr(config, "access_key", "deployment-secret")
+        monkeypatch.setattr(config, "rate_limit_per_minute", 10)
+        monkeypatch.setattr(config, "auth_attempt_limit_per_minute", 20)
+        monkeypatch.setattr(config, "trust_proxy", False)
+        _rate_limiter.reset()
+        _auth_limiter.reset()
+        yield
+        _rate_limiter.reset()
+        _auth_limiter.reset()
+
+    def test_a_rejected_key_does_not_consume_the_investigation_budget(self, monkeypatch):
+        """Ten wrong keys must not block a valid request."""
+        from vg.api import server as server_mod
+
+        monkeypatch.setattr(
+            server_mod,
+            "investigate",
+            lambda question, api_key=None, deadline_seconds=None: {
+                "question": question,
+                "lens_results": {},
+                "question_profile": {},
+                "synthesis": "mechanical summary",
+                "provenance": {},
+                "contradictions": [],
+            },
+        )
+
+        for _ in range(10):
+            bad = create_mock_handler(
+                headers={"X-VG-Access-Key": "wrong"}, body=b"{}"
+            )
+            bad._handle_incident_investigate({"question": "Why did the CEO resign?"})
+            assert bad.send_response.call_args[0][0] == HTTPStatus.UNAUTHORIZED
+
+        good = create_mock_handler(
+            headers={"X-VG-Access-Key": "deployment-secret"}, body=b"{}"
+        )
+        good._handle_incident_investigate({"question": "Why did the CEO resign?"})
+        assert good.send_response.call_args[0][0] == HTTPStatus.OK
+
+
+class TestStartupBanner:
+    """The banner must describe the mode the server actually enforces."""
+
+    def test_a_blank_access_key_is_reported_as_open(self, monkeypatch):
+        """A whitespace-only key is not a key — the banner must say so."""
+        from vg.api import server as server_mod
+
+        monkeypatch.setattr(config, "access_key", "   ")
+        lines = server_mod._startup_banner()
+
+        assert any("Access: open" in line for line in lines), lines
+        assert not any("deployment key required" in line for line in lines), lines
+
+    def test_a_real_access_key_is_reported_as_locked(self, monkeypatch):
+        """A configured key is announced as required."""
+        from vg.api import server as server_mod
+
+        monkeypatch.setattr(config, "access_key", "deployment-secret")
+        lines = server_mod._startup_banner()
+
+        assert any("deployment key required" in line for line in lines), lines
+
 
 class TestBrowserHardening:
     """The UI must not hand its secrets to a compromised dependency."""
