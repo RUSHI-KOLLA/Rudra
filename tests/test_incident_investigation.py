@@ -481,6 +481,132 @@ class TestInvestigateWithMockedSearch:
         assert result["contradictions"] == [], \
             f"Expected no contradictions, got {result['contradictions']}"
 
+    def test_unconfirmed_is_not_treated_as_a_negation(self, monkeypatch):
+        """"Unconfirmed" is uncertainty, not the opposite of "confirmed".
+
+        The agreed contract keeps uncertainty out of the negation set: a
+        report that nobody has confirmed does not deny a confirmed report.
+        """
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Kochhar payment confirmed by two sources",
+                "url": "https://example.com/money",
+                "snippet": "Kochhar payment confirmed by two sources",
+                "date": "2024-01-15",
+                "query": f"{entity} payment",
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Kochhar payment remains unconfirmed",
+                "url": "https://example.com/secrecy",
+                "snippet": "Kochhar payment remains unconfirmed",
+                "date": "2024-01-16",
+                "query": f"{entity} unconfirmed",
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert result["contradictions"] == [], result["contradictions"]
+
+    def test_mutually_exclusive_legal_outcomes_are_contradictions(self, monkeypatch):
+        """Acquittal vs conviction is one case, two exclusive outcomes.
+
+        The procedural-object guard treats "acquittal" and "conviction" as
+        different objects (parallel stages). They are mutually exclusive
+        outcomes, so this pair is a contradiction.
+        """
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Kochhar acquittal confirmed by the court",
+                "url": "https://example.com/money",
+                "snippet": "Kochhar acquittal confirmed by the court",
+                "date": "2024-01-15",
+                "query": f"{entity} payment",
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Kochhar conviction denied by the court",
+                "url": "https://example.com/secrecy",
+                "snippet": "Kochhar conviction denied by the court",
+                "date": "2024-01-16",
+                "query": f"{entity} denied",
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert len(result["contradictions"]) == 1, result["contradictions"]
+        contradiction = result["contradictions"][0]
+        assert contradiction["type"] == "denial_vs_affirmation"
+        assert contradiction["subject"] == "Kochhar"
+
+    def test_two_affirmative_exclusive_outcomes_are_contradictions(self, monkeypatch):
+        """"Acquitted" and "convicted" are opposites even without a denial word."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Kochhar acquitted in the loan fraud case",
+                "url": "https://example.com/money",
+                "snippet": "Kochhar acquitted in the loan fraud case",
+                "date": "2024-01-15",
+                "query": f"{entity} payment",
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Kochhar convicted in the loan fraud case",
+                "url": "https://example.com/secrecy",
+                "snippet": "Kochhar convicted in the loan fraud case",
+                "date": "2024-01-16",
+                "query": f"{entity} convicted",
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        assert len(result["contradictions"]) == 1, result["contradictions"]
+
     def test_parallel_legal_rulings_are_not_contradictions(self, monkeypatch):
         """Two different court rulings on the same case are not a contradiction.
 

@@ -29,7 +29,7 @@ import os
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any
+from typing import Any, Iterable
 
 from .sources import (
     search_money,
@@ -177,9 +177,11 @@ def question_snippet(question: str, term: str) -> str:
 # ---------------------------------------------------------------------------
 
 #: Words that reverse a claim.
+#: "unconfirmed" is deliberately absent: uncertainty is not the opposite of
+#: confirmation, so an unconfirmed report does not contradict a confirmed one.
 _NEGATION_TERMS = (
     "denied", "denies", "deny", "quashed", "rejected", "reversed", "cleared",
-    "dismissed", "refuted", "false", "baseless", "unsubstantiated", "unconfirmed",
+    "dismissed", "refuted", "false", "baseless", "unsubstantiated",
 )
 
 #: Words that assert a claim.
@@ -212,7 +214,19 @@ _LEGAL_OBJECTS = frozenset({
 })
 
 
-def _has_term(text: str, terms: tuple[str, ...]) -> bool:
+#: Mutually exclusive legal outcomes, as (one side, the other side) term
+#: sets per axis. Two findings naming opposite sides of the same axis talk
+#: about the same case, so they contradict — even when the procedural-object
+#: guard would otherwise treat them as parallel stages.
+_LEGAL_OUTCOME_AXES = (
+    (
+        frozenset({"convicted", "conviction", "sentenced", "found guilty"}),
+        frozenset({"acquitted", "acquittal", "not guilty", "cleared of all charges"}),
+    ),
+)
+
+
+def _has_term(text: str, terms: Iterable[str]) -> bool:
     """True when any term appears as a whole word (so 'unconfirmed' != 'confirmed')."""
     return any(re.search(rf"\b{re.escape(term)}\b", text) for term in terms)
 
@@ -220,6 +234,24 @@ def _has_term(text: str, terms: tuple[str, ...]) -> bool:
 def _polarity(text: str) -> tuple[bool, bool]:
     """Return (has_negation, has_affirmation) for a piece of text."""
     return _has_term(text, _NEGATION_TERMS), _has_term(text, _AFFIRMATION_TERMS)
+
+
+def _exclusive_legal_outcomes(text_a: str, text_b: str) -> bool:
+    """True when the two texts name opposite sides of one legal outcome axis.
+
+    "Acquittal confirmed" and "Conviction denied" are mutually exclusive
+    outcomes of one case. The procedural-object guard sees two different
+    objects and would call them parallel stages, which would hide a real
+    conflict.
+    """
+    for positive, negative in _LEGAL_OUTCOME_AXES:
+        if (
+            _has_term(text_a, positive) and _has_term(text_b, negative)
+        ) or (
+            _has_term(text_a, negative) and _has_term(text_b, positive)
+        ):
+            return True
+    return False
 
 
 def _legal_objects(text: str) -> set[str]:
@@ -262,6 +294,9 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
     ("denied" vs "confirmed") AND they are talking about the same subject.
     Requiring a shared subject is what stops two unrelated claims that
     happen to use opposite words from being reported as a contradiction.
+
+    Two findings that name mutually exclusive legal outcomes (acquittal vs
+    conviction) contradict even when both are phrased affirmatively.
     """
     contradictions: list[dict[str, Any]] = []
     lens_names = sorted(lens_results)
@@ -275,10 +310,14 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
                     fa_neg, fa_aff = _polarity(fa_text)
                     fb_neg, fb_aff = _polarity(fb_text)
 
-                    if not ((fa_neg and fb_aff) or (fa_aff and fb_neg)):
+                    exclusive = _exclusive_legal_outcomes(fa_text, fb_text)
+                    opposite_polarity = (fa_neg and fb_aff) or (fa_aff and fb_neg)
+                    if not (opposite_polarity or exclusive):
                         continue
 
-                    if _parallel_legal_developments(fa_text, fb_text):
+                    # Parallel legal developments are not a conflict — unless
+                    # the two findings name mutually exclusive outcomes.
+                    if not exclusive and _parallel_legal_developments(fa_text, fb_text):
                         continue
 
                     subjects_a = _subjects(fa)
