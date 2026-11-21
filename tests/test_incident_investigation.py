@@ -166,6 +166,15 @@ class TestSourcesFreeSearch:
         dates = extract_dates(text)
         assert "2024-01-15" in dates
 
+    def test_extract_dates_returns_full_years(self):
+        """Bare years come back whole (2018), not as the century prefix (20)."""
+        from vg.incidents.sources import extract_dates
+        dates = extract_dates("The event happened in 2018 and 2019 and 2020.")
+        assert "2018" in dates
+        assert "2019" in dates
+        assert "2020" in dates
+        assert "20" not in dates
+
     def test_extract_amounts_from_text(self):
         """Mechanical amount extraction from text returns list of amount strings."""
         from vg.incidents.sources import extract_amounts
@@ -408,3 +417,170 @@ class TestInvestigateWithMockedSearch:
         # (mechanical extractions don't have url and use "inferred" tag)
 
 
+# ---------------------------------------------------------------------------
+# Task 5: keyless news sources — Google News RSS + GDELT (Brave replacement)
+# ---------------------------------------------------------------------------
+
+
+class TestGoogleNewsParser:
+    """_parse_google_news() turns a Google News RSS feed into result dicts."""
+
+    RSS = """<?xml version="1.0" encoding="UTF-8"?>
+    <rss version="2.0"><channel>
+      <item>
+        <title>Bank chief quits over loan fraud - The Wire</title>
+        <link>https://news.google.com/rss/articles/abc</link>
+        <pubDate>Wed, 21 Mar 2018 10:00:00 GMT</pubDate>
+        <description>&lt;a href="https://news.google.com/rss/articles/abc"&gt;Bank chief quits&lt;/a&gt;</description>
+        <source url="https://thewire.in">The Wire</source>
+      </item>
+      <item>
+        <title>Headline with no publisher suffix</title>
+        <link>https://news.google.com/rss/articles/def</link>
+        <pubDate>not a real date</pubDate>
+        <source>Example News</source>
+      </item>
+    </channel></rss>"""
+
+    def test_strips_publisher_suffix_from_title(self):
+        from vg.incidents.sources import _parse_google_news
+        results = _parse_google_news(self.RSS)
+        assert results[0]["title"] == "Bank chief quits over loan fraud"
+
+    def test_returns_url_date_and_tag(self):
+        from vg.incidents.sources import _parse_google_news
+        results = _parse_google_news(self.RSS)
+        assert results[0]["url"] == "https://news.google.com/rss/articles/abc"
+        assert results[0]["date"] == "2018-03-21"
+        assert results[0]["tag"] == "reported_unconfirmed"
+        assert "The Wire" in results[0]["snippet"]
+
+    def test_survives_unparseable_date(self):
+        from vg.incidents.sources import _parse_google_news
+        results = _parse_google_news(self.RSS)
+        assert results[1]["date"] == ""
+        assert results[1]["title"] == "Headline with no publisher suffix"
+
+    def test_empty_channel_returns_empty_list(self):
+        from vg.incidents.sources import _parse_google_news
+        assert _parse_google_news("<rss><channel></channel></rss>") == []
+
+    def test_malformed_xml_returns_empty_list(self):
+        from vg.incidents.sources import _parse_google_news
+        assert _parse_google_news("<rss><channel>") == []
+
+
+class TestGdeltParser:
+    """_parse_gdelt() turns a GDELT DOC artlist payload into result dicts."""
+
+    PAYLOAD = {
+        "articles": [{
+            "title": "ICICI Bank chief quits",
+            "url": "https://example.com/a",
+            "domain": "example.com",
+            "seendate": "20180321T100000Z",
+            "language": "English",
+            "sourcecountry": "India",
+        }, {
+            "title": "",
+            "url": "https://example.com/empty-title",
+            "domain": "example.com",
+            "seendate": "20180322T100000Z",
+        }],
+    }
+
+    def test_parses_article_fields(self):
+        from vg.incidents.sources import _parse_gdelt
+        results = _parse_gdelt(self.PAYLOAD)
+        assert len(results) == 1
+        assert results[0]["title"] == "ICICI Bank chief quits"
+        assert results[0]["url"] == "https://example.com/a"
+        assert results[0]["date"] == "2018-03-21"
+        assert results[0]["tag"] == "reported_unconfirmed"
+        assert "example.com" in results[0]["snippet"]
+
+    def test_empty_payload_returns_empty_list(self):
+        from vg.incidents.sources import _parse_gdelt
+        assert _parse_gdelt({}) == []
+
+
+class TestKeylessSearchChain:
+    """search_free() falls back Brave -> Google News -> GDELT without keys."""
+
+    def test_uses_google_news_when_brave_returns_nothing(self, monkeypatch):
+        from vg.incidents import sources as src
+        monkeypatch.setattr(src, "_search_brave", lambda q: [])
+        monkeypatch.setattr(src, "_search_google_news", lambda q: [
+            {"title": "News hit", "url": "https://n.example/1", "snippet": "s", "date": "2018-03-21"}
+        ])
+        monkeypatch.setattr(src, "_search_gdelt", lambda q: [])
+        results = src.search_free("test query")
+        assert results[0]["title"] == "News hit"
+
+    def test_falls_back_to_gdelt_when_news_empty(self, monkeypatch):
+        from vg.incidents import sources as src
+        monkeypatch.setattr(src, "_search_brave", lambda q: [])
+        monkeypatch.setattr(src, "_search_google_news", lambda q: [])
+        monkeypatch.setattr(src, "_search_gdelt", lambda q: [
+            {"title": "GDELT hit", "url": "https://g.example/1", "snippet": "s", "date": "2018-03-21"}
+        ])
+        results = src.search_free("test query")
+        assert results[0]["title"] == "GDELT hit"
+
+    def test_gdelt_is_throttled_to_one_call_per_interval(self, monkeypatch):
+        from vg.incidents import sources as src
+        calls = []
+
+        class _Response:
+            status_code = 200
+
+            def raise_for_status(self):
+                return None
+
+            def json(self):
+                return {"articles": []}
+
+        def fake_get(*args, **kwargs):
+            calls.append(1)
+            return _Response()
+
+        monkeypatch.setattr(src, "_IN_TEST", False)
+        monkeypatch.setattr(src.requests, "get", fake_get)
+        monkeypatch.setattr(src, "_GDELT_LAST_CALL", 0.0)
+        src._search_gdelt("first")
+        src._search_gdelt("second")
+        assert len(calls) == 1
+
+    def test_lens_search_dedupes_results_by_url(self, monkeypatch):
+        from vg.incidents import sources as src
+        monkeypatch.setattr(src, "search_free", lambda q: [{
+            "title": "Test Entity named in report", "url": "https://same.example/1",
+            "snippet": "s", "date": "",
+        }])
+        results = src._lens_search("money", "Test Entity")
+        assert [r["url"] for r in results] == ["https://same.example/1"]
+
+    def test_lens_search_quotes_the_entity(self, monkeypatch):
+        """Quoting the entity keeps Google News on-topic instead of fuzzy-matching noise."""
+        from vg.incidents import sources as src
+        seen_queries = []
+
+        def fake_search(query):
+            seen_queries.append(query)
+            return []
+
+        monkeypatch.setattr(src, "search_free", fake_search)
+        src._lens_search("timing", "Chanda Kochhar")
+        assert seen_queries, "expected at least one query"
+        assert all('"Chanda Kochhar"' in q for q in seen_queries)
+
+    def test_lens_search_drops_results_that_do_not_mention_the_entity(self, monkeypatch):
+        from vg.incidents import sources as src
+        monkeypatch.setattr(src, "search_free", lambda q: [
+            {"title": "Changes on the cards for Australia Test team",
+             "url": "https://noise.example/1", "snippet": "cricket", "date": ""},
+            {"title": "Chanda Kochhar quits ICICI Bank",
+             "url": "https://real.example/2", "snippet": "resignation", "date": ""},
+        ])
+        results = src._lens_search("timing", "Chanda Kochhar")
+        assert [r["url"] for r in results] == ["https://real.example/2"]
