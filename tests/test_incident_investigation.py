@@ -339,6 +339,67 @@ class TestInvestigatePipeline:
         assert prov["lens_findings"] == len(inv_mod._LENS_FUNCS), prov
 
 
+class TestEntityExtraction:
+    """The entity extractor must recognise the common ways people name a subject."""
+
+    @staticmethod
+    def _entities(question: str) -> list[str]:
+        from vg.incidents.investigation import _extract_entities
+
+        return _extract_entities(question)
+
+    def test_single_token_surname_is_extracted(self):
+        """A surname on its own is a valid subject."""
+        assert self._entities("Why did Kochhar resign?") == ["Kochhar"]
+
+    def test_acronym_is_extracted(self):
+        """Regulator and company acronyms are valid subjects."""
+        assert self._entities("Why did RBI resign?") == ["RBI"]
+
+    def test_single_word_company_is_extracted(self):
+        """A one-word company name is a valid subject."""
+        assert self._entities("What happened to Boeing?") == ["Boeing"]
+
+    def test_organisation_suffix_belongs_to_the_name(self):
+        """"State Bank" is one organisation, not the word "State"."""
+        assert self._entities("Why did State Bank fail?") == ["State Bank"]
+
+    def test_person_and_company_are_separate_entities(self):
+        """Two named subjects in one question are both extracted."""
+        assert self._entities(
+            "Why did Chanda Kochhar resign from ICICI Bank in 2018?"
+        ) == ["Chanda Kochhar", "ICICI Bank"]
+
+    def test_role_words_are_not_entities(self):
+        """A job title is not a subject to investigate."""
+        assert self._entities("Why did the CEO resign?") == []
+
+    def test_of_style_names_are_kept_together(self):
+        """"Bank of Baroda" is one name."""
+        assert self._entities("What happened to Bank of Baroda?") == ["Bank of Baroda"]
+
+    def test_generic_words_are_not_entities(self):
+        """Capitalised filler words must not become subjects."""
+        assert self._entities("Why did the Government collapse?") == []
+
+    def test_question_without_an_entity_still_searches(self, monkeypatch):
+        """A question naming nobody must still run the lenses."""
+        from vg.incidents import investigation as inv_mod
+
+        seen: list[str] = []
+
+        def mock_lens(entity):
+            seen.append(entity)
+            return []
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did the CEO resign?")
+        assert seen, "no lens was asked to search"
+        assert any("resign" in subject.lower() for subject in seen), seen
+
+
 # ---------------------------------------------------------------------------
 # Task 4: Mocked search_free() tests — provenance & contradiction detection
 # ---------------------------------------------------------------------------

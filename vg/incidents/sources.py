@@ -763,6 +763,22 @@ def _mentions_entity(result: dict[str, Any], entity: str) -> bool:
     return any(token in text for token in tokens)
 
 
+def _is_proper_name(subject: str) -> bool:
+    """True when every word of the subject is capitalised.
+
+    A proper name is quoted so news search matches it exactly ("Chanda
+    Kochhar"). A free-text fallback subject ("CEO resign") must not be
+    quoted — an exact-phrase match for it would find nothing.
+    """
+    connectors = {"of", "the", "and", "de", "van", "von", "der"}
+    for word in subject.split():
+        if word.lower() in connectors:
+            continue
+        if not word[:1].isupper():
+            return False
+    return True
+
+
 def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
     """Run a lens-specific search for an entity using free web search."""
     templates = LENS_QUERY_TEMPLATES.get(lens, [])
@@ -770,7 +786,7 @@ def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
     seen: set[str] = set()
     # Quote the entity so news search matches the name exactly instead of
     # fuzzy-matching every word in the lens template.
-    quoted_entity = f'"{entity}"'
+    quoted_entity = f'"{entity}"' if _is_proper_name(entity) else entity
     for template in templates:
         query = template.format(entity=quoted_entity)
         for r in search_free(query):

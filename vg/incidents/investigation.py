@@ -56,27 +56,167 @@ VALID_TAGS = {"documented", "reported_unconfirmed", "inferred", "speculative"}
 # Mechanical entity extraction from a question
 # ---------------------------------------------------------------------------
 
-_ENTITY_PATTERNS = [
-    re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:CEO|CFO|founder|chairman|chairperson|president|minister|director)\b"),
-    re.compile(r"\b([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s+(?:Inc|Corp|Corporation|Ltd|Limited|LLC|PLC|Group|Bank|Banking)\b"),
-]
+#: Function words, auxiliaries, interrogatives and news filler. These never
+#: identify a subject on their own.
+_STOP_WORDS = frozenset({
+    # interrogatives and auxiliaries
+    "why", "what", "when", "where", "who", "whom", "whose", "which", "how",
+    "whether", "did", "do", "does", "done", "is", "are", "was", "were", "be",
+    "been", "being", "am", "has", "have", "had", "having", "will", "would",
+    "shall", "should", "can", "could", "may", "might", "must", "need",
+    # function words
+    "the", "and", "or", "but", "if", "then", "than", "so", "because", "as",
+    "of", "in", "on", "at", "to", "for", "from", "by", "with", "without",
+    "about", "after", "before", "during", "since", "until", "while",
+    "between", "through", "over", "under", "again", "further", "once",
+    "here", "there", "all", "any", "both", "each", "few", "more", "most",
+    "other", "some", "such", "no", "nor", "not", "only", "own", "same",
+    "too", "very", "just", "also", "now", "still", "yet", "ever", "never",
+    # news and task filler
+    "report", "reports", "reported", "reporting", "latest", "update",
+    "updates", "breaking", "news", "please", "tell", "explain", "investigate",
+    "investigation", "looking", "look", "find", "research", "happen",
+    "happened", "happens",
+    # months and weekdays
+    "january", "february", "march", "april", "june", "july", "august",
+    "september", "october", "november", "december",
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday",
+    "sunday",
+    # pronouns
+    "i", "me", "my", "we", "our", "you", "your", "he", "him", "his", "she",
+    "her", "it", "its", "they", "them", "their", "this", "that", "these",
+    "those",
+})
+
+#: Job titles and offices. A title is not a subject to investigate.
+_ROLE_WORDS = frozenset({
+    "ceo", "cfo", "coo", "cto", "cio", "cmo", "md", "chairman", "chairwoman",
+    "chairperson", "founder", "cofounder", "president", "vicepresident",
+    "minister", "secretary", "director", "directors", "governor",
+    "commissioner", "judge", "justice", "magistrate", "officer", "partner",
+    "analyst", "reporter", "lawyer", "prosecutor", "auditor", "inspector",
+    "supervisor", "executive", "head", "chief", "sheriff", "mayor",
+    "senator", "congressman", "administrator",
+})
+
+#: Words that can head an "X of Y" organisation name.
+_ORG_HEAD_WORDS = frozenset({
+    "bank", "ministry", "department", "university", "agency", "office",
+    "court", "council", "committee", "institute", "commission", "board",
+    "bureau", "authority", "fund", "house", "centre", "center", "group",
+    "company", "corporation", "party", "school", "academy", "hospital",
+    "museum", "library", "association", "federation", "union", "airline",
+    "airlines", "motor", "motors", "steel", "securities", "capital",
+    "partners", "associates", "technologies", "technology", "systems",
+    "pharma", "energy", "power", "foods", "tribunal", "commission",
+})
+
+#: Name particles that always join the words around them.
+_NAME_PARTICLES = frozenset({
+    "de", "van", "von", "der", "den", "du", "da", "di", "del", "la", "le",
+    "bin", "ibn", "al",
+})
+
+#: Words that only count as a subject when they are part of a longer name.
+_GENERIC_ALONE = frozenset({
+    "state", "government", "parliament", "senate", "congress", "court",
+    "courts", "board", "ministry", "department", "agency", "commission",
+    "council", "office", "bank", "banks", "company", "firm", "group",
+    "market", "industry", "sector", "country", "city", "world", "people",
+    "police", "army", "navy", "president", "prime", "minister", "party",
+    "fraud", "corruption", "bribery", "money", "loan", "loans", "banking",
+    "timeline", "history", "background", "context", "summary", "analysis",
+    "resignation", "resigned", "allegations", "charges", "scandal",
+    "investigation", "report", "reports", "truth", "facts", "evidence",
+})
+
+
+def _is_name_token(token: str) -> bool:
+    """True when a token can be part of a name (person, company, acronym)."""
+    if len(token) < 2 or not token[:1].isupper():
+        return False
+    lower = token.lower()
+    return lower not in _STOP_WORDS and lower not in _ROLE_WORDS
 
 
 def _extract_entities(question: str) -> list[str]:
-    """Extract person/entity names from a question using gazetteer patterns."""
+    """Extract the subjects named in a question.
+
+    Handles the forms people actually use: full names, single surnames,
+    acronyms ("RBI"), one-word companies ("Boeing"), names carrying an
+    organisation suffix ("State Bank", "ICICI Bank") and "of" style names
+    ("Bank of Baroda").
+    """
+    tokens = re.findall(r"[A-Za-z][A-Za-z&]*", question)
     entities: list[str] = []
-    for pattern in _ENTITY_PATTERNS:
-        for m in pattern.finditer(question):
-            name = m.group(1)
+
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        if not _is_name_token(token):
+            index += 1
+            continue
+
+        phrase = [token]
+        cursor = index + 1
+        while cursor < len(tokens):
+            following = tokens[cursor]
+            if _is_name_token(following):
+                phrase.append(following)
+                cursor += 1
+                continue
+            lower = following.lower()
+            if (
+                lower in _NAME_PARTICLES
+                and cursor + 1 < len(tokens)
+                and _is_name_token(tokens[cursor + 1])
+            ):
+                phrase.append(following)
+                cursor += 1
+                continue
+            if (
+                lower == "of"
+                and phrase[-1].lower() in _ORG_HEAD_WORDS
+                and cursor + 1 < len(tokens)
+                and _is_name_token(tokens[cursor + 1])
+            ):
+                phrase.append(following)
+                cursor += 1
+                continue
+            break
+
+        name = " ".join(phrase)
+        # A lone generic word ("Bank", "Government") is not a subject.
+        if len(phrase) > 1 or name.lower() not in _GENERIC_ALONE:
             if name not in entities:
                 entities.append(name)
-    # Fallback: any capitalised multi-word phrase
-    if not entities:
-        for m in re.finditer(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b", question):
-            name = m.group(0)
-            if name not in entities:
-                entities.append(name)
+        index = cursor
+
     return entities[:5]  # Cap at 5 entities
+
+
+def _fallback_subject(question: str) -> str:
+    """A search subject for a question that names nobody.
+
+    "Why did the CEO resign?" has no entity, but it still has content words
+    worth searching; without this the six lenses would return nothing at all.
+    """
+    words: list[str] = []
+    for token in re.findall(r"[A-Za-z][A-Za-z&]*", question):
+        if token.lower() in _STOP_WORDS or len(token) < 3:
+            continue
+        words.append(token)
+        if len(words) >= 4:
+            break
+    return " ".join(words)
+
+
+def _search_subjects(question: str, entities: list[str]) -> list[str]:
+    """What the lenses search for: the named subjects, or a fallback."""
+    if entities:
+        return entities
+    fallback = _fallback_subject(question)
+    return [fallback] if fallback else []
 
 
 def _extract_dates_amounts(question: str) -> dict[str, list[str]]:
@@ -113,8 +253,8 @@ def _is_safe_url(url: str) -> bool:
     return url.lower().startswith(_SAFE_URL_PREFIXES)
 
 
-def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list[str]], question: str) -> dict[str, Any]:
-    """Run one investigative lens against extracted entities.
+def _run_lens(lens_name: str, subjects: list[str], dates_amounts: dict[str, list[str]], question: str) -> dict[str, Any]:
+    """Run one investigative lens against the subjects of the question.
 
     Returns {'queries': [...], 'findings': [...]} where each finding has
     {title, url, snippet, date, tag, lens, question}. Mechanical question
@@ -129,9 +269,9 @@ def _run_lens(lens_name: str, entities: list[str], dates_amounts: dict[str, list
     seen_queries: set[str] = set()
 
     search_fn = _LENS_FUNCS[lens_name]
-    for entity in entities:
+    for subject in subjects:
         try:
-            results = search_fn(entity)
+            results = search_fn(subject)
         except Exception as exc:
             return {
                 "queries": queries,
@@ -399,6 +539,8 @@ def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
     # Extract entities, dates, amounts from the question
     entities = _extract_entities(question)
     dates_amounts = _extract_dates_amounts(question)
+    # A question that names nobody still has something to search for.
+    subjects = _search_subjects(question, entities)
 
     # Run all six lenses concurrently — each lens is network-bound, so
     # serial execution would multiply the slowest source by six.
@@ -406,7 +548,7 @@ def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
     with ThreadPoolExecutor(max_workers=len(_LENS_FUNCS)) as pool:
         futures = {
             lens_name: pool.submit(
-                _run_lens, lens_name, entities, dates_amounts, question
+                _run_lens, lens_name, subjects, dates_amounts, question
             )
             for lens_name in _LENS_FUNCS
         }
