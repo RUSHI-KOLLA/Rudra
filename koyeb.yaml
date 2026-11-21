@@ -33,8 +33,6 @@ definition:
         # Add your API keys in Koyeb dashboard (Settings → Variables) instead of here
         # - name: GROQ_API_KEY
         #   value: "gsk_..."
-        # - name: TAVILY_API_KEY
-        #   value: "tvly_..."
 
   # Optional: custom domain (configure in Koyeb dashboard after first deploy)
   # domains:

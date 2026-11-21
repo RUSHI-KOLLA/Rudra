@@ -8,6 +8,10 @@ cache/
 vg_cache/
 .chroma/
 
+# Tooling scratch (execution ledgers, local MCP artifacts)
+.superpowers/
+.playwright-mcp/
+
 # Python
 __pycache__/
 *.py[cod]

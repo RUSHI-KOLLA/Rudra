@@ -7,9 +7,6 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy source into vg/ subdirectory to make it a proper package
-COPY . vg/
-
 # ---- Runtime stage: minimal image ----
 FROM python:3.11-slim
 
@@ -19,8 +16,8 @@ WORKDIR /app
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
-# Copy application code (vg package)
-COPY --from=builder /app/vg ./vg
+# Copy the vg package (api/, incidents/, config.py, main.py)
+COPY vg/ /app/vg/
 
 # Non-root user for security
 RUN useradd --create-home --shell /bin/bash appuser && chown -R appuser:appuser /app

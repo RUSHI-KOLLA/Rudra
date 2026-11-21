@@ -14,7 +14,7 @@ if str(PROJECT_ROOT) in sys.path:
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from vg.config import config
-from api.server import VGWebHandler
+from vg.api.server import VGWebHandler
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import urlparse

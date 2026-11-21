@@ -1,9 +1,10 @@
 services:
   - type: web
-    name: vg-intelligence
+    name: vg-cid-investigator
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: ln -sfn . vg && PYTHONPATH=. python -m vg.main --web --port $PORT
+    startCommand: PYTHONPATH=. python -m vg.main --web --port $PORT
     envVars:
-      - key: TAVILY_API_KEY
-        sync: true
+      # Optional. Without it the investigator returns its mechanical summary.
+      - key: GROQ_API_KEY
+        sync: false

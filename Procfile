@@ -1,1 +1,1 @@
-web: ln -sfn . vg && PYTHONPATH=. python -m vg.main --web --port $PORT
+web: PYTHONPATH=. python -m vg.main --web --port $PORT

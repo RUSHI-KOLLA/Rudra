@@ -1,9 +1,9 @@
-"""Tests for the new investigate(question) pipeline (v6 architecture).
+"""Tests for the Mini CID investigator pipeline.
 
-Replaces run_match(paste) as the primary flow. Tests cover:
-- schema.py v6: external_pressure field
-- sources.py: free search/data sources
-- investigation.py: investigate(question) with six lenses
+Covers:
+- sources.py: free search/data sources (no paid APIs, no keys required)
+- investigation.py: investigate(question) with six lenses, provenance,
+  corroboration and contradiction detection
 """
 
 from __future__ import annotations
@@ -15,114 +15,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pytest
 
-from vg.incidents.schema import (
-    IncidentCard,
-    SCHEMA_VERSION,
-    WEIGHTS_VERSION,
-    TEMPLATE_VERSION,
-    load_card,
-)
-from vg.incidents.schema import Status, TriggerType, Tempo, ExitAuthority, Succession
-
 
 # ---------------------------------------------------------------------------
-# Task 1: schema.py v6 — external_pressure field
-# ---------------------------------------------------------------------------
-
-
-class TestSchemaV6ExternalPressure:
-    """Test that external_pressure field exists on IncidentCard (v6)."""
-
-    def test_versions_bumped_to_7(self):
-        """All three versions bump to 7 when schema changes (unverified field added)."""
-        assert SCHEMA_VERSION == 7
-        assert WEIGHTS_VERSION == 7
-        assert TEMPLATE_VERSION == 7
-
-    def test_card_has_external_pressure_field(self):
-        """IncidentCard accepts and stores external_pressure."""
-        card = IncidentCard(
-            incident_id="test_1",
-            title="Test",
-            status=Status.CURATED,
-            date="2024-01-01",
-            recorded_at="2024-01-02",
-            actors=["Alice", "Bob"],
-            actor_roles=["ceo", "board"],
-            sector="tech",
-            geography="us",
-            trigger="test",
-            trigger_type=TriggerType.FRAUD,
-            constraint_types=[],
-            legal_outcome="none",
-            escalation_vector=[],
-            tempo=Tempo.DAYS,
-            exit_authority=ExitAuthority.BOARD,
-            succession=Succession.INTERNAL,
-            timeline=[],
-            resolution=[],
-            external_pressure="regulatory investigation pending",
-        )
-        assert card.external_pressure == "regulatory investigation pending"
-
-    def test_card_external_pressure_defaults_to_empty_string(self):
-        """external_pressure defaults to empty string when not provided."""
-        card = IncidentCard(
-            incident_id="test_2",
-            title="Test 2",
-            status=Status.CURATED,
-            date="2024-01-01",
-            recorded_at="2024-01-02",
-            actors=["Alice", "Bob"],
-            actor_roles=["ceo", "board"],
-            sector="tech",
-            geography="us",
-            trigger="test",
-            trigger_type=TriggerType.FRAUD,
-            constraint_types=[],
-            legal_outcome="none",
-            escalation_vector=[],
-            tempo=Tempo.DAYS,
-            exit_authority=ExitAuthority.BOARD,
-            succession=Succession.INTERNAL,
-            timeline=[],
-            resolution=[],
-        )
-        assert card.external_pressure == ""
-
-    def test_from_dict_handles_missing_external_pressure(self):
-        """Loading a card without external_pressure (backward compat) defaults to empty."""
-        data = {
-            "incident_id": "test_3",
-            "title": "Test 3",
-            "status": "curated",
-            "date": "2024-01-01",
-            "recorded_at": "2024-01-02",
-            "actors": ["Alice", "Bob"],
-            "actor_roles": ["ceo", "board"],
-            "sector": "tech",
-            "geography": "us",
-            "trigger": "test",
-            "trigger_type": "fraud",
-            "constraint_types": [],
-            "legal_outcome": "none",
-            "escalation_vector": [],
-            "tempo": "days",
-            "exit_authority": "board",
-            "succession": "internal",
-            "timeline": [],
-            "resolution": [],
-            # external_pressure deliberately absent
-            "summary_embed": "",
-            "claims": [],
-            "sources": [],
-        }
-        card = IncidentCard.from_dict(data)
-        assert card.external_pressure == ""
-
-
-# ---------------------------------------------------------------------------
-# Task 2: sources.py — free search/data sources
+# sources.py — free search/data sources
 # ---------------------------------------------------------------------------
 
 
@@ -196,6 +91,21 @@ class TestSourcesFreeSearch:
         importlib.reload(src)
         # Module imports without error even without Tavily key
         assert src is not None
+
+    def test_incidents_package_has_no_store_dependency(self):
+        """The package no longer exposes the Chroma-backed incident store."""
+        import vg.incidents as pkg
+        assert not hasattr(pkg, "rebuild_index")
+        assert not hasattr(pkg, "load_all_cards")
+
+    def test_project_does_not_require_embedding_dependencies(self):
+        """chromadb / fastembed / onnxruntime are gone from the dependency set."""
+        from pathlib import Path
+        requirements = (
+            Path(__file__).resolve().parents[1] / "requirements.txt"
+        ).read_text().lower()
+        for banned in ("chromadb", "fastembed", "onnxruntime", "tavily"):
+            assert banned not in requirements, f"{banned} still required"
 
 
 # ---------------------------------------------------------------------------

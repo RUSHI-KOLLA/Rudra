@@ -1,6 +1,8 @@
 # Git
 .git
 .gitignore
+.playwright-mcp/
+.opencode/
 
 # Python
 __pycache__/
@@ -35,6 +37,9 @@ vg_cache/
 # Logs / Reports
 *.log
 vg_report.json
+*_report.md
+handoff-snapshot.yml
+opencode.json
 
 # Tests / Docs (not needed in container)
 tests/
@@ -46,6 +51,18 @@ testapp/
 AEGIS_Solution_Approach.md
 OPTIMIZATION_GUIDE.md
 SPEC.md
+
+# Media / binary artifacts (not used at runtime — keeps image small)
+*.mp4
+*.webm
+*.mov
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.patch
+*.zip
+*.tar
 
 # Misc
 *.pyc
