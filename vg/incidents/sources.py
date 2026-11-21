@@ -15,7 +15,6 @@ Six investigative lenses, each producing search queries from a question:
 Mechanical extraction helpers:
     extract_dates(text)   -> list[str]  (ISO dates and written dates)
     extract_amounts(text) -> list[str]  ($ amounts, millions/billions)
-    extract_names(text)   -> list[str]  (capitalised person/entity names)
 """
 
 from __future__ import annotations
@@ -526,8 +525,8 @@ def _search_wikidata(entity: str) -> list[dict[str, Any]]:
 
 def _search_opensanctions(entity: str) -> list[dict[str, Any]]:
     """OpenSanctions — companies + sanctions + watchlists + PEPs (includes OpenCorporates data).
-    
-    Note: Requires API key (set OPENSANCTIONS_API_KEY env var). 
+
+    Note: Requires API key (set OPENSANCTIONS_API_KEY env var).
     Free tier available at https://opensanctions.org/
     """
     if _IN_TEST:
@@ -848,10 +847,9 @@ _WRITTEN_DATE_RE = re.compile(
 )
 _YEAR_RE = re.compile(r"(?<!\d)(?:19|20)\d{2}(?!\d)")  # 1900-2099, not part of longer number
 _AMOUNT_RE = re.compile(
-    r"\$\s*\d+(?:\.\d+)?\s*(?:million|billion|M|B)?",
+    r"\$\s*(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?(?:\s*(?:million|billion|trillion|M|B))?",
     re.IGNORECASE,
 )
-_NAME_RE = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")
 
 
 def extract_dates(text: str) -> list[str]:
@@ -868,10 +866,3 @@ def extract_dates(text: str) -> list[str]:
 def extract_amounts(text: str) -> list[str]:
     """Extract monetary amounts from text."""
     return _AMOUNT_RE.findall(text)
-
-
-def extract_names(text: str) -> list[str]:
-    """Extract capitalised person/entity names from text."""
-    names = _NAME_RE.findall(text)
-    seen: set[str] = set()
-    return [n for n in names if not (n in seen or seen.add(n))]

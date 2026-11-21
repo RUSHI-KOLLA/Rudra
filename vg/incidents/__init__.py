@@ -13,7 +13,6 @@ from .investigation import investigate
 from .sources import (
     extract_amounts,
     extract_dates,
-    extract_names,
     search_counter_case,
     search_money,
     search_network,
@@ -26,7 +25,6 @@ __all__ = [
     "investigate",
     "extract_amounts",
     "extract_dates",
-    "extract_names",
     "search_counter_case",
     "search_money",
     "search_network",

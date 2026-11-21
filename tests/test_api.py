@@ -54,7 +54,7 @@ def create_mock_handler(headers=None, body=None):
     else:
         body_bytes = str(body).encode()
     conn = MockConnection(body_bytes)
-    
+
     # Create handler without calling setup()
     handler = BaseHTTPRequestHandler.__new__(VGWebHandler)
     handler.client_address = ("127.0.0.1", 8080)
@@ -64,13 +64,13 @@ def create_mock_handler(headers=None, body=None):
     handler.headers = headers or {}
     handler.rfile = conn.makefile('rb')
     handler.wfile = conn.makefile('wb')
-    
+
     # Mock response methods
     handler.send_response = MagicMock()
     handler.send_header = MagicMock()
     handler.end_headers = MagicMock()
     handler.log_message = MagicMock()
-    
+
     return handler
 
 
