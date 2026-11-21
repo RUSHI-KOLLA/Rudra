@@ -266,6 +266,38 @@ class TestInvestigatePipeline:
         assert "contradictions" in result
         assert isinstance(result["contradictions"], list)
 
+    def test_synthesis_without_key_is_mechanical(self, monkeypatch):
+        """No LLM key -> the mechanical summary is used."""
+        from vg.incidents import investigation as inv_mod
+        monkeypatch.delenv("GROQ_API_KEY", raising=False)
+        result = inv_mod.investigate("Why did the CEO resign?")
+        assert result["synthesis"].startswith("Investigation of:")
+
+    def test_synthesis_uses_llm_when_key_present(self, monkeypatch):
+        """With a key and an available client, the LLM summary is returned."""
+        from vg.incidents import investigation as inv_mod
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        monkeypatch.setattr(inv_mod, "_IN_TEST", False)
+        monkeypatch.setattr(
+            inv_mod, "_groq_synthesis",
+            lambda question, lens_results, contradictions: "LLM SUMMARY",
+        )
+        result = inv_mod.investigate("Why did the CEO resign?")
+        assert result["synthesis"] == "LLM SUMMARY"
+
+    def test_synthesis_falls_back_when_llm_fails(self, monkeypatch):
+        """A failing LLM call falls back to the mechanical summary."""
+        from vg.incidents import investigation as inv_mod
+
+        def boom(*args, **kwargs):
+            raise RuntimeError("groq down")
+
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
+        monkeypatch.setattr(inv_mod, "_IN_TEST", False)
+        monkeypatch.setattr(inv_mod, "_groq_synthesis", boom)
+        result = inv_mod.investigate("Why did the CEO resign?")
+        assert result["synthesis"].startswith("Investigation of:")
+
     def test_question_profile_holds_mechanical_extractions(self):
         """Entities/dates/amounts extracted from the question live in one profile."""
         from vg.incidents.investigation import investigate

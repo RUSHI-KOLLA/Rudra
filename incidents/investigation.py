@@ -26,7 +26,9 @@ reported_unconfirmed / inferred / speculative).
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 from dataclasses import asdict
 from typing import Any
 
@@ -55,6 +57,9 @@ except Exception:  # pragma: no cover
 
 # Token ceiling for the single bounded LLM synthesis call (~1-2k tokens total)
 SYNTHESIS_MAX_TOKENS = 1500
+
+# Test mode detection - the LLM synthesis path must stay off during tests
+_IN_TEST = "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
 
 # Valid provenance tags
 VALID_TAGS = {"documented", "reported_unconfirmed", "inferred", "speculative"}
@@ -314,13 +319,95 @@ def investigate(question: str) -> dict[str, Any]:
     }
 
 
+def _synthesis_prompt(
+    question: str,
+    lens_results: dict[str, dict[str, Any]],
+    contradictions: list[dict[str, Any]],
+) -> str:
+    """Build the compact evidence brief handed to the synthesis model."""
+    lines = [f"QUESTION: {question}", "", "FINDINGS BY LENS:"]
+    for lens_name in sorted(lens_results):
+        findings = [
+            f for f in lens_results[lens_name].get("findings", []) if f.get("url")
+        ]
+        if not findings:
+            continue
+        lines.append(f"\n[{lens_name}]")
+        for finding in findings[:6]:
+            date = finding.get("date") or "no date"
+            lines.append(
+                f"- ({date}) [{finding.get('tag', 'reported_unconfirmed')}] "
+                f"{finding.get('title', '').strip()}"
+            )
+    if contradictions:
+        lines.append("\nCONTRADICTIONS:")
+        for c in contradictions[:8]:
+            lines.append(
+                f"- {c.get('subject', '?')}: {c.get('finding_a', '')} VS {c.get('finding_b', '')}"
+            )
+    lines.append(
+        "\nWrite a CID-style briefing: what is established, what is only reported, "
+        "what contradicts, and what is still unknown. Cite the bracketed dates. "
+        "Do not invent facts or sources."
+    )
+    return "\n".join(lines)
+
+
+def _groq_synthesis(
+    question: str,
+    lens_results: dict[str, dict[str, Any]],
+    contradictions: list[dict[str, Any]],
+) -> str | None:
+    """One bounded Groq call. Returns None when no key/client is available."""
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        from groq import Groq
+    except ImportError:
+        return None
+
+    try:
+        client = Groq(api_key=api_key)
+        response = client.chat.completions.create(
+            model=os.getenv("GROQ_MODEL_LARGE", "openai/gpt-oss-120b"),
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "You are a case officer briefing a investigator. Use only "
+                        "the evidence provided. Mark each claim as established, "
+                        "reported, or unknown."
+                    ),
+                },
+                {"role": "user", "content": _synthesis_prompt(
+                    question, lens_results, contradictions
+                )},
+            ],
+            max_tokens=SYNTHESIS_MAX_TOKENS,
+            temperature=0.2,
+        )
+        text = (response.choices[0].message.content or "").strip()
+        return text or None
+    except Exception:
+        return None
+
+
 def _synthesize(question: str, lens_results: dict[str, dict[str, Any]], contradictions: list[dict[str, Any]]) -> str:
     """Bounded LLM synthesis call (~1-2k tokens total).
 
-    Currently returns a mechanical synthesis without an actual LLM call,
-    keeping within the token ceiling. The synthesis summarises findings
-    across lenses and flags contradictions.
+    Uses one Groq call when GROQ_API_KEY is set. Falls back to the mechanical
+    summary when no key is configured or the call fails, so the endpoint
+    always returns a non-empty synthesis.
     """
+    if not _IN_TEST:
+        try:
+            llm_summary = _groq_synthesis(question, lens_results, contradictions)
+            if llm_summary:
+                return llm_summary
+        except Exception:
+            pass
+
     total_findings = sum(len(d.get("findings", [])) for d in lens_results.values())
     num_contradictions = len(contradictions)
 
