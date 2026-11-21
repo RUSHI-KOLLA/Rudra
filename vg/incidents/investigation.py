@@ -35,6 +35,7 @@ from typing import Any, Iterable
 from vg.config import config
 
 from .sources import (
+    SearchSubject,
     search_money,
     search_power,
     search_secrecy,
@@ -52,6 +53,15 @@ SYNTHESIS_MAX_TOKENS = 1500
 # keeps the cross-lens contradiction scan (which compares every pair)
 # affordable.
 MAX_FINDINGS_PER_LENS = 40
+
+# Hard cap on the contradictions reported. Six lenses of 40 findings can
+# produce tens of thousands of conflicting pairs; the response only needs
+# the most specific ones.
+MAX_CONTRADICTIONS = 50
+
+# How many conflicting pairs are examined before the list is ranked and
+# trimmed. It bounds the scan without throwing away specificity.
+CONTRADICTION_SCAN_CAP = 2000
 
 # Wall-clock ceiling for one investigation when the caller sets none.
 DEFAULT_DEADLINE_SECONDS = 60
@@ -207,20 +217,26 @@ def _extract_entities(question: str) -> list[str]:
     return entities[:5]  # Cap at 5 entities
 
 
-def _fallback_subject(question: str) -> str:
+def _fallback_subject(question: str) -> SearchSubject:
     """A search subject for a question that names nobody.
 
     "Why did the CEO resign?" has no entity, but it still has content words
-    worth searching; without this the six lenses would return nothing at all.
+    worth searching; without this the six lenses would return nothing at
+    all. Role words and generic nouns are left out — they name no one —
+    and the subject is marked unquoted, because an exact-phrase match for
+    free text would find nothing.
     """
     words: list[str] = []
     for token in re.findall(r"[A-Za-z][A-Za-z&]*", question):
-        if token.lower() in _STOP_WORDS or len(token) < 3:
+        lower = token.lower()
+        if lower in _STOP_WORDS or lower in _ROLE_WORDS:
+            continue
+        if lower in _GENERIC_ALONE or len(token) < 3:
             continue
         words.append(token)
         if len(words) >= 4:
             break
-    return " ".join(words)
+    return SearchSubject(" ".join(words), quote=False)
 
 
 def _search_subjects(question: str, entities: list[str]) -> list[str]:
@@ -363,8 +379,10 @@ _AFFIRMATION_TERMS = (
     "revealed", "established", "convicted", "indicted",
 )
 
-#: Capitalised words that can stand as the subject of a claim.
-_SUBJECT_RE = re.compile(r"\b[A-Z][a-z]{3,}\b")
+#: Capitalised words that can stand as the subject of a claim. Acronyms
+#: ("RBI", "SEBI") count too — the investigator extracts them as entities,
+#: so a contradiction about one must be recognisable.
+_SUBJECT_RE = re.compile(r"\b(?:[A-Z][a-z]{3,}|[A-Z]{2,})\b")
 
 #: Capitalised words that are never a useful subject (interrogatives, news filler).
 _SUBJECT_STOPWORDS = frozenset({
@@ -493,12 +511,20 @@ def _parallel_legal_developments(text_a: str, text_b: str) -> bool:
 
 
 def _subjects(finding: dict[str, Any]) -> dict[str, int]:
-    """Capitalised candidate subjects named by a finding, with their position."""
+    """Capitalised candidate subjects named by a finding, with their position.
+
+    Acronyms count, and generic nouns do not: "Government confirmed..." and
+    "Government denied..." are two stories about a country, not a
+    contradiction about a subject.
+    """
     text = f"{finding.get('title', '')} {finding.get('snippet', '')}"
     subjects: dict[str, int] = {}
     for match in _SUBJECT_RE.finditer(text):
         token = match.group(0)
-        if token.lower() in _SUBJECT_STOPWORDS:
+        lower = token.lower()
+        if lower in _SUBJECT_STOPWORDS or lower in _GENERIC_ALONE:
+            continue
+        if lower in _ROLE_WORDS:
             continue
         subjects.setdefault(token, match.start())
     return subjects
@@ -524,6 +550,8 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
         lens_name: [_finding_signals(f) for f in lens_results[lens_name].get("findings", [])]
         for lens_name in lens_names
     }
+
+    seen_pairs: set[tuple[str, str, str]] = set()
 
     for index, lens_a in enumerate(lens_names):
         for lens_b in lens_names[index + 1:]:
@@ -556,6 +584,14 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
                         shared,
                         key=lambda token: (len(token), max(subjects_a[token], subjects_b[token])),
                     )
+
+                    # One contradiction per subject and pair of titles: the
+                    # same clash reported again adds no information.
+                    key = (subject, str(fa.get("title", "")), str(fb.get("title", "")))
+                    if key in seen_pairs:
+                        continue
+                    seen_pairs.add(key)
+
                     contradictions.append({
                         "lens_a": lens_a,
                         "lens_b": lens_b,
@@ -564,8 +600,15 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
                         "subject": subject,
                         "type": "denial_vs_affirmation",
                     })
+                    if len(contradictions) >= CONTRADICTION_SCAN_CAP:
+                        break
 
-    return contradictions
+    # The most specific subjects make the most useful contradictions, so
+    # they are kept when the list has to be trimmed.
+    contradictions.sort(
+        key=lambda c: (-len(c["subject"]), c["lens_a"], c["lens_b"], c["subject"])
+    )
+    return contradictions[:MAX_CONTRADICTIONS]
 
 
 # ---------------------------------------------------------------------------
@@ -673,6 +716,10 @@ def investigate(
 
     # Provenance totals count each source once. The per-lens view keeps the
     # breakdown, and each finding says how many lenses surfaced it.
+    #
+    # A finding without a URL cannot be counted as a source, so it is
+    # reported on its own: `total_findings` and `unique_sources` both mean
+    # "distinct sources with a link".
     all_findings = [
         f for data in lens_results.values() for f in data.get("findings", [])
     ]
@@ -684,7 +731,7 @@ def investigate(
             canonical.setdefault(url, f)
         else:
             unlinked.append(f)
-    unique_findings = list(canonical.values()) + unlinked
+    unique_findings = list(canonical.values())
 
     tag_counts: dict[str, int] = {}
     for f in unique_findings:
@@ -717,6 +764,7 @@ def investigate(
             "tag_counts": tag_counts,
             "lenses_run": list(_LENS_FUNCS.keys()),
             "lens_findings": len(all_findings),
+            "unlinked_findings": len(unlinked),
         },
         "contradictions": contradictions,
     }

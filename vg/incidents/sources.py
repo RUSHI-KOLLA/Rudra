@@ -38,6 +38,24 @@ _IN_TEST = "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not No
 #: or subjects being investigated.
 _SEARCH_POOL = ThreadPoolExecutor(max_workers=12, thread_name_prefix="vg-search")
 
+
+class SearchSubject(str):
+    """A search subject that knows whether it should be quoted in a query.
+
+    A named subject ("Chanda Kochhar") is quoted so news search matches the
+    name exactly. A free-text fallback subject ("resign") must not be
+    quoted — an exact-phrase match for it would find nothing. The decision
+    is carried with the subject instead of being guessed from its
+    capitalisation, which an uppercase fallback would defeat.
+    """
+
+    __slots__ = ("quote",)
+
+    def __new__(cls, value: str, quote: bool = True) -> "SearchSubject":
+        obj = super().__new__(cls, value)
+        obj.quote = quote
+        return obj
+
 # Simple in-memory cache for Wikidata lookups
 _WIKIDATA_ID_CACHE: dict[str, str | None] = {}
 _WIKIDATA_CLAIMS_CACHE: dict[str, dict] = {}
@@ -618,9 +636,13 @@ def _search_edgar(entity: str) -> list[dict[str, Any]]:
         if cached and now - cached[0] < _EDGAR_CACHE_TTL:
             return [dict(hit) for hit in cached[1]]
 
-    # SEC blocks automated requests without proper User-Agent
+    # SEC blocks automated requests without proper User-Agent. The contact
+    # address is configurable so the operator can give SEC a real one.
     headers = {
-        "User-Agent": "VG-Investigator/1.0 (contact: rushi@example.com)",
+        "User-Agent": os.getenv(
+            "SEC_USER_AGENT",
+            "VG-Investigator/1.0 (+https://github.com/RUSHI-KOLLA/Rudra)",
+        ),
         "Accept": "text/html,application/xhtml+xml",
     }
     try:
@@ -637,12 +659,23 @@ def _search_edgar(entity: str) -> list[dict[str, Any]]:
         from html.parser import HTMLParser
 
         class FilingParser(HTMLParser):
+            """Collect the filing rows of SEC's ``tableFile2`` table.
+
+            Each filing row ends with a cell holding the document link, so
+            the anchor's ``href`` is captured per cell — the cell text is
+            just the link label ("10-K") and the neighbouring column is the
+            file/film number, neither of which is a URL.
+            """
+
             def __init__(self):
                 super().__init__()
                 self.in_table = False
                 self.in_row = False
+                self.in_header_row = False
                 self.cells = []
+                self.links = []
                 self.current_cell = []
+                self.current_link = None
                 self.filings = []
 
             def handle_starttag(self, tag, attrs):
@@ -652,18 +685,30 @@ def _search_edgar(entity: str) -> list[dict[str, Any]]:
                         self.in_table = True
                 if self.in_table and tag == "tr":
                     self.in_row = True
+                    self.in_header_row = False
                     self.cells = []
+                    self.links = []
                 if self.in_row and tag in ("td", "th"):
                     self.current_cell = []
+                    self.current_link = None
+                    if tag == "th":
+                        self.in_header_row = True
+                if self.in_row and tag == "a" and self.current_link is None:
+                    href = dict(attrs).get("href", "")
+                    if href:
+                        self.current_link = href
 
             def handle_endtag(self, tag):
                 if tag in ("td", "th") and self.in_row:
                     cell_text = "".join(self.current_cell).strip()
                     self.cells.append(cell_text)
+                    self.links.append(self.current_link or "")
+                    self.current_link = None
                 if tag == "tr" and self.in_row:
                     self.in_row = False
-                    if len(self.cells) >= 5:
-                        self.filings.append(self.cells)
+                    # The header row names the columns; it is not a filing.
+                    if len(self.cells) >= 5 and not self.in_header_row:
+                        self.filings.append((self.cells, self.links))
                 if tag == "table" and self.in_table:
                     self.in_table = False
 
@@ -674,18 +719,24 @@ def _search_edgar(entity: str) -> list[dict[str, Any]]:
         parser = FilingParser()
         parser.feed(r.text)
 
-        for filing in parser.filings[:10]:  # Limit to 10 most recent
-            if len(filing) >= 5:
-                filing_type = filing[0]
-                date = filing[3]
-                doc_link = filing[4] if len(filing) > 4 else ""
-                results.append({
-                    "title": f"{entity} — {filing_type} filing",
-                    "url": f"https://www.sec.gov{doc_link}" if doc_link.startswith("/") else doc_link,
-                    "snippet": f"{filing_type} filed on {date}",
-                    "date": date,
-                    "tag": "inferred",  # Official filing = documented/inferred
-                })
+        for cells, links in parser.filings[:10]:  # Limit to 10 most recent
+            filing_type = cells[0]
+            date = cells[1] if len(cells) > 1 else ""
+            doc_link = next((link for link in links if link), "")
+            if not doc_link:
+                continue
+            url = (
+                f"https://www.sec.gov{doc_link}"
+                if doc_link.startswith("/")
+                else doc_link
+            )
+            results.append({
+                "title": f"{entity} — {filing_type} filing",
+                "url": url,
+                "snippet": f"{filing_type} filed on {date}",
+                "date": date,
+                "tag": "inferred",  # Official filing = documented/inferred
+            })
         with _EDGAR_CACHE_LOCK:
             _EDGAR_CACHE[entity] = (time.monotonic(), list(results))
         return results
@@ -777,21 +828,44 @@ def search_counter_case(entity: str) -> list[dict[str, Any]]:
 
 
 def _mentions_entity(result: dict[str, Any], entity: str) -> bool:
-    """True when a search hit actually mentions the entity we searched for."""
-    tokens = [t.lower() for t in re.split(r"\W+", entity) if len(t) > 3]
+    """True when a search hit actually mentions the entity we searched for.
+
+    Every meaningful word of the name has to appear as a whole word. A
+    loose substring test would accept "Bank holiday" for "Bank of Baroda"
+    and "metadata" for "Meta", and those false matches become false
+    corroboration and false contradictions.
+    """
+    tokens = [
+        token
+        for token in re.split(r"\W+", entity.lower())
+        if token and token not in _NAME_CONNECTIVES
+    ]
     if not tokens:
         return True
     text = f"{result.get('title', '')} {result.get('snippet', '')}".lower()
-    return any(token in text for token in tokens)
+    return all(re.search(rf"\b{re.escape(token)}\b", text) for token in tokens)
+
+
+#: Connectives that carry no identifying weight in a name. They are skipped
+#: when checking whether a hit really mentions the subject.
+_NAME_CONNECTIVES = frozenset({
+    "of", "the", "and", "for", "in", "at", "on", "to", "de", "van", "von",
+    "der", "den", "du", "da", "di", "del", "la", "le", "bin", "ibn", "al",
+})
 
 
 def _is_proper_name(subject: str) -> bool:
     """True when every word of the subject is capitalised.
 
     A proper name is quoted so news search matches it exactly ("Chanda
-    Kochhar"). A free-text fallback subject ("CEO resign") must not be
-    quoted — an exact-phrase match for it would find nothing.
+    Kochhar"). A free-text fallback subject ("resign") must not be quoted —
+    an exact-phrase match for it would find nothing. A subject that carries
+    its own decision (``SearchSubject``) is believed; otherwise the decision
+    is inferred from its capitalisation.
     """
+    quote = getattr(subject, "quote", None)
+    if quote is not None:
+        return bool(quote)
     connectors = {"of", "the", "and", "de", "van", "von", "der"}
     for word in subject.split():
         if word.lower() in connectors:

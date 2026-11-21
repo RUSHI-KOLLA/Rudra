@@ -118,11 +118,17 @@ class TestSourcesFreeSearch:
 
     def test_no_tavily_dependency(self):
         """sources.py does not require Tavily API key for free sources."""
-        import importlib
+        from pathlib import Path
+
         import vg.incidents.sources as src
-        importlib.reload(src)
-        # Module imports without error even without Tavily key
-        assert src is not None
+
+        # The free source chain must not reach for a paid provider at all.
+        # (The module is not reloaded here: a reload would replace its
+        # classes and pools behind the back of the rest of the package.)
+        source = Path(src.__file__).read_text().lower()
+        assert "tavily_api_key" not in source
+        assert "import tavily" not in source
+        assert src.search_free is not None
 
     def test_incidents_package_has_no_store_dependency(self):
         """The package no longer exposes the Chroma-backed incident store."""
@@ -1477,4 +1483,229 @@ class TestEvidenceFence:
         assert "YOU ARE FREE" in prompt
         closing = prompt.index("</evidence>")
         assert closing > prompt.index("YOU ARE FREE"), prompt
+
+
+# ---------------------------------------------------------------------------
+# Relevance: a finding must be about the subject that was searched for
+# ---------------------------------------------------------------------------
+
+class TestEntityRelevance:
+    """A hit is relevant only when it really names the subject."""
+
+    def test_a_shared_word_is_not_a_match(self):
+        """"Bank of Baroda" must not accept a story that merely says "bank"."""
+        from vg.incidents.sources import _mentions_entity
+
+        hit = {"title": "Bank holiday weekend", "snippet": "shops closed"}
+        assert _mentions_entity(hit, "Bank of Baroda") is False
+
+    def test_the_full_name_is_a_match(self):
+        from vg.incidents.sources import _mentions_entity
+
+        hit = {"title": "Chanda Kochhar quits ICICI Bank", "snippet": "resignation"}
+        assert _mentions_entity(hit, "Chanda Kochhar") is True
+
+    def test_an_acronym_must_match_as_a_whole_token(self):
+        """"RBI" must not match the word "rbit" inside another word."""
+        from vg.incidents.sources import _mentions_entity
+
+        assert _mentions_entity({"title": "rbit and more"}, "RBI") is False
+        assert _mentions_entity({"title": "The RBI acted"}, "RBI") is True
+
+    def test_a_short_name_is_not_matched_inside_a_longer_word(self):
+        """"Meta" must not match "metadata"."""
+        from vg.incidents.sources import _mentions_entity
+
+        assert _mentions_entity({"title": "Some metadata leak"}, "Meta") is False
+        assert _mentions_entity({"title": "Meta earnings"}, "Meta") is True
+
+    def test_a_one_word_company_matches_its_own_name(self):
+        from vg.incidents.sources import _mentions_entity
+
+        assert _mentions_entity({"title": "Boeing delays", "snippet": "jets"}, "Boeing") is True
+
+
+class TestFallbackSubjects:
+    """A question that names nobody still needs sensible search subjects."""
+
+    def test_role_words_are_not_subjects(self):
+        """"CEO" is a role, not something to investigate."""
+        from vg.incidents.investigation import _fallback_subject
+
+        subject = _fallback_subject("Why did the CEO resign?")
+        assert "ceo" not in subject.lower(), subject
+
+    def test_generic_nouns_are_not_subjects(self):
+        from vg.incidents.investigation import _fallback_subject
+
+        subject = _fallback_subject("Why did the government resign?")
+        assert "government" not in subject.lower(), subject
+
+    def test_an_uppercase_fallback_is_not_quoted(self):
+        """A fallback subject is free text — quoting it finds nothing."""
+        from vg.incidents.sources import _is_proper_name
+
+        from vg.incidents import investigation as inv_mod
+
+        fallback = inv_mod._fallback_subject("Why did the CEO RESIGN?")
+        assert fallback, "expected a fallback subject"
+        assert not _is_proper_name(fallback) or "RESIGN" not in fallback
+
+
+class TestContradictionSubjects:
+    """Contradictions need a shared subject — and a usable one."""
+
+    def test_an_acronym_can_be_the_subject(self):
+        """"RBI confirmed..." vs "RBI denied..." is a contradiction."""
+        from vg.incidents.investigation import _detect_contradictions
+
+        lens_results = {
+            "money": {"findings": [{
+                "title": "RBI confirmed the new penalty",
+                "url": "https://example.com/a",
+                "snippet": "RBI confirmed the order",
+                "date": "2024-01-01",
+            }]},
+            "power": {"findings": [{
+                "title": "RBI denied the new penalty",
+                "url": "https://example.com/b",
+                "snippet": "RBI denied the order",
+                "date": "2024-01-02",
+            }]},
+        }
+        contradictions = _detect_contradictions(lens_results)
+        assert contradictions, "expected an acronym-subject contradiction"
+        assert contradictions[0]["subject"] == "RBI"
+
+    def test_a_generic_noun_is_not_a_subject(self):
+        """"Government" is too generic to anchor a contradiction."""
+        from vg.incidents.investigation import _detect_contradictions
+
+        lens_results = {
+            "money": {"findings": [{
+                "title": "Government confirmed the new policy",
+                "url": "https://example.com/a",
+                "snippet": "Government confirmed it",
+                "date": "2024-01-01",
+            }]},
+            "power": {"findings": [{
+                "title": "Government denied the new policy",
+                "url": "https://example.com/b",
+                "snippet": "Government denied it",
+                "date": "2024-01-02",
+            }]},
+        }
+        assert _detect_contradictions(lens_results) == []
+
+    def test_the_contradiction_list_is_bounded(self):
+        """A pile of conflicting findings must not explode the response."""
+        from vg.incidents import investigation as inv_mod
+
+        lens_results = {}
+        for lens in ("money", "power"):
+            lens_results[lens] = {"findings": [
+                {
+                    "title": f"Kochhar confirmed claim {index}",
+                    "url": f"https://example.com/{lens}/c{index}",
+                    "snippet": "Kochhar confirmed it",
+                    "date": "2024-01-01",
+                }
+                for index in range(40)
+            ] + [
+                {
+                    "title": f"Kochhar denied claim {index}",
+                    "url": f"https://example.com/{lens}/d{index}",
+                    "snippet": "Kochhar denied it",
+                    "date": "2024-01-02",
+                }
+                for index in range(40)
+            ]}
+
+        contradictions = inv_mod._detect_contradictions(lens_results)
+        assert len(contradictions) <= inv_mod.MAX_CONTRADICTIONS, len(contradictions)
+
+
+class TestProvenanceTotals:
+    """The totals must match the documented contract."""
+
+    def test_total_findings_equals_unique_sources(self, monkeypatch):
+        """A finding without a URL must not inflate the source total."""
+        from vg.incidents import investigation as inv_mod
+
+        mocks = {
+            lens: (lambda entity: [{
+                "title": "A finding without a link",
+                "url": "",
+                "snippet": "s",
+                "date": "",
+            }])
+            for lens in inv_mod._LENS_FUNCS
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        provenance = result["provenance"]
+        assert provenance["total_findings"] == provenance["unique_sources"], provenance
+
+
+class TestEdgarFilingUrls:
+    """EDGAR findings must carry a real, clickable filing URL."""
+
+    SEC_HTML = """
+    <table class="tableFile2">
+      <tr><th>Type</th><th>Date</th><th>Size</th><th>File/Film Number</th></tr>
+      <tr>
+        <td>10-K</td>
+        <td>2024-02-15</td>
+        <td>1.2 MB</td>
+        <td>001-36743 18985212</td>
+        <td><a href="/Archives/edgar/data/320193/000032019324000012/aapl-20230930.htm" class="documentsbutton">10-K</a></td>
+      </tr>
+      <tr>
+        <td>8-K</td>
+        <td>2024-05-01</td>
+        <td>200 KB</td>
+        <td>001-36743 18985213</td>
+        <td><a href="/Archives/edgar/data/320193/000032019324000055/aapl-20240501.htm" class="documentsbutton">8-K</a></td>
+      </tr>
+    </table>
+    """
+
+    def test_filing_links_are_built_from_the_document_anchor(self, monkeypatch):
+        """The parser must read the anchor, not the file-number column."""
+        from vg.incidents import sources as src
+
+        class FakeResponse:
+            text = TestEdgarFilingUrls.SEC_HTML
+
+            def raise_for_status(self):
+                return None
+
+        monkeypatch.setattr(src, "_IN_TEST", False)
+        monkeypatch.setattr(
+            src.requests, "get", lambda *a, **k: FakeResponse()
+        )
+
+        results = src._search_edgar("Apple Inc")
+        urls = [r["url"] for r in results]
+        assert urls, "expected EDGAR findings"
+        for url in urls:
+            assert url.startswith("https://www.sec.gov/Archives/"), url
+
+    def test_the_header_row_is_not_a_filing(self, monkeypatch):
+        from vg.incidents import sources as src
+
+        class FakeResponse:
+            text = TestEdgarFilingUrls.SEC_HTML
+
+            def raise_for_status(self):
+                return None
+
+        monkeypatch.setattr(src, "_IN_TEST", False)
+        monkeypatch.setattr(
+            src.requests, "get", lambda *a, **k: FakeResponse()
+        )
+
+        results = src._search_edgar("Apple Inc")
+        assert not any("File/Film Number" in r["title"] for r in results), results
 
