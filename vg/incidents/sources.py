@@ -200,16 +200,6 @@ def _search_brave(query: str) -> list[dict[str, Any]]:
         return []
 
 
-def _search_ddgs(query: str) -> list[dict[str, Any]]:
-    """DuckDuckGo HTML scrape — unlimited, no key (disabled due to reliability issues)."""
-    # DDGS is unreliable (rate limits, timeouts) — disabled by default.
-    # Enable by setting ENABLE_DDGS=1 if needed.
-    if _IN_TEST or not os.getenv("ENABLE_DDGS"):
-        return []
-    # ... original implementation would go here if enabled
-    return []
-
-
 def _search_ddgs_direct(query: str) -> list[dict[str, Any]]:
     """Direct requests fallback for DuckDuckGo (no library dependency)."""
     # Disabled by default - enable with ENABLE_DDGS=1
@@ -294,9 +284,6 @@ def search_free(query: str) -> list[dict[str, Any]]:
         return results
     # DDGS fallback disabled by default - enable with ENABLE_DDGS=1
     if os.getenv("ENABLE_DDGS"):
-        results = _search_ddgs(query)
-        if results:
-            return results
         return _search_ddgs_direct(query)
     return []
 
