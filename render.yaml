@@ -1,9 +1,23 @@
+# Render Blueprint — the Mini CID Investigator.
+#
+# Deploy: Render dashboard → New → Blueprint → pick RUSHI-KOLLA/Rudra.
+# Render reads this file, builds the Dockerfile in the repo root and runs
+# it. The container follows the PORT Render injects, so the same image
+# works unchanged on Koyeb and Hugging Face Spaces.
+#
+# On the first deploy Render will ask for the two secrets marked
+# "sync: false" below. Both are optional:
+#   - VG_ACCESS_KEY  locks the endpoint down (X-VG-Access-Key required).
+#   - GROQ_API_KEY   pays for the LLM briefing, and is only ever spent on
+#                    requests that carry the access key above.
+# Leave them unset for an open, rate-limited endpoint that returns the
+# deterministic mechanical summary.
+
 services:
   - type: web
     name: vg-cid-investigator
-    runtime: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: PYTHONPATH=. python -m vg.main --web --port $PORT
+    runtime: docker
+    healthCheckPath: /api/health
     envVars:
       # Deployment access key. Set it to lock the endpoint down: requests must
       # present it in X-VG-Access-Key, and only then is GROQ_API_KEY used.

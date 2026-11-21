@@ -23,9 +23,12 @@ COPY vg/ /app/vg/
 RUN useradd --create-home --shell /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
-# Hugging Face Spaces / Koyeb expect port 7860
+# Hugging Face Spaces expect port 7860; every other platform injects its
+# own PORT (Render 10000, Koyeb 8000). The default below is only the
+# fallback — the running server always follows $PORT.
 ENV PORT=7860
 EXPOSE 7860
 
-# Run the VG web server from /app (parent of vg package)
-CMD ["python", "-m", "vg.main", "--web", "--host", "0.0.0.0", "--port", "7860"]
+# Run the VG web server from /app (parent of vg package). The port comes
+# from $PORT so the same image works on every platform.
+CMD ["python", "-m", "vg.main", "--web", "--host", "0.0.0.0"]

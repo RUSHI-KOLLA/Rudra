@@ -1,13 +1,25 @@
-# Koyeb GitOps manifest for VG Intelligence
-# Deploy: push to main branch, or `koyeb apply -f koyeb.yaml`
+# Koyeb GitOps manifest — the Mini CID Investigator (Rudra).
+#
+# Deploy: push to the main branch and Koyeb redeploys, or
+#         koyeb apply -f koyeb.yaml
+#
+# The container follows the PORT Koyeb injects, so the same image works
+# unchanged on Render and Hugging Face Spaces.
+#
+# Secrets are set in the Koyeb dashboard (Settings → Variables) or by
+# uncommenting them here:
+#   - VG_ACCESS_KEY  locks the endpoint down (X-VG-Access-Key required).
+#   - GROQ_API_KEY   pays for the LLM briefing, and is only ever spent on
+#                    requests that carry the access key above.
+# Leave them unset for an open, rate-limited endpoint that returns the
+# deterministic mechanical summary.
 
 definition:
-  name: vg-intelligence
+  name: rudra-cid-investigator
   type: APP
 
   git:
-    # Replace with your GitHub repo
-    repository: github.com/<your-username>/vg-intelligence
+    repository: github.com/RUSHI-KOLLA/Rudra
     branch: main
     build:
       dockerfile: Dockerfile
@@ -20,7 +32,7 @@ definition:
         - was  # Washington, DC (US East) - change if needed: fra, sin, syd
       http:
         path: /
-        port: 7860
+        port: 8000
         health_check:
           path: /api/health
           initial_delay: 30
@@ -29,10 +41,7 @@ definition:
           failure_threshold: 3
       env:
         - name: PORT
-          value: "7860"
-        # Add your keys in the Koyeb dashboard (Settings → Variables).
-        # VG_ACCESS_KEY locks the endpoint down (X-VG-Access-Key required).
-        # GROQ_API_KEY is only spent for requests that carry that access key.
+          value: "8000"
         # - name: VG_ACCESS_KEY
         #   value: "choose-a-secret"
         # - name: GROQ_API_KEY

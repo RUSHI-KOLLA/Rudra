@@ -628,6 +628,50 @@ class TestStartupBanner:
         assert any("deployment key required" in line for line in lines), lines
 
 
+class TestDeploymentConfigs:
+    """The platform manifests must match what the service actually does."""
+
+    @staticmethod
+    def _read(name: str) -> str:
+        return (Path(__file__).resolve().parents[1] / name).read_text()
+
+    def test_the_container_follows_the_injected_port(self):
+        """Render injects PORT=10000; a hardcoded port never goes live."""
+        dockerfile = self._read("Dockerfile")
+        cmd = [
+            line for line in dockerfile.splitlines()
+            if line.strip().startswith("CMD")
+        ]
+        assert cmd, "expected a CMD instruction"
+        assert "--port" not in cmd[0], cmd[0]
+
+    def test_the_koyeb_manifest_points_at_the_real_repository(self):
+        manifest = self._read("koyeb.yaml")
+        assert "<your-username>" not in manifest, manifest
+        assert "github.com/RUSHI-KOLLA/Rudra" in manifest, manifest
+
+    def test_the_manifests_trust_the_platform_proxy(self):
+        """Behind an ingress every client shares one socket address."""
+        for name in ("render.yaml", "koyeb.yaml"):
+            manifest = self._read(name)
+            assert "VG_TRUST_PROXY" in manifest, name
+
+    def test_the_manifests_never_bake_in_a_secret(self):
+        """A key in the manifest would be a key in git."""
+        for name in ("render.yaml", "koyeb.yaml"):
+            manifest = self._read(name)
+            for marker in ("gsk_", "choose-a-secret"):
+                uncommented = [
+                    line for line in manifest.splitlines()
+                    if marker in line and not line.strip().startswith("#")
+                ]
+                assert not uncommented, (name, uncommented)
+
+    def test_the_render_manifest_health_checks_the_api(self):
+        manifest = self._read("render.yaml")
+        assert "healthCheckPath: /api/health" in manifest, manifest
+
+
 class TestBrowserHardening:
     """The UI must not hand its secrets to a compromised dependency."""
 
