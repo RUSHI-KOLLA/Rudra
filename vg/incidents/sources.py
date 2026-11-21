@@ -784,20 +784,12 @@ LENS_QUERY_TEMPLATES = {
 
 def search_money(entity: str) -> LensFindings:
     """Money lens: who paid, who benefited, who lost?"""
-    results, errors = _lens_search_with_errors("money", entity)
-    # Add structured sources for Money
-    structured, structured_errors = _structured_search_with_errors(entity)
-    results.extend(structured)
-    return LensFindings(results, errors + structured_errors)
+    return _lens_with_structured("money", entity)
 
 
 def search_power(entity: str) -> LensFindings:
     """Power lens: who appointed, who could remove, who protected?"""
-    results, errors = _lens_search_with_errors("power", entity)
-    # Add structured sources for Power
-    structured, structured_errors = _structured_search_with_errors(entity)
-    results.extend(structured)
-    return LensFindings(results, errors + structured_errors)
+    return _lens_with_structured("power", entity)
 
 
 def search_secrecy(entity: str) -> LensFindings:
@@ -814,18 +806,20 @@ def search_timing(entity: str) -> LensFindings:
 
 def search_network(entity: str) -> LensFindings:
     """Network lens: who else is connected to these people or firms?"""
-    results, errors = _lens_search_with_errors("network", entity)
-    # Add structured sources for Network
-    structured, structured_errors = _structured_search_with_errors(entity)
-    results.extend(structured)
-    return LensFindings(results, errors + structured_errors)
+    return _lens_with_structured("network", entity)
 
 
 def search_counter_case(entity: str) -> LensFindings:
     """Counter-case lens: what would have to be true for the official story?"""
-    results, errors = _lens_search_with_errors("counter_case", entity)
-    # Add structured sources for Counter-case
-    structured, structured_errors = _structured_search_with_errors(entity)
+    return _lens_with_structured("counter_case", entity)
+
+
+def _lens_with_structured(lens: str, entity: str) -> LensFindings:
+    """Run a lens's web search together with the registries that lens uses."""
+    results, errors = _lens_search_with_errors(lens, entity)
+    structured, structured_errors = _structured_search_with_errors(
+        entity, LENS_STRUCTURED_SOURCES.get(lens, ())
+    )
     results.extend(structured)
     return LensFindings(results, errors + structured_errors)
 
@@ -942,8 +936,39 @@ def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
     return results
 
 
+#: The structured registry each lens consults. Each registry belongs to the
+#: lenses it can actually speak to: letting every lens pull every registry
+#: would put the same URL in four lenses and fake corroboration.
+LENS_STRUCTURED_SOURCES: dict[str, tuple[str, ...]] = {
+    "money": ("edgar",),
+    "power": ("wikidata", "edgar"),
+    "secrecy": (),
+    "timing": (),
+    "network": ("wikidata", "opensanctions", "gleif"),
+    "counter_case": ("wikidata",),
+}
+
+#: The structured source adapters, by name.
+_STRUCTURED_ADAPTER_NAMES = ("wikidata", "edgar", "gleif", "opensanctions")
+
+
+def _structured_adapters() -> dict[str, Any]:
+    """The structured adapters, resolved when they are needed.
+
+    Looking them up at call time (rather than at import time) keeps one
+    place to patch or extend them.
+    """
+    return {
+        "wikidata": _search_wikidata,
+        "edgar": _search_edgar,
+        "gleif": _search_gleif,
+        "opensanctions": _search_opensanctions,
+    }
+
+
 def _structured_search_with_errors(
     entity: str,
+    names: tuple[str, ...] | None = None,
 ) -> tuple[list[dict[str, Any]], list[str]]:
     """Run the structured sources for one subject and report what failed.
 
@@ -953,12 +978,11 @@ def _structured_search_with_errors(
     others, and the pool keeps the number of open connections bounded no
     matter how many investigations are in flight.
     """
-    adapters = (
-        ("wikidata", _search_wikidata),
-        ("edgar", _search_edgar),
-        ("gleif", _search_gleif),
-        ("opensanctions", _search_opensanctions),
-    )
+    available = _structured_adapters()
+    selected = names if names is not None else _STRUCTURED_ADAPTER_NAMES
+    adapters = [
+        (name, available[name]) for name in selected if name in available
+    ]
     futures = [
         (_SEARCH_POOL.submit(adapter, entity), name) for name, adapter in adapters
     ]

@@ -1788,3 +1788,16 @@ class TestGlobalOutboundBound:
         assert results
         assert "fake_wikidata" in seen, seen
 
+    def test_each_lens_only_pulls_the_registries_it_belongs_to(self):
+        """A registry in every lens would fake corroboration."""
+        from vg.incidents.sources import LENS_STRUCTURED_SOURCES
+
+        assert LENS_STRUCTURED_SOURCES["secrecy"] == ()
+        assert LENS_STRUCTURED_SOURCES["timing"] == ()
+        assert "edgar" in LENS_STRUCTURED_SOURCES["money"]
+        assert "opensanctions" in LENS_STRUCTURED_SOURCES["network"]
+        # No lens may pull a registry another lens already owns.
+        assert "opensanctions" not in LENS_STRUCTURED_SOURCES["money"]
+        assert "opensanctions" not in LENS_STRUCTURED_SOURCES["power"]
+        assert "edgar" not in LENS_STRUCTURED_SOURCES["network"]
+
