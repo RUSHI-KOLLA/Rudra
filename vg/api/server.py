@@ -51,6 +51,7 @@ import hmac
 import json
 import mimetypes
 import os
+import secrets
 import threading
 import time
 from http import HTTPStatus
@@ -265,12 +266,47 @@ class VGWebHandler(BaseHTTPRequestHandler):
             return
 
         content_type, _ = mimetypes.guess_type(str(file_path))
+        extra_headers: dict[str, str] = {}
+        if file_path.name == "index.html":
+            body, policy = self._index_html()
+            extra_headers["Content-Security-Policy"] = policy
+        else:
+            body = file_path.read_bytes()
+
         self.send_response(HTTPStatus.OK)
         self.send_header("Content-Type", content_type or "application/octet-stream")
+        self.send_header("Content-Length", str(len(body)))
         self.send_header("Cache-Control", "no-cache")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("Referrer-Policy", "no-referrer")
+        for name, value in extra_headers.items():
+            self.send_header(name, value)
         self._send_cors_headers()
         self.end_headers()
-        self.wfile.write(file_path.read_bytes())
+        self.wfile.write(body)
+
+    def _index_html(self) -> tuple[bytes, str]:
+        """Render the UI with a per-response CSP nonce.
+
+        The page ships one inline script and three pinned CDN scripts. The
+        inline script gets a fresh nonce on every response so a Content
+        Security Policy can allow it without allowing arbitrary inline code.
+        """
+        nonce = secrets.token_urlsafe(16)
+        html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+        html = html.replace('nonce="__VG_NONCE__"', f'nonce="{nonce}"')
+        policy = (
+            "default-src 'self'; "
+            f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data:; "
+            "connect-src 'self'; "
+            "base-uri 'none'; "
+            "form-action 'self'; "
+            "frame-ancestors 'none'"
+        )
+        return html.encode("utf-8"), policy
 
     def _send_json(
         self,
@@ -385,7 +421,11 @@ class VGWebHandler(BaseHTTPRequestHandler):
         try:
             # The caller's key drives the synthesis (BYOK); the server's own
             # GROQ_API_KEY is only reachable behind the deployment access key.
-            result = investigate(question, api_key=self._synthesis_key())
+            result = investigate(
+                question,
+                api_key=self._synthesis_key(),
+                deadline_seconds=config.max_investigation_seconds,
+            )
         except Exception as exc:
             self._send_json(
                 HTTPStatus.INTERNAL_SERVER_ERROR,

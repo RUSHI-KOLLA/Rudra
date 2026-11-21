@@ -851,6 +851,96 @@ class TestInvestigateWithMockedSearch:
         assert queries == ['"Chanda Kochhar" payment'], queries
         assert len(result["lens_results"]["money"]["findings"]) == 3
 
+    def test_subjects_of_one_lens_are_searched_concurrently(self, monkeypatch):
+        """One lens must not search its subjects one after the other."""
+        import threading
+        import time
+        from vg.incidents import investigation as inv_mod
+
+        lock = threading.Lock()
+        state = {"active": 0, "max_active": 0}
+
+        def mock_lens(entity):
+            with lock:
+                state["active"] += 1
+                state["max_active"] = max(state["max_active"], state["active"])
+            time.sleep(0.25)
+            with lock:
+                state["active"] -= 1
+            return []
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {lens: mock_empty for lens in inv_mod._LENS_FUNCS}
+        mocks["money"] = mock_lens
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        # Two named subjects: "Chanda Kochhar" and "ICICI Bank".
+        inv_mod.investigate("Why did Chanda Kochhar resign from ICICI Bank?")
+        assert state["max_active"] >= 2, state
+
+    def test_a_slow_lens_cannot_hold_the_investigation_past_its_deadline(self, monkeypatch):
+        """The pipeline returns partial results when the deadline passes."""
+        import time
+        from vg.incidents import investigation as inv_mod
+
+        def slow_lens(entity):
+            time.sleep(5)
+            return []
+
+        def quick_lens(entity):
+            return [{
+                "title": "Fast finding",
+                "url": "https://example.com/fast",
+                "snippet": "quick",
+                "date": "2024-01-15",
+                "query": f"{entity} query",
+            }]
+
+        mocks = {lens: quick_lens for lens in inv_mod._LENS_FUNCS}
+        mocks["money"] = slow_lens
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        started = time.monotonic()
+        result = inv_mod.investigate(
+            "Why did Chanda Kochhar resign?", deadline_seconds=0.5
+        )
+        elapsed = time.monotonic() - started
+
+        assert elapsed < 4, f"deadline ignored ({elapsed:.1f}s)"
+        assert result["lens_results"]["power"]["findings"], "fast lenses must survive"
+        assert "error" in result["lens_results"]["money"]
+
+    def test_findings_per_lens_are_capped(self, monkeypatch):
+        """A runaway source cannot flood the response."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_lens(entity):
+            return [
+                {
+                    "title": f"Finding {index}",
+                    "url": f"https://example.com/{index}",
+                    "snippet": "text",
+                    "date": "2024-01-15",
+                    "query": f"{entity} query",
+                }
+                for index in range(60)
+            ]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {lens: mock_lens for lens in inv_mod._LENS_FUNCS}
+        mocks["timing"] = mock_empty
+        mocks["network"] = mock_empty
+        mocks["counter_case"] = mock_empty
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar resign?")
+        for lens, data in result["lens_results"].items():
+            assert len(data["findings"]) <= inv_mod.MAX_FINDINGS_PER_LENS, lens
+
     def test_wikidata_labels_are_fetched_in_one_batch(self, monkeypatch):
         """Entity labels are fetched in a single batched request, not one per claim.
 

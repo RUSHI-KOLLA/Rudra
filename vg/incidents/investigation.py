@@ -28,7 +28,8 @@ from __future__ import annotations
 import os
 import re
 import sys
-from concurrent.futures import ThreadPoolExecutor
+import time
+from concurrent.futures import ThreadPoolExecutor, wait
 from typing import Any, Iterable
 
 from .sources import (
@@ -44,6 +45,14 @@ from .sources import (
 
 # Token ceiling for the single bounded LLM synthesis call (~1-2k tokens total)
 SYNTHESIS_MAX_TOKENS = 1500
+
+# Hard cap on the findings kept per lens. It bounds the response size and
+# keeps the cross-lens contradiction scan (which compares every pair)
+# affordable.
+MAX_FINDINGS_PER_LENS = 40
+
+# Wall-clock ceiling for one investigation when the caller sets none.
+DEFAULT_DEADLINE_SECONDS = 60
 
 # Test mode detection - the LLM synthesis path must stay off during tests
 _IN_TEST = "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
@@ -261,23 +270,34 @@ def _run_lens(lens_name: str, subjects: list[str], dates_amounts: dict[str, list
     extractions (entities/dates/amounts) live once in ``question_profile``
     instead of being repeated into every lens.
 
+    The subjects are searched concurrently: each one is an independent set of
+    network calls, so waiting for them in turn would multiply the slowest
+    source by the number of subjects.
+
     A lens that raises is isolated: its error is recorded and the other
     lenses still report. One broken source must not void the investigation.
     """
     queries: list[str] = []
     findings: list[dict[str, Any]] = []
     seen_queries: set[str] = set()
+    errors: list[str] = []
 
     search_fn = _LENS_FUNCS[lens_name]
-    for subject in subjects:
+
+    def search_subject(subject: str) -> list[dict[str, Any]]:
         try:
-            results = search_fn(subject)
+            return search_fn(subject)
         except Exception as exc:
-            return {
-                "queries": queries,
-                "findings": findings,
-                "error": f"{type(exc).__name__}: {exc}",
-            }
+            errors.append(f"{type(exc).__name__}: {exc}")
+            return []
+
+    if subjects:
+        with ThreadPoolExecutor(max_workers=min(len(subjects), 3)) as pool:
+            results_per_subject = list(pool.map(search_subject, subjects))
+    else:
+        results_per_subject = []
+
+    for results in results_per_subject:
         for r in results:
             url = str(r.get("url", "") or "")
             if not _is_safe_url(url):
@@ -299,7 +319,27 @@ def _run_lens(lens_name: str, subjects: list[str], dates_amounts: dict[str, list
                 "question": r.get("query", ""),
             })
 
-    return {"queries": queries, "findings": findings}
+    findings = _cap_findings(findings)
+
+    result: dict[str, Any] = {"queries": queries, "findings": findings}
+    if errors:
+        result["error"] = "; ".join(errors)
+    return result
+
+
+def _cap_findings(findings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Keep the response bounded without throwing away structured evidence.
+
+    Web hits come first and can be numerous; structured records (Wikidata,
+    EDGAR, GLEIF) are the most reliable facts, so they are kept even when
+    the web hits fill the budget.
+    """
+    if len(findings) <= MAX_FINDINGS_PER_LENS:
+        return findings
+    structured = [f for f in findings if f.get("tag") == "inferred"]
+    web = [f for f in findings if f.get("tag") != "inferred"]
+    room = max(MAX_FINDINGS_PER_LENS - len(structured), 0)
+    return web[:room] + structured[:MAX_FINDINGS_PER_LENS]
 
 
 def question_snippet(question: str, term: str) -> str:
@@ -376,22 +416,66 @@ def _polarity(text: str) -> tuple[bool, bool]:
     return _has_term(text, _NEGATION_TERMS), _has_term(text, _AFFIRMATION_TERMS)
 
 
-def _exclusive_legal_outcomes(text_a: str, text_b: str) -> bool:
-    """True when the two texts name opposite sides of one legal outcome axis.
+def _outcome_sides(text: str) -> set[tuple[int, str]]:
+    """Which sides of which legal-outcome axes a text names.
 
     "Acquittal confirmed" and "Conviction denied" are mutually exclusive
     outcomes of one case. The procedural-object guard sees two different
     objects and would call them parallel stages, which would hide a real
     conflict.
     """
-    for positive, negative in _LEGAL_OUTCOME_AXES:
+    sides: set[tuple[int, str]] = set()
+    for index, (positive, negative) in enumerate(_LEGAL_OUTCOME_AXES):
+        if _has_term(text, positive):
+            sides.add((index, "positive"))
+        if _has_term(text, negative):
+            sides.add((index, "negative"))
+    return sides
+
+
+def _finding_signals(finding: dict[str, Any]) -> dict[str, Any]:
+    """Precompute the signals used to compare one finding with another.
+
+    The contradiction scan compares every finding with every other one, so
+    the text is only scanned once per finding instead of once per pair.
+    """
+    text = f"{finding.get('title', '')} {finding.get('snippet', '')}".lower()
+    negation, affirmation = _polarity(text)
+    return {
+        "text": text,
+        "negation": negation,
+        "affirmation": affirmation,
+        "sides": _outcome_sides(text),
+    }
+
+
+def _exclusive_signals(signal_a: dict[str, Any], signal_b: dict[str, Any]) -> bool:
+    """True when two findings name opposite sides of one legal outcome axis."""
+    axes_a = {axis for axis, _ in signal_a["sides"]}
+    axes_b = {axis for axis, _ in signal_b["sides"]}
+    for axis in axes_a & axes_b:
         if (
-            _has_term(text_a, positive) and _has_term(text_b, negative)
+            (axis, "positive") in signal_a["sides"]
+            and (axis, "negative") in signal_b["sides"]
         ) or (
-            _has_term(text_a, negative) and _has_term(text_b, positive)
+            (axis, "negative") in signal_a["sides"]
+            and (axis, "positive") in signal_b["sides"]
         ):
             return True
     return False
+
+
+def _signals_conflict(signal_a: dict[str, Any], signal_b: dict[str, Any]) -> bool:
+    """True when two findings carry opposite signals.
+
+    That is either opposite polarity ("denied" vs "confirmed") or opposite
+    sides of one legal outcome axis (acquittal vs conviction).
+    """
+    if (signal_a["negation"] and signal_b["affirmation"]) or (
+        signal_a["affirmation"] and signal_b["negation"]
+    ):
+        return True
+    return _exclusive_signals(signal_a, signal_b)
 
 
 def _legal_objects(text: str) -> set[str]:
@@ -441,23 +525,30 @@ def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict
     contradictions: list[dict[str, Any]] = []
     lens_names = sorted(lens_results)
 
+    # Every finding is scanned once; the pairwise comparison then works on
+    # the precomputed signals.
+    signals = {
+        lens_name: [_finding_signals(f) for f in lens_results[lens_name].get("findings", [])]
+        for lens_name in lens_names
+    }
+
     for index, lens_a in enumerate(lens_names):
         for lens_b in lens_names[index + 1:]:
-            for fa in lens_results[lens_a].get("findings", []):
-                for fb in lens_results[lens_b].get("findings", []):
-                    fa_text = f"{fa.get('title', '')} {fa.get('snippet', '')}".lower()
-                    fb_text = f"{fb.get('title', '')} {fb.get('snippet', '')}".lower()
-                    fa_neg, fa_aff = _polarity(fa_text)
-                    fb_neg, fb_aff = _polarity(fb_text)
-
-                    exclusive = _exclusive_legal_outcomes(fa_text, fb_text)
-                    opposite_polarity = (fa_neg and fb_aff) or (fa_aff and fb_neg)
-                    if not (opposite_polarity or exclusive):
+            for fa, signal_a in zip(
+                lens_results[lens_a].get("findings", []), signals[lens_a]
+            ):
+                for fb, signal_b in zip(
+                    lens_results[lens_b].get("findings", []), signals[lens_b]
+                ):
+                    exclusive = _exclusive_signals(signal_a, signal_b)
+                    if not _signals_conflict(signal_a, signal_b):
                         continue
 
                     # Parallel legal developments are not a conflict — unless
                     # the two findings name mutually exclusive outcomes.
-                    if not exclusive and _parallel_legal_developments(fa_text, fb_text):
+                    if not exclusive and _parallel_legal_developments(
+                        signal_a["text"], signal_b["text"]
+                    ):
                         continue
 
                     subjects_a = _subjects(fa)
@@ -519,13 +610,20 @@ def _apply_corroboration(lens_results: dict[str, dict[str, Any]]) -> None:
             finding["corroboration"] = len(lenses) if lenses else 1
 
 
-def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
+def investigate(
+    question: str,
+    api_key: str | None = None,
+    deadline_seconds: float | None = None,
+) -> dict[str, Any]:
     """Investigate a question using six lenses and return findings.
 
     Args:
         question: A plain-language question (e.g., "Why did the CEO resign?")
         api_key: Optional caller-supplied key for the synthesis call (BYOK).
             Falls back to the server's ``GROQ_API_KEY`` when omitted.
+        deadline_seconds: Wall-clock budget for the whole investigation.
+            When it passes, the lenses that are still running are abandoned
+            and their partial results are returned.
 
     Returns:
         Dict with keys:
@@ -542,18 +640,39 @@ def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
     # A question that names nobody still has something to search for.
     subjects = _search_subjects(question, entities)
 
+    budget = deadline_seconds if deadline_seconds is not None else DEFAULT_DEADLINE_SECONDS
+    deadline = time.monotonic() + max(budget, 0.0)
+
     # Run all six lenses concurrently — each lens is network-bound, so
     # serial execution would multiply the slowest source by six.
     lens_results: dict[str, dict[str, Any]] = {}
-    with ThreadPoolExecutor(max_workers=len(_LENS_FUNCS)) as pool:
+    pool = ThreadPoolExecutor(max_workers=len(_LENS_FUNCS))
+    try:
         futures = {
             lens_name: pool.submit(
                 _run_lens, lens_name, subjects, dates_amounts, question
             )
             for lens_name in _LENS_FUNCS
         }
+        # Wait for the whole fan-out, but never past the deadline: lenses
+        # that finished keep their findings, the rest are reported as cut
+        # short rather than holding the request open.
+        done, _ = wait(
+            futures.values(), timeout=max(deadline - time.monotonic(), 0.0)
+        )
         for lens_name, future in futures.items():
-            lens_results[lens_name] = future.result()
+            if future in done:
+                lens_results[lens_name] = future.result()
+            else:
+                lens_results[lens_name] = {
+                    "queries": [],
+                    "findings": [],
+                    "error": "investigation deadline exceeded",
+                }
+    finally:
+        # Do not wait for the abandoned lenses — they keep their own provider
+        # timeouts and die on their own.
+        pool.shutdown(wait=False, cancel_futures=True)
 
     # Mark how many lenses surfaced each source
     _apply_corroboration(lens_results)

@@ -13,12 +13,18 @@
         href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap"
         rel="stylesheet">
 
-    <!-- Three.js (r128) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Three.js (r128) — pinned by subresource integrity -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
+        integrity="sha384-CI3ELBVUz9XQO+97x6nwMDPosPR5XvsxW2ua7N1Xeygeh1IxtgqtCkGfQY9WWdHu"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <!-- GSAP & ScrollTrigger -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <!-- GSAP & ScrollTrigger — pinned by subresource integrity -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+        integrity="sha384-g4NTh/Iv5PPU4xPyhEWqPcwtNXOvdaDI8LLnyYfyNZOjKJeYQyjzQ9X5275eBjpt"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"
+        integrity="sha384-Z3REaz79l2IaAZqJsSABtTbhjgOUYyV3p90XNnAPCSHg3EMTz1fouunq9WZRtj3d"
+        crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
     <style>
         :root {
@@ -1311,30 +1317,38 @@
     <div id="setup-overlay" style="display: none;">
         <div class="setup-modal" style="position: relative;">
             <button id="setup-close-btn"
-                style="display: none; position: absolute; top: 15px; right: 20px; background: none; border: 1px solid var(--matrix-green); color: var(--matrix-green); font-family: var(--font-mono); font-size: 14px; padding: 4px 12px; cursor: pointer; letter-spacing: 1px; transition: all 0.3s ease;"
-                onmouseover="this.style.background='var(--matrix-green)';this.style.color='#000'"
-                onmouseout="this.style.background='none';this.style.color='var(--matrix-green)'">✕ BACK</button>
-            <div class="setup-title">INITIALIZATION REQUIRED</div>
+                style="display: none; position: absolute; top: 15px; right: 20px; background: none; border: 1px solid var(--matrix-green); color: var(--matrix-green); font-family: var(--font-mono); font-size: 14px; padding: 4px 12px; cursor: pointer; letter-spacing: 1px; transition: all 0.3s ease;">✕ BACK</button>
+            <div class="setup-title">OPTIONAL UPLINK</div>
             <div class="setup-text">
-                To power the VG Intelligence mesh, you must establish a neural uplink.
+                The investigator runs on free, keyless sources. Add a Groq key to get
+                an AI-written briefing instead of the mechanical summary.
                 <br><br>
-                <strong>Groq API Key Required</strong><br>
                 Get your free key at <a href="https://console.groq.com/keys" target="_blank"
+                    rel="noopener"
                     style="color: var(--matrix-green); text-decoration: underline;">console.groq.com/keys</a> — fast,
                 accurate, zero cost.
             </div>
             <div class="setup-warning">
-                🔒 Your key is stored locally in your browser. It is never saved on our servers.
+                🔒 Your key stays in this browser tab only (sessionStorage). It is never
+                saved on our servers.
             </div>
             <form id="setup-form">
                 <div class="setup-input-group">
                     <input type="password" class="setup-input" id="setup-api-key"
-                        placeholder="Enter Groq API Key (gsk_...)" required autocomplete="off">
+                        placeholder="Optional Groq API Key (gsk_...)" autocomplete="off">
                     <button type="submit" class="setup-btn">CONNECT UPLINK</button>
+                </div>
+                <div class="setup-input-group" id="setup-access-group" style="display: none; margin-top: 10px;">
+                    <input type="password" class="setup-input" id="setup-access-key"
+                        placeholder="Deployment access key" autocomplete="off">
                 </div>
                 <div id="setup-error"
                     style="color: var(--dark-ember); font-family: var(--font-mono); font-size: 12px; margin-top: 10px;">
                 </div>
+                <button type="button" id="setup-skip-btn"
+                    style="margin-top: 14px; background: none; border: 1px solid rgba(0, 255, 65, 0.45); color: var(--matrix-green); font-family: var(--font-mono); font-size: 12px; padding: 6px 14px; cursor: pointer; letter-spacing: 1px;">
+                    SKIP — INVESTIGATE WITHOUT A KEY
+                </button>
             </form>
         </div>
     </div>
@@ -1465,40 +1479,78 @@
         </div>
     </div>
 
-    <script>
-        // ─── API Key Management (localStorage — never sent to server for storage) ───
+    <script nonce="__VG_NONCE__">
+        // ─── Credentials (sessionStorage — a tab-scoped secret, never persisted) ───
         function getApiKey() {
-            return localStorage.getItem('vg_api_key') || '';
+            return sessionStorage.getItem('vg_api_key') || '';
         }
         function setApiKey(key) {
-            localStorage.setItem('vg_api_key', key);
+            if (key) sessionStorage.setItem('vg_api_key', key);
+            else sessionStorage.removeItem('vg_api_key');
+        }
+        function getAccessKey() {
+            return sessionStorage.getItem('vg_access_key') || '';
+        }
+        function setAccessKey(key) {
+            if (key) sessionStorage.setItem('vg_access_key', key);
+            else sessionStorage.removeItem('vg_access_key');
+        }
+
+        // Only http(s) links are rendered — a source must not be able to
+        // smuggle a javascript:/data: URL into the page.
+        function safeUrl(url) {
+            if (!url) return '';
+            const value = String(url).trim();
+            if (!/^https?:\/\//i.test(value)) return '';
+            return value;
+        }
+
+        // A deployment may require its own access key; ask the server which
+        // mode it is in so the overlay only asks for what is needed.
+        let accessKeyRequired = false;
+        async function checkDeploymentAuth() {
+            try {
+                const res = await fetch('/api/health');
+                const data = await res.json();
+                accessKeyRequired = !!(data && data.auth === 'access_key');
+            } catch (err) {
+                accessKeyRequired = false;
+            }
+            const group = document.getElementById('setup-access-group');
+            if (group) group.style.display = accessKeyRequired ? 'block' : 'none';
+            const skipBtn = document.getElementById('setup-skip-btn');
+            if (skipBtn) skipBtn.style.display = accessKeyRequired ? 'none' : 'inline-block';
         }
 
         // Check if key exists on page load
         (function checkSetup() {
+            checkDeploymentAuth();
             if (!getApiKey()) {
                 document.getElementById('setup-overlay').style.display = 'flex';
             }
         })();
 
-        // Setup form — save key to localStorage only
+        // Setup form — save the key in this tab only
         document.getElementById('setup-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const key = document.getElementById('setup-api-key').value.trim();
+            const accessKey = document.getElementById('setup-access-key').value.trim();
             const errorDiv = document.getElementById('setup-error');
-            const btn = e.target.querySelector('button');
+            const btn = e.target.querySelector('button[type="submit"]');
 
-            if (!key) {
-                errorDiv.textContent = 'Please enter an API key.';
+            if (accessKeyRequired && !accessKey) {
+                errorDiv.textContent = 'This deployment requires an access key.';
                 return;
             }
 
             errorDiv.textContent = '';
             btn.textContent = 'VERIFYING...';
 
-            // Quick validation: try a lightweight health check with the key
+            // The key is stored in this tab only; nothing is sent until an
+            // investigation runs.
             try {
                 setApiKey(key);
+                setAccessKey(accessKey);
                 if (typeof playConnectSound === 'function') playConnectSound();
                 const overlay = document.getElementById('setup-overlay');
                 overlay.classList.add('hidden');
@@ -1509,6 +1561,13 @@
             }
         });
 
+        // Skip the optional key — the investigation still runs without one.
+        document.getElementById('setup-skip-btn').addEventListener('click', () => {
+            const overlay = document.getElementById('setup-overlay');
+            overlay.classList.add('hidden');
+            setTimeout(() => overlay.style.display = 'none', 500);
+        });
+
         // Settings button — open setup modal on demand
         document.getElementById('btn-settings').addEventListener('click', () => {
             const overlay = document.getElementById('setup-overlay');
@@ -1516,16 +1575,35 @@
             overlay.style.display = 'flex';
             document.getElementById('setup-api-key').value = '';
             document.getElementById('setup-error').textContent = '';
-            const btn = document.querySelector('#setup-form button');
+            const btn = document.querySelector('#setup-form button[type="submit"]');
             if (btn) btn.textContent = 'CONNECT UPLINK';
-            // Show close/back button only if user already has a key
+            const accessGroup = document.getElementById('setup-access-group');
+            if (accessGroup) accessGroup.style.display = accessKeyRequired ? 'block' : 'none';
+            const skipBtn = document.getElementById('setup-skip-btn');
+            if (skipBtn) skipBtn.style.display = accessKeyRequired ? 'none' : 'inline-block';
+            // Show the back button only if the user already connected
             const closeBtn = document.getElementById('setup-close-btn');
-            if (getApiKey()) {
+            if (getApiKey() || getAccessKey()) {
                 closeBtn.style.display = 'block';
             } else {
                 closeBtn.style.display = 'none';
             }
         });
+
+        // Hover styling for the back button (no inline handlers: the page is
+        // served under a strict Content Security Policy).
+        (function wireBackButton() {
+            const btn = document.getElementById('setup-close-btn');
+            if (!btn) return;
+            btn.addEventListener('mouseover', () => {
+                btn.style.background = 'var(--matrix-green)';
+                btn.style.color = '#000';
+            });
+            btn.addEventListener('mouseout', () => {
+                btn.style.background = 'none';
+                btn.style.color = 'var(--matrix-green)';
+            });
+        })();
 
         // Close/Back button on setup modal
         document.getElementById('setup-close-btn').addEventListener('click', () => {
@@ -1873,16 +1951,20 @@
 
             // ── API helper ──
             async function postJSON(url, payload) {
+                const headers = { 'Content-Type': 'application/json' };
                 const apiKey = getApiKey();
-                if (!apiKey) {
+                if (apiKey) headers['X-API-Key'] = apiKey;
+                const accessKey = getAccessKey();
+                if (accessKey) headers['X-VG-Access-Key'] = accessKey;
+                if (!apiKey && !accessKey && accessKeyRequired) {
                     document.getElementById('setup-overlay').style.display = 'flex';
-                    const err = new Error('no api key');
+                    const err = new Error('access key required');
                     err.noKey = true;
                     throw err;
                 }
                 const res = await fetch(url, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+                    headers: headers,
                     body: JSON.stringify(payload)
                 });
                 let data = null;
@@ -1923,8 +2005,9 @@
             // Mirror the investigation into the main console feed.
             async function reportToConsole(data) {
                 const prov = data.provenance || {};
+                const acrossLenses = Number(prov.lens_findings) || Number(prov.total_findings) || 0;
                 const lines = [
-                    `INVESTIGATION COMPLETE · ${prov.total_findings || 0} findings · ${prov.unique_sources || 0} unique sources`,
+                    `INVESTIGATION COMPLETE · ${prov.total_findings || 0} unique findings · ${acrossLenses} across lenses`,
                     ...Object.entries(prov.tag_counts || {}).map(([tag, n]) => `${tag}: ${n}`),
                 ];
                 const contradictions = data.contradictions || [];
@@ -1975,7 +2058,7 @@
                 if (Object.keys(tags).length) {
                     const tagLine = Object.entries(tags)
                         .map(([t, c]) => `${esc(t)}: ${Number(c) || 0}`).join(' · ');
-                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Total: ${Number(prov.total_findings) || 0} · Unique sources: ${Number(prov.unique_sources) || 0}</div>`);
+                    parts.push(`<div class="io-line" style="opacity:0.7;font-size:13px;">Provenance: ${tagLine} · Unique findings: ${Number(prov.total_findings) || 0} · Across lenses: ${Number(prov.lens_findings) || 0}</div>`);
                 }
 
                 // Lenses
@@ -2002,7 +2085,8 @@
                         const snippet = esc(f.snippet || '');
                         const corroborated = Number(f.corroboration) || 1;
                         const corrob = corroborated > 1 ? ` · ${corroborated} lenses` : '';
-                        const url = f.url ? `<a href="${esc(f.url)}" target="_blank" rel="noopener" class="io-src-link">source</a>` : '';
+                        const link = safeUrl(f.url);
+                        const url = link ? `<a href="${esc(link)}" target="_blank" rel="noopener noreferrer" class="io-src-link">source</a>` : '';
                         parts.push(`
                             <div class="io-claim">
                                 <span class="io-tag ${tagClass}">${esc(tag.toUpperCase())}</span>

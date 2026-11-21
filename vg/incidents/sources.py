@@ -27,11 +27,17 @@ import sys
 import threading
 import time
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 from email.utils import parsedate_to_datetime
 from typing import Any
 
 # Test mode detection - skip slow network calls during tests
 _IN_TEST = "pytest" in sys.modules or os.getenv("PYTEST_CURRENT_TEST") is not None
+
+#: One shared pool for outbound searches. A single bounded pool keeps the
+#: number of requests in flight predictable, whatever the number of lenses
+#: or subjects being investigated.
+_SEARCH_POOL = ThreadPoolExecutor(max_workers=12, thread_name_prefix="vg-search")
 
 # Simple in-memory cache for Wikidata lookups
 _WIKIDATA_ID_CACHE: dict[str, str | None] = {}
@@ -594,10 +600,25 @@ def _search_gleif(entity: str) -> list[dict[str, Any]]:
         return []
 
 
+#: EDGAR filing lists change slowly. A short cache keeps one investigation
+#: (and the next few) from hammering SEC, which is strict about automated
+#: request rates.
+_EDGAR_CACHE: dict[str, tuple[float, list[dict[str, Any]]]] = {}
+_EDGAR_CACHE_TTL = 600.0
+_EDGAR_CACHE_LOCK = threading.Lock()
+
+
 def _search_edgar(entity: str) -> list[dict[str, Any]]:
     """SEC EDGAR — US public company filings (8-K, 10-K, insider trades, etc.)."""
     if _IN_TEST:
         return []
+
+    now = time.monotonic()
+    with _EDGAR_CACHE_LOCK:
+        cached = _EDGAR_CACHE.get(entity)
+        if cached and now - cached[0] < _EDGAR_CACHE_TTL:
+            return [dict(hit) for hit in cached[1]]
+
     # SEC blocks automated requests without proper User-Agent
     headers = {
         "User-Agent": "VG-Investigator/1.0 (contact: rushi@example.com)",
@@ -666,6 +687,8 @@ def _search_edgar(entity: str) -> list[dict[str, Any]]:
                     "date": date,
                     "tag": "inferred",  # Official filing = documented/inferred
                 })
+        with _EDGAR_CACHE_LOCK:
+            _EDGAR_CACHE[entity] = (time.monotonic(), list(results))
         return results
     except Exception:
         return []
@@ -787,9 +810,18 @@ def _lens_search(lens: str, entity: str) -> list[dict[str, Any]]:
     # Quote the entity so news search matches the name exactly instead of
     # fuzzy-matching every word in the lens template.
     quoted_entity = f'"{entity}"' if _is_proper_name(entity) else entity
-    for template in templates:
-        query = template.format(entity=quoted_entity)
-        for r in search_free(query):
+    queries = [template.format(entity=quoted_entity) for template in templates]
+
+    # The template queries are independent network calls — run them together
+    # so one slow provider does not hold up the whole lens.
+    futures = [_SEARCH_POOL.submit(search_free, query) for query in queries]
+
+    for query, future in zip(queries, futures):
+        try:
+            hits = future.result()
+        except Exception:
+            hits = []
+        for r in hits:
             # Google News ignores some query terms; drop hits that never
             # mention the entity (e.g. unrelated cricket coverage).
             if not _mentions_entity(r, entity):

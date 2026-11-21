@@ -273,9 +273,10 @@ class TestAccessControlAndBudgets:
 
         seen: dict = {}
 
-        def fake_investigate(question, api_key=None):
+        def fake_investigate(question, api_key=None, deadline_seconds=None):
             seen["question"] = question
             seen["api_key"] = api_key
+            seen["deadline_seconds"] = deadline_seconds
             return {
                 "question": question,
                 "lens_results": {},
@@ -447,6 +448,80 @@ class TestAccessControlAndBudgets:
             if len(call.args) == 2
         }
         assert sent.get("Access-Control-Allow-Origin") == "https://app.example"
+
+
+class TestBrowserHardening:
+    """The UI must not hand its secrets to a compromised dependency."""
+
+    @staticmethod
+    def _html() -> str:
+        path = Path(__file__).resolve().parents[1] / "vg" / "api" / "static" / "index.html"
+        return path.read_text()
+
+    def test_cdn_scripts_are_integrity_pinned(self):
+        """Every remote script carries a subresource-integrity hash."""
+        import re
+
+        html = self._html()
+        remote_scripts = re.findall(r'<script[^>]*src="https://[^"]+"[^>]*>', html)
+        assert remote_scripts, "expected the UI to load pinned CDN scripts"
+        for tag in remote_scripts:
+            assert "integrity=\"sha384-" in tag, tag
+            assert "crossorigin=\"anonymous\"" in tag, tag
+
+    def test_inline_script_carries_a_nonce_placeholder(self):
+        """The inline script is marked for the per-response CSP nonce."""
+        import re
+
+        html = self._html()
+        inline = re.findall(r"<script(?![^>]*src=)[^>]*>", html)
+        assert inline, "expected an inline script"
+        for tag in inline:
+            assert 'nonce="__VG_NONCE__"' in tag, tag
+
+    def test_index_is_served_with_a_content_security_policy(self):
+        """The page is served with a CSP that pins script sources."""
+        handler = create_mock_handler(headers={})
+        handler.path = "/"
+        handler.do_GET()
+
+        sent = {
+            call.args[0]: call.args[1]
+            for call in handler.send_header.call_args_list
+            if len(call.args) == 2
+        }
+        policy = sent.get("Content-Security-Policy", "")
+        assert "script-src" in policy, policy
+        assert "nonce-" in policy, policy
+        assert "frame-ancestors 'none'" in policy, policy
+
+    def test_api_key_is_not_kept_in_local_storage(self):
+        """A long-lived secret must not sit in localStorage for the whole browser."""
+        html = self._html()
+        assert "localStorage.setItem('vg_api_key'" not in html
+        assert "sessionStorage" in html
+
+    def test_no_inline_event_handlers(self):
+        """Inline handlers are blocked by the CSP, so there must be none."""
+        import re
+
+        html = self._html()
+        handlers = re.findall(r'\son[a-z]+="[^"]*"', html)
+        assert not handlers, handlers
+
+    def test_client_checks_the_link_scheme(self):
+        """The client refuses to render a link with a non-http scheme."""
+        html = self._html()
+        assert "http://" in html and "https://" in html
+        assert "safeUrl" in html or "safeURL" in html
+
+    def test_the_api_key_is_optional_in_the_setup_overlay(self):
+        """A visitor can investigate without a key of their own."""
+        html = self._html()
+        assert 'id="setup-api-key"' in html
+        key_input = html.split('id="setup-api-key"', 1)[1].split(">", 1)[0]
+        assert "required" not in key_input, key_input
+        assert "skip" in html.lower()
 
 
 if __name__ == "__main__":
