@@ -190,10 +190,26 @@ class TestInvestigatePipeline:
         monkeypatch.setattr(inv_mod, "_IN_TEST", False)
         monkeypatch.setattr(
             inv_mod, "_groq_synthesis",
-            lambda question, lens_results, contradictions: "LLM SUMMARY",
+            lambda question, lens_results, contradictions, api_key=None: "LLM SUMMARY",
         )
         result = inv_mod.investigate("Why did the CEO resign?")
         assert result["synthesis"] == "LLM SUMMARY"
+
+    def test_synthesis_uses_the_submitted_key(self, monkeypatch):
+        """A key submitted by the caller is used for the synthesis call (BYOK)."""
+        from vg.incidents import investigation as inv_mod
+
+        seen: dict = {}
+
+        def fake_groq(question, lens_results, contradictions, api_key=None):
+            seen["api_key"] = api_key
+            return "LLM SUMMARY"
+
+        monkeypatch.setattr(inv_mod, "_IN_TEST", False)
+        monkeypatch.setattr(inv_mod, "_groq_synthesis", fake_groq)
+
+        inv_mod.investigate("Why did the CEO resign?", api_key="caller-key")
+        assert seen["api_key"] == "caller-key"
 
     def test_synthesis_falls_back_when_llm_fails(self, monkeypatch):
         """A failing LLM call falls back to the mechanical summary."""

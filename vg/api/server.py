@@ -206,7 +206,9 @@ class VGWebHandler(BaseHTTPRequestHandler):
             return
 
         try:
-            result = investigate(question)
+            # The caller's key drives the synthesis (BYOK); the server's own
+            # GROQ_API_KEY is only the fallback.
+            result = investigate(question, api_key=self._groq_key())
         except Exception as exc:
             self._send_json(
                 HTTPStatus.INTERNAL_SERVER_ERROR,

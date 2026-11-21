@@ -117,6 +117,13 @@ Open `http://127.0.0.1:8080/` in a browser for the investigator UI.
 | `401` | No `X-API-Key` header (and no server-side key) |
 | `500` | Investigation failed (detail in the body) |
 
+**About the key** — the key sent in `X-API-Key` is the caller's own Groq key
+(BYOK). It is used for the single synthesis call and never stored. If it is
+missing or invalid, the investigation still completes and falls back to the
+deterministic mechanical summary. A server-side `GROQ_API_KEY` is only used
+when the caller sends none — set it only for a private instance, otherwise
+anyone who can reach the endpoint spends your quota.
+
 ### `GET /api/health`
 
 ```json

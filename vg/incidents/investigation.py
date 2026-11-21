@@ -313,11 +313,13 @@ def _apply_corroboration(lens_results: dict[str, dict[str, Any]]) -> None:
             finding["corroboration"] = counts.get(finding.get("url", ""), 1)
 
 
-def investigate(question: str) -> dict[str, Any]:
+def investigate(question: str, api_key: str | None = None) -> dict[str, Any]:
     """Investigate a question using six lenses and return findings.
 
     Args:
         question: A plain-language question (e.g., "Why did the CEO resign?")
+        api_key: Optional caller-supplied key for the synthesis call (BYOK).
+            Falls back to the server's ``GROQ_API_KEY`` when omitted.
 
     Returns:
         Dict with keys:
@@ -363,8 +365,8 @@ def investigate(question: str) -> dict[str, Any]:
         if f.get("url"):
             unique_urls.add(f["url"])
 
-    # Bounded LLM synthesis call (placeholder — actual LLM call would go here)
-    synthesis = _synthesize(question, lens_results, contradictions)
+    # Bounded LLM synthesis call (one Groq call when a key is available)
+    synthesis = _synthesize(question, lens_results, contradictions, api_key=api_key)
 
     return {
         "question": question,
@@ -423,10 +425,16 @@ def _groq_synthesis(
     question: str,
     lens_results: dict[str, dict[str, Any]],
     contradictions: list[dict[str, Any]],
+    api_key: str | None = None,
 ) -> str | None:
-    """One bounded Groq call. Returns None when no key/client is available."""
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
+    """One bounded Groq call. Returns None when no key/client is available.
+
+    ``api_key`` is the key submitted by the caller (BYOK). It falls back to
+    the server's ``GROQ_API_KEY`` so a self-hosted instance works with only
+    an environment variable set.
+    """
+    key = api_key or os.getenv("GROQ_API_KEY")
+    if not key:
         return None
     try:
         from groq import Groq
@@ -434,7 +442,7 @@ def _groq_synthesis(
         return None
 
     try:
-        client = Groq(api_key=api_key)
+        client = Groq(api_key=key)
         response = client.chat.completions.create(
             model=os.getenv("GROQ_MODEL_LARGE", "openai/gpt-oss-120b"),
             messages=[
@@ -459,16 +467,24 @@ def _groq_synthesis(
         return None
 
 
-def _synthesize(question: str, lens_results: dict[str, dict[str, Any]], contradictions: list[dict[str, Any]]) -> str:
+def _synthesize(
+    question: str,
+    lens_results: dict[str, dict[str, Any]],
+    contradictions: list[dict[str, Any]],
+    api_key: str | None = None,
+) -> str:
     """Bounded LLM synthesis call (~1-2k tokens total).
 
-    Uses one Groq call when GROQ_API_KEY is set. Falls back to the mechanical
-    summary when no key is configured or the call fails, so the endpoint
-    always returns a non-empty synthesis.
+    Uses one Groq call when a key is available (the caller's key, else the
+    server's ``GROQ_API_KEY``). Falls back to the mechanical summary when no
+    key is configured or the call fails, so the endpoint always returns a
+    non-empty synthesis.
     """
     if not _IN_TEST:
         try:
-            llm_summary = _groq_synthesis(question, lens_results, contradictions)
+            llm_summary = _groq_synthesis(
+                question, lens_results, contradictions, api_key=api_key
+            )
             if llm_summary:
                 return llm_summary
         except Exception:
