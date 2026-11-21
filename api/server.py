@@ -26,7 +26,6 @@ already-consumed stream.
 
 from __future__ import annotations
 
-import asyncio
 import json
 import mimetypes
 import os
@@ -36,16 +35,8 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import urlparse
 
-from vg.main import analyze_async
 from vg.config import config
-from vg.incidents.match import (
-    ExtractionIncomplete,
-    MAX_PASTE_CHARS,
-    record_outcome,
-    run_match,
-)
 from vg.incidents.investigation import investigate
-from vg.incidents.store import IncidentStoreError
 
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -90,9 +81,7 @@ class VGWebHandler(BaseHTTPRequestHandler):
                     "service": "vg-web",
                     "version": "2.0",
                     "mode": "saas",
-                    # R5: new FIELD on the existing route (no new endpoint).
-                    # The panel uses it to decide whether to render Debate.
-                    "debate_enabled": bool(config.debate_enabled),
+                    "modes": ["investigate"],
                 },
             )
             return
@@ -112,11 +101,9 @@ class VGWebHandler(BaseHTTPRequestHandler):
     def do_POST(self) -> None:  # noqa: N802
         route = urlparse(self.path).path
 
-        # Dispatch table over the routes (design doc §22).
+        # Dispatch table over the routes. The investigator is the only
+        # analysis endpoint — the debate and paste-a-case flows are gone.
         dispatch: dict[str, Callable[[dict[str, Any]], None]] = {
-            "/api/analyze": self._handle_analyze,
-            "/api/incident-match": self._handle_incident_match,
-            "/api/incident-outcome": self._handle_incident_outcome,
             "/api/incident-investigate": self._handle_incident_investigate,
         }
 
@@ -206,122 +193,6 @@ class VGWebHandler(BaseHTTPRequestHandler):
         )
         return False
 
-    def _send_match_error(self, exc: Exception) -> None:
-        """Map incident-mode exceptions to the typed failure contract."""
-        if isinstance(exc, ExtractionIncomplete):
-            self._send_json(
-                HTTPStatus.UNPROCESSABLE_ENTITY,
-                {
-                    "error": "needs_manual_entry",
-                    "status": "needs_manual_entry",
-                    "missing": exc.missing,
-                    "raw_paste": exc.raw_paste,
-                    "spooled_path": exc.spooled_path,
-                },
-            )
-            return
-        if isinstance(exc, IncidentStoreError):
-            self._send_json(
-                HTTPStatus.SERVICE_UNAVAILABLE,
-                {"error": "service unavailable", "reason": str(exc)},
-            )
-            return
-        if isinstance(exc, LookupError):
-            self._send_json(
-                HTTPStatus.NOT_FOUND,
-                {"error": "unknown incident_id", "incident_id": str(exc.args[0])},
-            )
-            return
-        self._send_json(
-            HTTPStatus.INTERNAL_SERVER_ERROR,
-            {"error": "Match failed.", "detail": str(exc)},
-        )
-
-    # ─── Incident match endpoint ────────────────────────────────────
-    def _handle_incident_match(self, body: dict[str, Any]) -> None:
-        """POST /api/incident-match — extract card, score corpus, return matches.
-
-        Two-phase: no ``extracted`` key -> ``status: reviewing`` (or 422
-        needs_manual_entry); with ``extracted`` -> ``status: complete``.
-        ``mode=debate`` reuses the same body (already read) and routes to
-        the analyze handler.
-        """
-        mode = str(body.get("mode", "incident") or "incident").strip()
-        if mode not in ("incident", "debate"):
-            self._send_json(
-                HTTPStatus.BAD_REQUEST,
-                {"error": "Invalid mode. Use 'incident' or 'debate'."},
-            )
-            return
-
-        if mode == "debate":
-            # Same parsed body — no second read of rfile (it is spent).
-            self._handle_analyze(body)
-            return
-
-        if not self._require_key():
-            return
-
-        paste = str(body.get("paste", "") or "")
-        if not paste.strip():
-            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Paste is required."})
-            return
-
-        extracted = body.get("extracted")
-        if extracted is not None and not isinstance(extracted, dict):
-            self._send_json(
-                HTTPStatus.BAD_REQUEST,
-                {"error": "'extracted' must be an object when present."},
-            )
-            return
-
-        try:
-            result = asyncio.run(
-                run_match(
-                    paste=paste,
-                    api_key=self._groq_key(),
-                    extracted=extracted,
-                )
-            )
-        except Exception as exc:
-            self._send_match_error(exc)
-            return
-
-        if len(paste) > MAX_PASTE_CHARS:
-            result.setdefault("truncated", True)
-        self._send_json(HTTPStatus.OK, result)
-
-    # ─── Incident outcome endpoint ──────────────────────────────────
-    def _handle_incident_outcome(self, body: dict[str, Any]) -> None:
-        """POST /api/incident-outcome — record outcome for a card."""
-        if not self._require_key():
-            return
-
-        incident_id = str(body.get("incident_id", "") or "").strip()
-        outcome_text = str(body.get("outcome_text", "") or "").strip()
-
-        if not incident_id or not outcome_text:
-            self._send_json(
-                HTTPStatus.BAD_REQUEST,
-                {"error": "Both incident_id and outcome_text are required."},
-            )
-            return
-
-        try:
-            result = asyncio.run(
-                record_outcome(
-                    incident_id=incident_id,
-                    outcome_text=outcome_text,
-                    api_key=self._groq_key(),
-                )
-            )
-        except Exception as exc:
-            self._send_match_error(exc)
-            return
-
-        self._send_json(HTTPStatus.OK, result)
-
-    # ─── Incident investigate endpoint ───────────────────────────────
     def _handle_incident_investigate(self, body: dict[str, Any]) -> None:
         """POST /api/incident-investigate — question-driven mini CID investigation.
 
@@ -346,96 +217,20 @@ class VGWebHandler(BaseHTTPRequestHandler):
             )
             return
 
-        # Flag any matched corpus cards that are unverified
-        # This is informational — the investigation pipeline doesn't match cards,
-        # but the UI may cross-reference. We include the list for the panel.
-        result["unverified_cards"] = [
-            "kalanick_uber_2017",
-            "strauss_kahn_imf_2011",
-        ]
-
         self._send_json(HTTPStatus.OK, result)
 
-    # ─── Debate endpoint ────────────────────────────────────────────
-    def _handle_analyze(self, body: dict[str, Any]) -> None:
-        """POST /api/analyze — debate pipeline, gated on debate_enabled.
-
-        Flag off -> 409 *before* any coordinator construction (a misrouted
-        paste must not burn Tavily quota). Flag on -> unchanged behavior.
-        """
-        if not config.debate_enabled:
-            self._send_json(
-                HTTPStatus.CONFLICT,
-                {"error": "forecast mode disabled"},
-            )
-            return
-
-        if not self._require_key():
-            return
-
-        groq_key = self._groq_key()
-        question = str(body.get("question", "") or "").strip()
-
-        if not question:
-            self._send_json(HTTPStatus.BAD_REQUEST, {"error": "Question is required."})
-            return
-
-        try:
-            result = asyncio.run(
-                analyze_async(
-                    question,
-                    use_enhanced=True,
-                    api_key=groq_key,
-                    provider="groq",
-                )
-            )
-        except Exception as exc:
-            error_msg = str(exc)
-            if (
-                "auth" in error_msg.lower()
-                or "unauthorized" in error_msg.lower()
-                or "invalid" in error_msg.lower()
-            ):
-                self._send_json(
-                    HTTPStatus.UNAUTHORIZED,
-                    {"error": "Invalid API key. Please check your Groq API key."},
-                )
-            else:
-                self._send_json(
-                    HTTPStatus.INTERNAL_SERVER_ERROR,
-                    {"error": "Analysis failed.", "detail": error_msg},
-                )
-            return
-
-        self._send_json(
-            HTTPStatus.OK,
-            {
-                "question": question,
-                "enhanced": True,
-                "result": result,
-            },
-        )
-
-
+    # ─── Server ──────────────────────────────────────────────────────
 def run_server(host: str = "0.0.0.0", port: int = 8080) -> None:
     """Start the threaded VG web server."""
-    print("  Mode: Public SaaS (per-request API keys)")
+    print("  Mode: Mini CID Investigator")
     print("  Server: VGWeb/2.0")
-    print(
-        f"  Debate mode: {'enabled' if config.debate_enabled else 'disabled (forecast disabled)'}"
-    )
+    print("  Endpoint: POST /api/incident-investigate")
 
-    server_key = config.groq_api_key or os.getenv("GROQ_API_KEY")
+    server_key = os.getenv("GROQ_API_KEY")
     if server_key:
-        print("  Server fallback key: ✓ configured (for CLI)")
+        print("  Server fallback key: ✓ configured (synthesis)")
     else:
-        print("  Server fallback key: ✗ not set (web users must provide their own)")
-
-    tavily_key = config.tavily_api_key
-    if tavily_key and "your" not in tavily_key.lower():
-        print("  Tavily key: ✓ configured")
-    else:
-        print("  Tavily key: ✗ not set (web search disabled)")
+        print("  Server fallback key: ✗ not set (mechanical synthesis only)")
 
     server = ThreadingHTTPServer((host, port), VGWebHandler)
     print(f"\nVG web interface running at http://{host}:{port}")

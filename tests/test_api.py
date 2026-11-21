@@ -121,7 +121,7 @@ class TestIncidentInvestigateEndpoint:
         assert "contradictions" in data
         assert "synthesis" in data
         assert "provenance" in data
-        assert "unverified_cards" in data
+        assert "question_profile" in data
 
         # Verify 6 lenses
         lenses = set(data["lens_results"].keys())
@@ -138,12 +138,10 @@ class TestIncidentInvestigateEndpoint:
         # Verify provenance
         prov = data["provenance"]
         assert "total_findings" in prov
+        assert "unique_sources" in prov
         assert "tag_counts" in prov
         assert "lenses_run" in prov
         assert set(prov["lenses_run"]) == expected_lenses
-
-        # Verify unverified_cards
-        assert data["unverified_cards"] == ["kalanick_uber_2017", "strauss_kahn_imf_2011"]
 
     def test_each_lens_has_queries_and_findings(self):
         """Each lens result has queries and findings lists."""
@@ -181,29 +179,41 @@ class TestIncidentInvestigateEndpoint:
                     f"{lens_name} finding has invalid tag: {finding['tag']}"
 
 
-class TestAnalyzeEndpointForecastGuard:
-    """Tests for POST /api/analyze 409 guard when forecast mode is off."""
+class TestOnlyInvestigateIsServed:
+    """The server exposes exactly one analysis endpoint: the investigator."""
 
-    def test_409_when_debate_disabled(self):
-        """POST /api/analyze returns 409 when debate_enabled is False."""
-        # Save original config
-        original_flag = config.debate_enabled
-        config.debate_enabled = False
+    def test_analyze_endpoint_is_gone(self):
+        """POST /api/analyze returns 404 — the debate pipeline is removed."""
+        handler = create_mock_handler(
+            headers={"Content-Type": "application/json", "X-API-Key": "test-key"},
+            body=json.dumps({"question": "Why did the CEO resign?"}).encode(),
+        )
+        handler.path = "/api/analyze"
+        handler.do_POST()
 
-        try:
-            handler = create_mock_handler(
-                headers={"Content-Type": "application/json", "X-API-Key": "test-key"},
-                body=json.dumps({"question": "Why did the CEO resign?"}).encode()
-            )
-            handler._handle_analyze({"question": "Why did the CEO resign?"})
+        assert handler.send_response.call_args[0][0] == HTTPStatus.NOT_FOUND
 
-            assert handler.send_response.call_args[0][0] == HTTPStatus.CONFLICT
-            response_body = handler.wfile.write.call_args[0][0]
-            data = json.loads(response_body.decode())
-            assert data["error"] == "forecast mode disabled"
-        finally:
-            # Restore config
-            config.debate_enabled = original_flag
+    def test_incident_match_endpoint_is_gone(self):
+        """POST /api/incident-match returns 404 — the paste-a-case flow is removed."""
+        handler = create_mock_handler(
+            headers={"Content-Type": "application/json", "X-API-Key": "test-key"},
+            body=json.dumps({"paste": "some incident text"}).encode(),
+        )
+        handler.path = "/api/incident-match"
+        handler.do_POST()
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.NOT_FOUND
+
+    def test_health_lists_only_investigate(self):
+        """GET /api/health reports the investigator as the only mode."""
+        handler = create_mock_handler(headers={})
+        handler.path = "/api/health"
+        handler.do_GET()
+
+        assert handler.send_response.call_args[0][0] == HTTPStatus.OK
+        data = json.loads(handler.wfile.write.call_args[0][0].decode())
+        assert data["modes"] == ["investigate"]
+        assert "debate_enabled" not in data
 
 
 if __name__ == "__main__":

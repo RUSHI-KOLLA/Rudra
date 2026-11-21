@@ -1,172 +1,19 @@
 """
-VG main entry point.
+VG main entry point — Mini CID Investigator.
 
 Default behavior:
   python -m vg.main
   python -m vg.main --web --port 8080
-
-Legacy terminal mode:
-  python -m vg.main --cli "Will India's semiconductor policy succeed?"
-  python -m vg.main --cli "Your question" --basic --json
 """
 
-import asyncio
-import sys
 import os
-import json
-import textwrap
+import sys
 
 if __package__ in (None, ""):
     PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     if PROJECT_ROOT in sys.path:
         sys.path.remove(PROJECT_ROOT)
     sys.path.insert(0, PROJECT_ROOT)
-
-from vg.config import config
-
-# Default to enhanced coordinator if available
-try:
-    from vg.core.enhanced_debate import EnhancedDebateCoordinator as DebateCoordinator
-    ENHANCED_MODE = True
-except ImportError:
-    from vg.core.debate import DebateCoordinator
-    ENHANCED_MODE = False
-
-
-class ForecastDisabledError(RuntimeError):
-    """debate_enabled is off — forecast mode must not run.
-
-    Raised before any coordinator construction so a misrouted paste cannot
-    burn Tavily quota (the debate pipeline's first act is a search call).
-    The API layer maps this to HTTP 409 "forecast mode disabled".
-    """
-
-
-async def analyze_async(
-    question: str,
-    use_enhanced: bool = True,
-    api_key: str = None,
-    provider: str | None = None,
-) -> dict:
-    """Run the full VG analysis pipeline.
-
-    Gated on ``debate_enabled`` BEFORE any coordinator is constructed.
-    """
-    if not config.debate_enabled:
-        raise ForecastDisabledError("forecast mode disabled")
-
-    if use_enhanced and ENHANCED_MODE:
-        coordinator = DebateCoordinator(
-            enable_optimizations=True,
-            api_key=api_key,
-            provider=provider,
-        )
-    else:
-        coordinator = DebateCoordinator()
-    return await coordinator.run_full_pipeline(question)
-
-
-def analyze(question: str, case_name: str = None, use_enhanced: bool = True) -> dict:
-    """Synchronous wrapper for the VG pipeline."""
-    from vg.setup import run_async
-    return run_async(analyze_async(question, use_enhanced=use_enhanced))
-
-
-def print_report(result: dict):
-    """Print the final VG intelligence report."""
-    verdict = result.get("verdict", {})
-    agents = result.get("agent_results", [])
-    question = result.get("question", "Unknown")
-
-    print()
-    print("═" * 60)
-    print("  VG POLITICAL INTELLIGENCE REPORT")
-    print("═" * 60)
-    print(f"\n  QUESTION: {question}")
-
-    print(f"\n  MAJORITY VERDICT: {verdict.get('majority_verdict', verdict.get('primary_verdict', 'No verdict'))}")
-    print(f"  CONFIDENCE: {verdict.get('confidence', verdict.get('primary_confidence', 0))}%")
-
-    # 🔮 Oracle Mode — Upset Probability
-    oracle_data = result.get("oracle_mode", {})
-    upset_prob = verdict.get("upset_probability", oracle_data.get("upset_probability", 0))
-    if upset_prob > 0:
-        print(f"\n  🔮 UPSET PROBABILITY: {upset_prob}%")
-
-        upset_scenario = verdict.get("upset_scenario", oracle_data.get("upset_scenario", ""))
-        if upset_scenario:
-            print(f"  🔮 UPSET SCENARIO:")
-            for line in textwrap.wrap(str(upset_scenario), width=54):
-                print(f"    {line}")
-
-        key_signal = verdict.get("key_signal", "")
-        if key_signal:
-            print(f"  🔮 KEY SIGNAL TO WATCH:")
-            print(f"    {key_signal}")
-
-        signals = oracle_data.get("key_signals_to_watch", [])
-        if signals:
-            print(f"\n  🔮 SIGNALS TO WATCH:")
-            for s in signals[:3]:
-                print(f"    • {s}")
-
-    key_pattern = verdict.get("key_pattern", verdict.get("upset_pattern", ""))
-    if key_pattern:
-        print(f"\n  KEY PATTERN IDENTIFIED:")
-        print(f"    {key_pattern}")
-
-    precedent = verdict.get("historical_precedent", verdict.get("historical_parallel", ""))
-    if precedent:
-        print(f"\n  HISTORICAL PRECEDENT:")
-        print(f"    {precedent}")
-
-    print(f"\n  AGENT BREAKDOWN:")
-    for agent in agents:
-        marker = "✗" if agent.get("error") else "✓"
-        name = agent.get("agent_name", "Unknown")
-        stance = agent.get("stance", "N/A")
-        conf = agent.get("confidence", 0)
-        wrapped = textwrap.wrap(str(stance), width=72) or ["N/A"]
-        print(f"    {marker} {name:25} {wrapped[0]} [{conf}%]")
-        for line in wrapped[1:]:
-            print(f"      {'':25} {line}")
-
-    # Show contrarian agents if Oracle Mode was active
-    contrarian_agents = oracle_data.get("contrarian_agent_results", [])
-    if contrarian_agents:
-        print(f"\n  🔮 CONTRARIAN AGENTS (arguing against consensus):")
-        for agent in contrarian_agents:
-            if agent.get("error"):
-                continue
-            name = agent.get("agent_name", "Unknown")
-            stance = agent.get("stance", "N/A")
-            conf = agent.get("confidence", 0)
-            wrapped = textwrap.wrap(str(stance), width=68) or ["N/A"]
-            print(f"    🔮 {name:23} {wrapped[0]} [{conf}%]")
-            for line in wrapped[1:]:
-                print(f"      {'':25} {line}")
-
-    dissent = verdict.get("strongest_dissent", verdict.get("strongest_contrarian_argument", ""))
-    if dissent:
-        print(f"\n  MINORITY DISSENT:")
-        print(f"    {dissent}")
-
-    reasoning = verdict.get("reasoning", "")
-    if reasoning:
-        print(f"\n  REASONING:")
-        print(f"    {reasoning}")
-
-    print(f"\n  {'─' * 56}")
-    print("  DISCLAIMER: Speculative pattern analysis.")
-    print("  Not verified intelligence. For research only.")
-    print("═" * 60)
-    print()
-
-
-def byok_setup():
-    """Check for API keys, prompt if missing."""
-    from vg.setup import byok_setup as _byok
-    _byok(interactive=True)
 
 
 def _consume_option(argv: list[str], option: str, default: str) -> str:
@@ -177,102 +24,13 @@ def _consume_option(argv: list[str], option: str, default: str) -> str:
     try:
         value = argv[index + 1]
     except IndexError as exc:
-        raise SystemExit(f"{option} requires a value.") from exc
+        raise SystemExit(f"{option} requires a value.")
     del argv[index:index + 2]
     return value
 
 
-def run_cli(argv: list[str]) -> None:
-    """Run the legacy terminal interface."""
-    byok_setup()
-
-    save_json = "--json" in argv
-    if save_json:
-        argv = [arg for arg in argv if arg != "--json"]
-
-    use_enhanced = "--basic" not in argv
-    if "--basic" in argv:
-        argv = [arg for arg in argv if arg != "--basic"]
-    if "--enhanced" in argv:
-        argv = [arg for arg in argv if arg != "--enhanced"]
-
-    if argv:
-        question = " ".join(argv)
-    else:
-        mode_str = " [ENHANCED]" if use_enhanced and ENHANCED_MODE else ""
-        question = input(f"\n🧠 Enter your political analysis question{mode_str}: ")
-
-    if not question.strip():
-        print("No question provided. Exiting.")
-        sys.exit(1)
-
-    print(f"\n🚀 VG Intelligence Analysis{' (Enhanced Mode)' if use_enhanced and ENHANCED_MODE else ''}")
-    print("=" * 56)
-
-    try:
-        result = analyze(question, use_enhanced=use_enhanced)
-    except ForecastDisabledError:
-        print("\nForecast mode is disabled (debate_enabled = off).")
-        print("Set VG_DEBATE_ENABLED=1 to run the debate pipeline.")
-        sys.exit(1)
-    print_report(result)
-
-    # Show optimization stats if enhanced mode
-    if use_enhanced and ENHANCED_MODE:
-        stats = result.get("stats", {})
-        pipeline = result.get("pipeline", {})
-        optimizations = pipeline.get("optimizations_applied", [])
-
-        print("\n⚡ OPTIMIZATION STATS:")
-        print(f"   Cache hits: {stats.get('cache_hits', 0)}")
-        print(f"   Pattern grounding: {'✓' if stats.get('pattern_grounding_applied') else '✗'}")
-        print(f"   Hallucinations flagged: {stats.get('hallucinations_flagged', 0)}")
-        print(f"   Optimizations applied: {', '.join(optimizations) if optimizations else 'None'}")
-        print(f"   Total time: {result.get('elapsed_seconds', 'N/A')}s")
-
-    # Optionally save JSON
-    if save_json:
-        output_path = "vg_report.json"
-        with open(output_path, "w") as f:
-            json.dump(result, f, indent=2, default=str)
-        print(f"📄 Full report saved to {output_path}")
-
-
 def run_web(argv: list[str]) -> None:
     """Run the browser-native web server."""
-    # Ensure RAG database is built at startup if missing
-    from vg.config import config
-    db_path = config.chroma_db_path
-    sqlite_file = os.path.join(db_path, "chroma.sqlite3")
-    if not os.path.exists(sqlite_file):
-        print(f"📁 ChromaDB sqlite file not found at {sqlite_file}. Building RAG database now...")
-        try:
-            from vg.rag.builder import build_all
-            build_all()
-        except Exception as e:
-            print(f"❌ Failed to auto-build RAG database: {e}")
-
-    # Incident corpus: ensure the incidents collection exists and is in sync
-    # with data/incidents/*.json (the JSON files are the source of truth).
-    # Best effort at startup — a missing embedder still serves, and the
-    # per-request path raises IncidentStoreError -> HTTP 503 instead.
-    try:
-        from vg.incidents.store import IncidentStoreError, drift_check, load_all_cards, rebuild_index
-
-        cards = load_all_cards()
-        if not cards:
-            print("📁 No incident cards found — incident corpus empty.")
-        elif drift_check():
-            print(f"📁 Incident index out of sync ({len(cards)} cards). Rebuilding...")
-            n = rebuild_index()
-            print(f"✓ Incident index built: {n} cards")
-        else:
-            print(f"✓ Incident index in sync: {len(cards)} cards")
-    except IncidentStoreError as e:
-        print(f"⚠ Incident index unavailable at startup: {e}")
-    except Exception as e:  # pragma: no cover - never block serving
-        print(f"⚠ Incident index startup check failed: {e}")
-
     host = _consume_option(argv, "--host", os.getenv("VG_HOST", "0.0.0.0"))
     port = int(_consume_option(argv, "--port", os.getenv("PORT", os.getenv("VG_PORT", "8080"))))
     from vg.api.server import run_server
@@ -281,11 +39,6 @@ def run_web(argv: list[str]) -> None:
 
 if __name__ == "__main__":
     argv = sys.argv[1:]
-    use_cli = "--cli" in argv
-    if use_cli:
-        argv = [arg for arg in argv if arg != "--cli"]
-        run_cli(argv)
-    else:
-        if "--web" in argv:
-            argv = [arg for arg in argv if arg != "--web"]
-        run_web(argv)
+    if "--web" in argv:
+        argv = [arg for arg in argv if arg != "--web"]
+    run_web(argv)
