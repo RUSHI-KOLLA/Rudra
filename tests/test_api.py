@@ -495,6 +495,28 @@ class TestBrowserHardening:
         assert "nonce-" in policy, policy
         assert "frame-ancestors 'none'" in policy, policy
 
+    def test_the_inline_script_carries_the_served_nonce(self):
+        """The nonce in the policy must match the one in the page, or the
+        browser blocks the page's own script."""
+        import re
+
+        handler = create_mock_handler(headers={})
+        handler.path = "/"
+        handler.do_GET()
+
+        sent = {
+            call.args[0]: call.args[1]
+            for call in handler.send_header.call_args_list
+            if len(call.args) == 2
+        }
+        policy = sent.get("Content-Security-Policy", "")
+        nonce = re.search(r"'nonce-([^']+)'", policy)
+        assert nonce, policy
+
+        body = handler.wfile.write.call_args[0][0].decode("utf-8")
+        assert f'nonce="{nonce.group(1)}"' in body
+        assert "__VG_NONCE__" not in body
+
     def test_api_key_is_not_kept_in_local_storage(self):
         """A long-lived secret must not sit in localStorage for the whole browser."""
         html = self._html()
