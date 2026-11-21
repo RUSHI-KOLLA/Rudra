@@ -447,15 +447,91 @@ class TestInvestigateWithMockedSearch:
         _patch_lens_funcs(monkeypatch, mocks)
 
         result = inv_mod.investigate("Why was Test Entity involved?")
+        assert result["contradictions"] == [], \
+            f"Expected no contradictions, got {result['contradictions']}"
 
-        # May have contradictions from mechanical extractions, but not from search results
-        # The key is: search-derived findings (with url) should not contradict each other
-        search_contradictions = [
-            c for c in result["contradictions"]
-            if c.get("type") == "denial_vs_affirmation"
-        ]
-        # With consistent mock data, there should be no denial_vs_affirmation from search
-        # (mechanical extractions don't have url and use "inferred" tag)
+    def test_detects_opposing_claims_about_same_subject(self, monkeypatch):
+        """Opposing claims about the same subject across lenses are flagged."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Kochhar confirmed the payment was approved",
+                "url": "https://example.com/money",
+                "snippet": "Kochhar confirmed the payment was approved",
+                "date": "2024-01-15",
+                "query": f"{entity} payment contract funding"
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Kochhar denied approving the payment",
+                "url": "https://example.com/secrecy",
+                "snippet": "Kochhar denied approving the payment",
+                "date": "2024-01-16",
+                "query": f"{entity} reported unconfirmed denied comment"
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why did Chanda Kochhar approve the payment?")
+        assert len(result["contradictions"]) > 0, \
+            f"Expected contradictions, got {result['contradictions']}"
+
+        contradiction = result["contradictions"][0]
+        assert contradiction["type"] == "denial_vs_affirmation"
+        assert contradiction["subject"]
+        assert "kochhar" in contradiction["subject"].lower()
+
+    def test_opposing_claims_about_different_subjects_are_not_flagged(self, monkeypatch):
+        """Opposing wording about unrelated subjects is not a contradiction."""
+        from vg.incidents import investigation as inv_mod
+
+        def mock_money(entity):
+            return [{
+                "title": "Regulator confirmed the fine was approved",
+                "url": "https://example.com/money",
+                "snippet": "Regulator confirmed the fine was approved",
+                "date": "2024-01-15",
+                "query": f"{entity} payment"
+            }]
+
+        def mock_secrecy(entity):
+            return [{
+                "title": "Auditor denied approving the transfer",
+                "url": "https://example.com/secrecy",
+                "snippet": "Auditor denied approving the transfer",
+                "date": "2024-01-16",
+                "query": f"{entity} denied"
+            }]
+
+        def mock_empty(entity):
+            return []
+
+        mocks = {
+            "money": mock_money,
+            "secrecy": mock_secrecy,
+            "power": mock_empty,
+            "timing": mock_empty,
+            "network": mock_empty,
+            "counter_case": mock_empty,
+        }
+        _patch_lens_funcs(monkeypatch, mocks)
+
+        result = inv_mod.investigate("Why was the payment approved?")
+        assert result["contradictions"] == [], \
+            f"Expected no contradictions, got {result['contradictions']}"
 
 
 # ---------------------------------------------------------------------------

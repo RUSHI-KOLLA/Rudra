@@ -155,46 +155,74 @@ def question_snippet(question: str, term: str) -> str:
 # Contradiction detection across lenses
 # ---------------------------------------------------------------------------
 
+#: Words that reverse a claim.
+_NEGATION_TERMS = (
+    "denied", "denies", "deny", "quashed", "rejected", "reversed", "cleared",
+    "dismissed", "refuted", "false", "baseless", "unsubstantiated", "unconfirmed",
+)
+
+#: Words that assert a claim.
+_AFFIRMATION_TERMS = (
+    "confirmed", "admits", "admitted", "acknowledged", "upheld", "approved",
+    "revealed", "established", "convicted", "indicted",
+)
+
+#: Capitalised words that can stand as the subject of a claim.
+_SUBJECT_RE = re.compile(r"\b[A-Z][a-z]{3,}\b")
+
+
+def _has_term(text: str, terms: tuple[str, ...]) -> bool:
+    """True when any term appears as a whole word (so 'unconfirmed' != 'confirmed')."""
+    return any(re.search(rf"\b{re.escape(term)}\b", text) for term in terms)
+
+
+def _polarity(text: str) -> tuple[bool, bool]:
+    """Return (has_negation, has_affirmation) for a piece of text."""
+    return _has_term(text, _NEGATION_TERMS), _has_term(text, _AFFIRMATION_TERMS)
+
+
+def _subjects(finding: dict[str, Any]) -> set[str]:
+    """Capitalised candidate subjects named by a finding."""
+    text = f"{finding.get('title', '')} {finding.get('snippet', '')}"
+    return set(_SUBJECT_RE.findall(text))
+
+
 def _detect_contradictions(lens_results: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     """Detect contradictions across the six investigative lenses.
 
-    Looks for opposing claims about the same entity/topic across different
-    lenses (e.g., money says X benefited, power says Y appointed).
+    Two findings contradict each other when they carry opposite polarity
+    ("denied" vs "confirmed") AND they are talking about the same subject.
+    Requiring a shared subject is what stops two unrelated claims that
+    happen to use opposite words from being reported as a contradiction.
     """
     contradictions: list[dict[str, Any]] = []
+    lens_names = sorted(lens_results)
 
-    # Collect all findings by lens
-    lens_findings = {
-        lens: data.get("findings", [])
-        for lens, data in lens_results.items()
-    }
+    for index, lens_a in enumerate(lens_names):
+        for lens_b in lens_names[index + 1:]:
+            for fa in lens_results[lens_a].get("findings", []):
+                for fb in lens_results[lens_b].get("findings", []):
+                    fa_text = f"{fa.get('title', '')} {fa.get('snippet', '')}".lower()
+                    fb_text = f"{fb.get('title', '')} {fb.get('snippet', '')}".lower()
+                    fa_neg, fa_aff = _polarity(fa_text)
+                    fb_neg, fb_aff = _polarity(fb_text)
 
-    # Simple contradiction detection: findings with opposing keywords
-    # across different lenses about similar entities
-    denial_keywords = {"denied", "unconfirmed", "unsubstantiated", "false", "baseless"}
-    affirmation_keywords = {"confirmed", "admitted", "acknowledged", "revealed", "established"}
+                    if not ((fa_neg and fb_aff) or (fa_aff and fb_neg)):
+                        continue
 
-    for lens_a, findings_a in lens_findings.items():
-        for lens_b, findings_b in lens_findings.items():
-            if lens_a >= lens_b:
-                continue  # Avoid duplicate pairs
-            for fa in findings_a:
-                for fb in findings_b:
-                    fa_text = (fa.get("snippet", "") + " " + fa.get("title", "")).lower()
-                    fb_text = (fb.get("snippet", "") + " " + fb.get("title", "")).lower()
-                    fa_has_denial = any(k in fa_text for k in denial_keywords)
-                    fb_has_affirmation = any(k in fb_text for k in affirmation_keywords)
-                    fa_has_affirmation = any(k in fa_text for k in affirmation_keywords)
-                    fb_has_denial = any(k in fb_text for k in denial_keywords)
+                    shared = _subjects(fa) & _subjects(fb)
+                    if not shared:
+                        continue
 
-                    if (fa_has_denial and fb_has_affirmation) or (fa_has_affirmation and fb_has_denial):
-                        contradictions.append({
-                            "lens_a": lens_a,
-                            "lens_b": lens_b,
-                            "finding_a": fa.get("title", "")[:80],
-                            "finding_b": fb.get("title", "")[:80],
-                            "type": "denial_vs_affirmation",
-                        })
+                    subject = sorted(shared, key=len, reverse=True)[0]
+                    contradictions.append({
+                        "lens_a": lens_a,
+                        "lens_b": lens_b,
+                        "finding_a": fa.get("title", "")[:80],
+                        "finding_b": fb.get("title", "")[:80],
+                        "subject": subject,
+                        "type": "denial_vs_affirmation",
+                    })
 
     return contradictions
 
